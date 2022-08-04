@@ -2,7 +2,6 @@ tmp
 .bundle
 log
 vendor
-var
 etc/config.yml
 *.swp
 *.swo

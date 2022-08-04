@@ -1,0 +1,11 @@
+---
+nodes:
+- hostname: chead1
+  profile: login
+  status: complete
+- hostname: cnode01
+  profile: compute
+  status: failed
+- hostname: cnode02
+  profile: compute
+  status: deploying
