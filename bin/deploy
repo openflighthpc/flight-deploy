@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+begin
+  lib_dir = File.expand_path(File.join(__FILE__, '../../lib'))
+  $LOAD_PATH.unshift(lib_dir)
+  ENV['BUNDLE_GEMFILE'] ||= File.join(__FILE__, '../../Gemfile')
+
+  require 'rubygems'
+  gem 'bundler', '2.1.4'
+  require 'bundler'
+  
+  Bundler.setup(:default)
+
+  require "deploy/cli"
+  Deploy::CLI.run!(*ARGV)
+
+rescue Interrupt
+  $stderr.print "\nWARNING: Cancelled by user"
+
+  raise SignalException.new(2)
+end
