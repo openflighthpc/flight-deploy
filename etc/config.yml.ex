@@ -1,2 +1,2 @@
 ---
-# profiles_path:
+# inventory_path:

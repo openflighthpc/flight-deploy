@@ -11,6 +11,10 @@ module Deploy
       def config
         @config ||= YAML.load_file(Pathname.new('../../etc/config.yml').expand_path(__dir__))
       end
+
+      def inventory_path
+        config.inventory_path
+      end
     end
   end
 end
