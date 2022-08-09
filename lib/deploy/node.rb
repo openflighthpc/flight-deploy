@@ -1,15 +1,15 @@
 module Deploy
   class Node
     def self.all
-      all_nodes = []
-      YAML.load_file(Config.inventory_path)['nodes'].each do |node|
-        all_nodes << new(
-          hostname: node['hostname'],
-          profile: node['profile'],
-          status: node['status'],
-          )
+      @all_nodes ||= [].tap do |a|
+        YAML.load_file(Config.inventory_path)['nodes'].each do |node|
+          a << new(
+            hostname: node['hostname'],
+            profile: node['profile'],
+            status: node['status'],
+            )
+        end
       end
-      all_nodes
     end
 
     attr_reader :hostname, :profile, :status
