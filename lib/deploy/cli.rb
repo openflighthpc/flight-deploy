@@ -32,19 +32,12 @@ module Deploy
       end
     end
 
-    # Commands go here:
-    # command :example do |c|
-    #   cli_syntax(c)
-    #   c.summary = 'Do something useful'
-    #   c.action Commands, :example
-    #   c.description = ""
-    # end
-    # OPTIONAL: alias_command :something_else, :example
-    #
-    # NOTE: We are using a symbol object when specifying the command name
-    # with `c.action`. We do this because it means we can refer to the
-    # commands by name without having to import the class for every single
-    # one in this file. We could also use a string, if we wanted to.
-    # See Deploy::Commands::method_missing for more information.
+    command :list do |c|
+      cli_syntax(c)
+      c.summary = 'Display all node information.'
+      c.action Commands, :list
+      c.description = "Display the configuration profile and status of each node."
+    end
+    alias_command :ls, :list
   end
 end

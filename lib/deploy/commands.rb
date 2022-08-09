@@ -1,6 +1,4 @@
-# Here, use `require_relative` to add new commands in the `lib/deploy/commands/`
-# directory to the command line interface. e.g.
-# require_relative 'commands/example'
+require_relative 'commands/list'
 
 module Deploy
   module Commands
