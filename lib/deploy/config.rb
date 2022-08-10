@@ -22,6 +22,10 @@ module Deploy
       def inventory_dir
         File.join(root, config.inventory_dir)
       end
+
+      def ansible_path
+        config.ansible_path
+      end
     end
   end
 end

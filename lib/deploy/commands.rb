@@ -1,4 +1,5 @@
 require_relative 'commands/list'
+require_relative 'commands/setup'
 
 module Deploy
   module Commands
