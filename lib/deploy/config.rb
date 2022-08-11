@@ -26,6 +26,10 @@ module Deploy
       def ansible_path
         config.ansible_path
       end
+
+      def log_dir
+        File.join(root, "log/")
+      end
     end
   end
 end
