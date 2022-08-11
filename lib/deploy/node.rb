@@ -7,18 +7,43 @@ module Deploy
           a << new(
             hostname: node['hostname'],
             profile: node['profile'],
-            status: node['status']
+            status: node['status'],
+            deployment_pid: node[:deployment_pid]
           )
         end
       end.sort_by { |n| n.hostname }
     end
 
-    attr_reader :hostname, :profile, :status
+    def self.find(hostname=nil)
+      all.find { |node| node.hostname == hostname }
+    end
 
-    def initialize(hostname:, profile:, status:)
+    def self.save_all
+      Node.all.map(&:save)
+    end
+
+    def to_h
+      {
+        hostname: hostname,
+        profile: profile,
+        deployment_pid: deployment_pid
+      }.to_h
+    end
+
+    def filepath
+      File.join(Config.inventory_path, "#{hostname}.yaml")
+    end
+
+    def save
+      File.open(filepath, 'w') { |f| YAML.dump(self.to_h. f) }
+    end
+
+    attr_accessor :hostname, :profile, :deployment_pid
+
+    def initialize(hostname:, profile:, deployment_pid:)
       @hostname = hostname
       @profile = profile
-      @status = status
+      @deployment_pid = deployment_pid
     end
   end
 end

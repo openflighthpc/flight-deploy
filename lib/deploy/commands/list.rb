@@ -9,7 +9,7 @@ module Deploy
         t = Table.new
         t.headers('Node', 'Profile', 'Status')
         Node.all.each do |node|
-          t.row( node.hostname, node.profile, node.status )
+          t.row( node.hostname, node.profile, node.deployment_pid )
         end
         t.emit
       end
