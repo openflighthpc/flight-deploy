@@ -1,3 +1,3 @@
 ---
-# inventory_dir:
+inventory_dir: var/inventory/
 # ansible_dir:
