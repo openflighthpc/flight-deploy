@@ -19,8 +19,8 @@ module Deploy
         @root ||= File.expand_path('../..', __dir__)
       end
 
-      def inventory_path
-        File.join(root, config.inventory_path)
+      def inventory_dir
+        File.join(root, config.inventory_dir)
       end
     end
   end
