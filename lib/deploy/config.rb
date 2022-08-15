@@ -13,6 +13,8 @@ module Deploy
       def config
         @config ||= YAML.load_file(Pathname.new('../../etc/config.yml').expand_path(__dir__))
                         .to_shash
+      rescue NoMethodError
+        raise "Config file has missing values"
       end
 
       def root
@@ -20,10 +22,12 @@ module Deploy
       end
 
       def inventory_dir
+        raise "Inventory directory not set in config" if !config.inventory_dir
         File.join(root, config.inventory_dir)
       end
 
       def ansible_dir
+        raise "Ansible directory not set in config" if !config.ansible_dir
         config.ansible_dir
       end
 
