@@ -23,8 +23,8 @@ module Deploy
         File.join(root, config.inventory_dir)
       end
 
-      def ansible_path
-        config.ansible_path
+      def ansible_dir
+        config.ansible_dir
       end
 
       def log_dir

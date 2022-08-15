@@ -33,7 +33,7 @@ module Deploy
     end
 
     command :setup do |c|
-      cli_syntax(c, ['NODE', 'PROFILE'])
+      cli_syntax(c, ['HOSTNAME', 'PROFILE'])
       c.summary = "Hard-coded Ansible deployment for testing"
       c.action Commands, :setup
       c.description = "Hard-coded Ansible deployment for testing"
