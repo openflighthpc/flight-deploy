@@ -32,6 +32,13 @@ module Deploy
       end
     end
 
+    command :setup do |c|
+      cli_syntax(c, ['HOSTNAME', 'PROFILE'])
+      c.summary = "Hard-coded Ansible deployment for testing"
+      c.action Commands, :setup
+      c.description = "Hard-coded Ansible deployment for testing"
+    end
+
     command :list do |c|
       cli_syntax(c)
       c.summary = 'Display all node information.'
