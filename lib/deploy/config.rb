@@ -11,10 +11,14 @@ module Deploy
       # Convert to super hash so any YAML keys in the file
       # can be accessed like a regular method
       def config
-        @config ||= YAML.load_file(Pathname.new('../../etc/config.yml').expand_path(__dir__))
+        @config ||= YAML.load_file(config_path)
                         .to_shash
       rescue NoMethodError
         raise "Config file has missing values"
+      end
+
+      def config_path
+        Pathname.new('../../etc/config.yml').expand_path(__dir__)
       end
 
       def root

@@ -1,4 +1,5 @@
 require 'tty-prompt'
+require 'yaml'
 require_relative '../command'
 
 module Deploy
@@ -10,15 +11,14 @@ module Deploy
           ask_questions
           ask = false if prompt.yes?("\nAre these details correct?")
         end
-        ENV['CLUSTER_NAME'] = @result[:name]
-        ENV['IP_RANGE'] = @result[:ip]
+        save_answers
       end
 
       private
 
       def ask_questions
         puts "\n"
-        @result = prompt.collect do
+        @answers = prompt.collect do
           key(:name).ask('Cluster name:') do |q|
             q.default 'my-cluster'
             q.validate /^[a-zA-Z0-9_\-]+$/
@@ -32,6 +32,14 @@ module Deploy
               "Must contain only 0-9, '.' and '/'."
           end
         end
+      end
+
+      def save_answers
+        raise 'Attempted to save answers without answering questions' unless @answers
+        config = YAML.load_file(Config.config_path)
+        config['cluster_name'] = @answers[:name]
+        config['ip_range'] = @answers[:ip].to_s
+        File.write(Config.config_path, YAML.dump(config))
       end
 
       def prompt
