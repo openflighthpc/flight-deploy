@@ -55,6 +55,10 @@ module Deploy
         end
         values.length > 1 ? values : values.first
       end
+
+      def profiles_dir
+        File.join(root, "etc", "profiles")
+      end
     end
   end
 end
