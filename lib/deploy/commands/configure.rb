@@ -6,15 +6,24 @@ module Deploy
   module Commands
     class Configure < Command
       def run
-        ask = true
-        while ask
-          ask_questions
-          ask = false if prompt.yes?("\nAre these details correct?")
+        if @options.show
+          display_details
+        else
+          ask = true
+          while ask
+            ask_questions
+            ask = false if prompt.yes?("\nAre these details correct?")
+          end
+          save_answers
         end
-        save_answers
       end
 
       private
+
+      def display_details
+        puts "Cluster name: #{Config.config.cluster_name || '(none)'}"
+        puts "IP range: #{Config.config.ip_range || '(none)'}"
+      end
 
       def ask_questions
         puts "\n"
@@ -34,16 +43,16 @@ module Deploy
         end
       end
 
+      def prompt
+        @prompt ||= TTY::Prompt.new(help_color: :yellow)
+      end
+
       def save_answers
         raise 'Attempted to save answers without answering questions' unless @answers
         config = YAML.load_file(Config.config_path)
         config['cluster_name'] = @answers[:name]
         config['ip_range'] = @answers[:ip].to_s
         File.write(Config.config_path, YAML.dump(config))
-      end
-
-      def prompt
-        @prompt ||= TTY::Prompt.new(help_color: :yellow)
       end
     end
   end

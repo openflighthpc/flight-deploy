@@ -52,6 +52,7 @@ module Deploy
       c.summary = "Set the name and IP range of the cluster."
       c.action Commands, :configure
       c.description = "Set the cluster name and the IP range of your cluster nodes as an IPv4 CIDR block."
+      c.slop.bool '--show', "Show the current configuration details."
     end
   end
 end
