@@ -11,10 +11,24 @@ module Deploy
       # Convert to super hash so any YAML keys in the file
       # can be accessed like a regular method
       def config
-        @config ||= YAML.load_file(Pathname.new('../../etc/config.yml').expand_path(__dir__))
-                        .to_shash
+        @config ||= config_hash.to_shash
       rescue NoMethodError
         raise "Config file has missing values"
+      end
+
+      def config_hash
+        @config_hash ||= YAML.load_file(config_path) || {}
+      end
+
+      def append_to_config(details_to_append)
+        details_to_append.each do |key,value|
+          config_hash[key] = value
+        end
+        File.write(config_path, YAML.dump(config_hash))
+      end
+
+      def config_path
+        Pathname.new('../../etc/config.yml').expand_path(__dir__)
       end
 
       def root

@@ -46,5 +46,13 @@ module Deploy
       c.description = "Display the configuration profile and status of each node."
     end
     alias_command :ls, :list
+
+    command :configure do |c|
+      cli_syntax(c)
+      c.summary = "Set the name and IP range of the cluster."
+      c.action Commands, :configure
+      c.description = "Set the cluster name and the IP range of your cluster nodes as an IPv4 CIDR block."
+      c.slop.bool '--show', "Show the current configuration details."
+    end
   end
 end
