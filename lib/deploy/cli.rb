@@ -54,5 +54,12 @@ module Deploy
       c.description = "Set the cluster name and the IP range of your cluster nodes as an IPv4 CIDR block."
       c.slop.bool '--show', "Show the current configuration details."
     end
+
+    command :view do |c|
+      cli_syntax(c, 'NODE')
+      c.summary = 'View setup progress for a node.'
+      c.action Commands, :view
+      c.description = "View the setup progress and status of a given node."
+    end
   end
 end

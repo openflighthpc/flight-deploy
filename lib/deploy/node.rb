@@ -37,6 +37,12 @@ module Deploy
       File.join(Config.inventory_dir, "#{hostname}.yaml")
     end
 
+    def log_filepath
+      Dir.glob("#{Config.log_dir}/#{hostname}-*.log")
+         .sort
+         .last
+    end
+
     def save
       File.open(filepath, 'w+') { |f| YAML.dump(self.to_h, f) }
     end
