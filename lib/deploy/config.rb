@@ -16,6 +16,14 @@ module Deploy
         raise "Config file has missing values"
       end
 
+      def cluster_name
+        config.cluster_name
+      end
+
+      def ip_range
+        config.ip_range
+      end
+
       def config_hash
         @config_hash ||= YAML.load_file(config_path) || {}
       end

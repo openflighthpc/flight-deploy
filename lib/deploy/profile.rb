@@ -16,6 +16,10 @@ module Deploy
       end.sort_by { |n| n.name }
     end
 
+    def self.find(name=nil)
+      all.find { |profile| profile.name == name }
+    end
+
     def filepath
       File.join(Config.profile_dir, "#{name}.yaml")
     end
