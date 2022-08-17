@@ -67,6 +67,10 @@ module Deploy
       def profiles_dir
         File.join(root, "etc", "profiles")
       end
+
+      def ansible_inv_dir
+        File.join(root, "var", "ansible_invs")
+      end
     end
   end
 end
