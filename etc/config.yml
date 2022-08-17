@@ -1,3 +1,21 @@
 ---
 # inventory_dir:
 # ansible_dir:
+
+configuration_questions:
+  - id: :cluster_name
+    text: 'Cluster name:'
+    default: 'my-cluster'
+    format:
+      type: text
+    validate:
+      type: 'string'
+      format: /^[a-zA-Z0-9_\-]+$/
+
+  - id: :ip_range
+    text: 'IP range:'
+    format:
+      type: text
+    validate:
+      type: 'string'
+      format: /^[0-9\/.]+$/
