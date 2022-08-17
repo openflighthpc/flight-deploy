@@ -9,6 +9,9 @@ module Deploy
         display_command
         puts "\nProgress:"
         display_task_status
+        puts "\nStatus:"
+        display_overall_status
+        puts "\n"
       end
 
       def display_command
@@ -46,6 +49,10 @@ module Deploy
             task_name, task_status = nil
           end
         end
+      end
+
+      def display_overall_status
+        puts "   #{@success ? node.status.upcase : 'FAILED'}"
       end
 
       def node
