@@ -37,10 +37,18 @@ module Deploy
       File.join(Config.inventory_dir, "#{hostname}.yaml")
     end
 
+    def log_file
+      @log_file ||= File.open(log_filepath)
+    end
+
     def log_filepath
       Dir.glob("#{Config.log_dir}/#{hostname}-*.log")
          .sort
          .last
+    end
+
+    def command
+      File.open(log_filepath, &:readline)
     end
 
     def save

@@ -15,15 +15,14 @@ module Deploy
       end
 
       def display_command
-        puts "   ansible-playbook -i #{Config.config.cluster_name}.inv --limit #{@hostname} openflight.yml"
+        puts "   #{node.command}"
       end
 
       def display_task_status
         task_name, task_status, role, new_role = nil
         roles = []
         @success = true
-        log_file = File.open(node.log_filepath)
-        log_file.readlines.each do |line|
+        node.log_file.readlines.each do |line|
           next if line.start_with?('PLAY')
           if line.start_with?('TASK')
             task = line[ /\[(.*?)\]/, 1 ].split(' : ')
