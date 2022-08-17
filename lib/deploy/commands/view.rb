@@ -5,6 +5,7 @@ module Deploy
     class View < Command
       def run
         @hostname = args[0]
+        raise "Setup has not been run for this node." unless node.log_filepath
         puts "\nRunning:"
         puts "   #{node.command}"
         puts "\nProgress:"

@@ -42,9 +42,9 @@ module Deploy
     end
 
     def log_filepath
-      Dir.glob("#{Config.log_dir}/#{hostname}-*.log")
-         .sort
-         .last
+      @log_filepath ||= Dir.glob("#{Config.log_dir}/#{hostname}-*.log")
+                           .sort
+                           .last
     end
 
     def command
