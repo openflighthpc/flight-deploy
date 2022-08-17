@@ -1,2 +1,2 @@
 name: compute
-command: "ansible-playbook -i $INVFILE --limit $NODE --extra-vars=\"cluster_name=$CLUSTERNAME compute_ip_range=$IPRANGE\" openflight.yml"
+command: "ansible-playbook -i $INVFILE --limit $NODE --extra-vars=\"cluster_name=$CLUSTERNAME compute_ip_range=$IPRANGE\" /home/openflight/openflight-ansible-playbook/openflight.yml"
