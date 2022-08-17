@@ -57,7 +57,7 @@ module Deploy
 
     command :view do |c|
       cli_syntax(c, 'NODE')
-      c.summary = "View setup progress for a node."
+      c.summary = "View the setup status of a node."
       c.action Commands, :view
       c.description = "View the setup progress and status of a given node."
       c.slop.bool "--raw", "Show the entire ansible log output."
