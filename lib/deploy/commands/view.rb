@@ -18,28 +18,31 @@ module Deploy
         task_name, task_status, role, new_role = nil
         roles = []
         node.log_file.readlines.each do |line|
-          next if line.start_with?('PLAY')
-          if line.start_with?('TASK')
-            task = line[ /\[(.*?)\]/, 1 ].split(' : ')
-            role = task.first
-            task_name = task.last
-            new_role = !roles.include?(role)
-            roles << role if new_role
-          elsif all_statuses.any? { |s| line.start_with?(s) }
-            if task_name && (!task_status || success_statuses.include?(task_status))
-              task_status = line.split(':')
-                                .first
-            end
+          if @options.raw
+            puts line unless line == node.command
           else
-            if task_name && task_status
-              puts role if new_role
-              if success_statuses.include?(task_status)
-                puts "   \u2705 #{task_name}"
-              elsif fail_statuses.include?(task_status)
-                puts "   \u274c #{task_name}"
+            if line.start_with?('TASK')
+              task = line[ /\[(.*?)\]/, 1 ].split(' : ')
+              role = task.first
+              task_name = task.last
+              new_role = !roles.include?(role)
+              roles << role if new_role
+            elsif all_statuses.any? { |s| line.start_with?(s) }
+              if task_name && (!task_status || success_statuses.include?(task_status))
+                task_status = line.split(':')
+                                  .first
               end
+            else
+              if task_name && task_status
+                puts role if new_role
+                if success_statuses.include?(task_status)
+                  puts "   \u2705 #{task_name}"
+                elsif fail_statuses.include?(task_status)
+                  puts "   \u274c #{task_name}"
+                end
+              end
+              task_name, task_status = nil
             end
-            task_name, task_status = nil
           end
         end
       end

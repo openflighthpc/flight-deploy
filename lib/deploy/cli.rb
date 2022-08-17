@@ -60,6 +60,7 @@ module Deploy
       c.summary = "View setup progress for a node."
       c.action Commands, :view
       c.description = "View the setup progress and status of a given node."
+      c.slop.bool "--raw", "Show the entire ansible log output."
     end
   end
 end
