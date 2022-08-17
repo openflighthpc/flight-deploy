@@ -5,8 +5,14 @@ module Deploy
     class View < Command
       def run
         @hostname = args[0]
-        puts "Progress:"
+        puts "\nRunning:"
+        display_command
+        puts "\nProgress:"
         display_task_status
+      end
+
+      def display_command
+        puts "   ansible-playbook -i #{Config.config.cluster_name}.inv --limit #{@hostname} openflight.yml"
       end
 
       def display_task_status
