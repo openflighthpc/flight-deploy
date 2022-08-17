@@ -25,12 +25,14 @@ module Deploy
           exit_status: nil
         )
 
+        cmd = "sudo ansible-playbook -i mycluster.inv openflight.yml"
+
         pid = Process.fork do
           log_name = "#{Config.log_dir}/#{node.hostname}-#{Time.now.to_i}.log"
           sub_pid = Process.spawn(
             { "ANSIBLE_HOST_KEY_CHECKING" => "false" },
             # Assuming that the user has passwordless sudo access
-            "sudo ansible-playbook -i mycluster.inv openflight.yml",
+            "echo #{cmd}; #{cmd}",
             chdir: Config.ansible_dir,
             out: log_name,
             err: log_name

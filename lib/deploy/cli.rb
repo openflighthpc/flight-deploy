@@ -41,7 +41,7 @@ module Deploy
 
     command :list do |c|
       cli_syntax(c)
-      c.summary = 'Display all node information.'
+      c.summary = "Display all node information."
       c.action Commands, :list
       c.description = "Display the configuration profile and status of each node."
     end
@@ -52,7 +52,15 @@ module Deploy
       c.summary = "Set the name and IP range of the cluster."
       c.action Commands, :configure
       c.description = "Set the cluster name and the IP range of your cluster nodes as an IPv4 CIDR block."
-      c.slop.bool '--show', "Show the current configuration details."
+      c.slop.bool "--show", "Show the current configuration details."
+    end
+
+    command :view do |c|
+      cli_syntax(c, 'NODE')
+      c.summary = "View the setup status of a node."
+      c.action Commands, :view
+      c.description = "View the setup progress and status of a given node."
+      c.slop.bool "--raw", "Show the entire ansible log output."
     end
   end
 end
