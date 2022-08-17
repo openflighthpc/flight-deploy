@@ -74,7 +74,13 @@ module Deploy
       stdout_str, state = Open3.capture2("ps -e")
       processes = stdout_str.split("\n").map! { |p| p.split(" ") }
       running = processes.any? { |p| p[0].to_i == deployment_pid }
-      running ? "deploying" : "complete"
+      if running
+        'deploying'
+      elsif exit_status > 0
+        'failed'
+      else
+        'complete'
+      end
     end
 
     attr_accessor :hostname, :profile, :deployment_pid, :exit_status

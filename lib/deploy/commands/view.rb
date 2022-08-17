@@ -6,22 +6,17 @@ module Deploy
       def run
         @hostname = args[0]
         puts "\nRunning:"
-        display_command
+        puts "   #{node.command}"
         puts "\nProgress:"
         display_task_status
         puts "\nStatus:"
-        display_overall_status
+        puts "   #{node.status.upcase}"
         puts "\n"
-      end
-
-      def display_command
-        puts "   #{node.command}"
       end
 
       def display_task_status
         task_name, task_status, role, new_role = nil
         roles = []
-        @success = true
         node.log_file.readlines.each do |line|
           next if line.start_with?('PLAY')
           if line.start_with?('TASK')
@@ -42,16 +37,11 @@ module Deploy
                 puts "   \u2705 #{task_name}"
               elsif fail_statuses.include?(task_status)
                 puts "   \u274c #{task_name}"
-                @success = false
               end
             end
             task_name, task_status = nil
           end
         end
-      end
-
-      def display_overall_status
-        puts "   #{@success ? node.status.upcase : 'FAILED'}"
       end
 
       def node
