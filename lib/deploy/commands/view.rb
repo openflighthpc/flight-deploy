@@ -31,7 +31,7 @@ module Deploy
             task_name = task.last
             new_role = !roles.include?(role)
             roles << role if new_role
-          elsif line.length > 1
+          elsif all_statuses.any? { |s| line.start_with?(s) }
             if task_name && (!task_status || success_statuses.include?(task_status))
               task_status = line.split(':')
                                 .first
@@ -65,6 +65,14 @@ module Deploy
 
       def fail_statuses
         %w[failed fatal unreachable]
+      end
+
+      def skip_statuses
+        %w[skipped ignored]
+      end
+
+      def all_statuses
+        success_statuses + fail_statuses + skip_statuses
       end
     end
   end
