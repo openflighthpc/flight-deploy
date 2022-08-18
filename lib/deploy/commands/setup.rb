@@ -17,7 +17,7 @@ module Deploy
         node = Node.find(args[0])
         raise "Node already exists" if node
 
-        profile =  Profile.find(args[1])
+        profile = Profile.find(args[1])
         raise "No profile exists with given name" if !profile
 
         node = Node.new(
@@ -30,6 +30,8 @@ module Deploy
         cmd = profile.command
         cluster_name = Config.cluster_name
         ip_range = Config.ip_range
+
+        raise "Deploy has not been configured yet" if !(cluster_name && ip_range)
 
         inventory = Inventory.load(cluster_name)
         # If profile doesn't exist in inventory, create it
