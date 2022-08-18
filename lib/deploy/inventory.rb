@@ -5,15 +5,22 @@ module Deploy
     def self.load(name=nil)
       begin
         file = File.read(File.join(Config.ansible_inv_dir, "#{name}.inv"))
+        # Split string by "any string in between two square brackets",
+        # keeping the delimiter as part of the split string.
         groups = file.split(/(?=\[.*\])/).reject(&:empty?)
 
         inventory = {}
         groups.each do |r|
           group = r.split("\n")
+          # First slice removes the square brackets from group name
+          # Second slice takes every row except the first one (so,
+          # all the nodes excluding the group name)
           inventory[group[0][1...-1]] = group[1..-1]
         end
 
         new(cluster_name: name, groups: inventory)
+
+      # File not found? Create it.
       rescue Errno::ENOENT
         new(cluster_name: name, groups: {}).tap do |inv|
           inv.dump

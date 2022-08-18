@@ -32,8 +32,10 @@ module Deploy
         ip_range = Config.ip_range
 
         inventory = Inventory.load(cluster_name)
+        # If profile doesn't exist in inventory, create it
         inventory.groups[profile.name] ||= []
-        inventory.groups[profile.name] << node.hostname
+        # Add node to profile if it isn't already there
+        inventory.groups[profile.name] |= node.hostname
         inventory.dump
 
         inv_file = inventory.filepath
