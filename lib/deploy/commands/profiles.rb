@@ -7,13 +7,12 @@ module Deploy
       def run
         raise "No profiles to display" if !Profile.all.any?
 
+        t = Table.new
+        t.headers('Name', 'Command')
         Profile.all.each do |p|
-          puts <<~PROFILE
-          Name: #{p.name}
-          Command: #{p.command}
-
-          PROFILE
+          t.row( p.name, p.command )
         end
+        t.emit
       end
     end
   end

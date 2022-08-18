@@ -34,9 +34,9 @@ module Deploy
 
     command :profiles do |c|
       cli_syntax(c)
-      c.summary = "Profiles"
+      c.summary = "List profiles"
       c.action Commands, :profiles
-      c.description = "Profiles"
+      c.description = "Show list of profiles by name and command"
     end
 
     command :setup do |c|
