@@ -1,4 +1,5 @@
 require_relative 'commands/list'
+require_relative 'commands/profiles'
 require_relative 'commands/setup'
 require_relative 'commands/configure'
 require_relative 'commands/view'

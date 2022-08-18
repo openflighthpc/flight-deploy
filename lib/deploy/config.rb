@@ -16,6 +16,14 @@ module Deploy
         raise "Config file has missing values"
       end
 
+      def cluster_name
+        config.cluster_name
+      end
+
+      def ip_range
+        config.ip_range
+      end
+
       def config_hash
         @config_hash ||= YAML.load_file(config_path) || {}
       end
@@ -54,6 +62,14 @@ module Deploy
           config.public_send(key.to_sym)
         end
         values.length > 1 ? values : values.first
+      end
+
+      def profiles_dir
+        File.join(root, "etc", "profiles")
+      end
+
+      def ansible_inv_dir
+        File.join(root, "var", "ansible_invs")
       end
     end
   end

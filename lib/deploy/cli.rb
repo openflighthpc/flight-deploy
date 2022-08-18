@@ -32,6 +32,13 @@ module Deploy
       end
     end
 
+    command :profiles do |c|
+      cli_syntax(c)
+      c.summary = "List profiles"
+      c.action Commands, :profiles
+      c.description = "Show list of profiles by name and command"
+    end
+
     command :setup do |c|
       cli_syntax(c, ['HOSTNAME', 'PROFILE'])
       c.summary = "Hard-coded Ansible deployment for testing"
