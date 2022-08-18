@@ -28,17 +28,19 @@ module Deploy
       def ask_questions
         puts "\n"
         @answers = prompt.collect do
-          key(:cluster_name).ask('Cluster name:') do |q|
-            q.default 'my-cluster'
-            q.validate /^[a-zA-Z0-9_\-]+$/
-            q.messages[:valid?] = "Invalid cluster name: %{value}. " \
-              "Must contain only alphanumeric characters, '-' and '_'."
-          end
-          key(:ip_range).ask('IP range:') do |q|
-            q.required true
-            q.validate /^[0-9\/.]+$/
-            q.messages[:valid?] = "Invalid IP range: %{value}. " \
-              "Must contain only 0-9, '.' and '/'."
+          Config.fetch(:configuration_questions).each do |question|
+            key(question.id).ask(question.text) do |q|
+              if Config.fetch(question.id)
+                q.default Config.fetch(question.id)
+              elsif question.default
+                q.default question.default
+              end
+              q.required question.validation.required
+              if question.validation.to_h.key?(:format)
+                q.validate Regexp.new(question.validation.format)
+                q.messages[:valid?] = question.validation.message
+              end
+            end
           end
         end
       end
