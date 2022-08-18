@@ -35,7 +35,7 @@ module Deploy
         # If profile doesn't exist in inventory, create it
         inventory.groups[profile.name] ||= []
         # Add node to profile if it isn't already there
-        inventory.groups[profile.name] |= node.hostname
+        inventory.groups[profile.name] |= [node.hostname]
         inventory.dump
 
         inv_file = inventory.filepath
