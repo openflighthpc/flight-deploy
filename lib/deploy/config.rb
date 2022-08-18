@@ -49,10 +49,6 @@ module Deploy
         File.join(root, "log/")
       end
 
-      def questions
-        config.configuration_questions
-      end
-
       def fetch(*keys)
         values = keys.map do |key|
           config.public_send(key.to_sym)

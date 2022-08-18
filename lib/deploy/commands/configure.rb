@@ -28,7 +28,7 @@ module Deploy
       def ask_questions
         puts "\n"
         @answers = prompt.collect do
-          Config.questions.each do |question|
+          Config.fetch(:configuration_questions).each do |question|
             key(question.id).ask(question.text) do |q|
               if Config.fetch(question.id)
                 q.default Config.fetch(question.id)
