@@ -43,7 +43,6 @@ module Deploy
             end
           end
         end
-
       end
 
       def prompt
