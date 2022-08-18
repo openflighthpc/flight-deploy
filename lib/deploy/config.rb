@@ -48,6 +48,10 @@ module Deploy
       def log_dir
         File.join(root, "log/")
       end
+
+      def questions
+        config.configuration_questions
+      end
     end
   end
 end

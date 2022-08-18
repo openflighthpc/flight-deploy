@@ -1,21 +1,19 @@
 ---
 # inventory_dir:
 # ansible_dir:
-
 configuration_questions:
-  - id: :cluster_name
-    text: 'Cluster name:'
-    default: 'my-cluster'
-    format:
-      type: text
-    validate:
-      type: 'string'
-      format: /^[a-zA-Z0-9_\-]+$/
-
-  - id: :ip_range
-    text: 'IP range:'
-    format:
-      type: text
-    validate:
-      type: 'string'
-      format: /^[0-9\/.]+$/
+- id: :cluster_name
+  text: 'Cluster name:'
+  default: my-cluster
+  validation:
+    type: string
+    format: "^[a-zA-Z0-9_\\-]+$"
+    message: Invalid cluster name. Must contain only alphanumeric characters, '-'
+      and '_'.
+- id: :ip_range
+  text: 'IP range:'
+  validation:
+    type: string
+    required: true
+    format: "^[0-9\\/.]+$"
+    message: Invalid IP range. Must contain only 0-9, '.' and '/'.
