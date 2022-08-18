@@ -30,7 +30,11 @@ module Deploy
         @answers = prompt.collect do
           Config.questions.each do |question|
             key(question.id).ask(question.text) do |q|
-              q.default question.default if question.default
+              if Config.fetch(question.id)
+                q.default Config.fetch(question.id)
+              elsif question.default
+                q.default question.default
+              end
               q.required question.validation.required
               if question.validation.to_h.key?(:format)
                 q.validate Regexp.new(question.validation.format)

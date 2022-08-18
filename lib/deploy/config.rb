@@ -52,6 +52,13 @@ module Deploy
       def questions
         config.configuration_questions
       end
+
+      def fetch(*keys)
+        values = keys.map do |key|
+          config.public_send(key.to_sym)
+        end
+        values.length > 1 ? values : values.first
+      end
     end
   end
 end
