@@ -7,8 +7,9 @@ module Deploy
             profile = YAML.load_file(file)
             a << new(
               name: profile['name'],
-              command: profile['command'],
-              description: profile['description']
+              description: profile['description'],
+              group_name: profile['group_name'],
+              command: profile['command']
             )
           rescue NoMethodError
             puts "Error loading #{file}"
@@ -25,12 +26,13 @@ module Deploy
       File.join(Config.profile_dir, "#{name}.yaml")
     end
 
-    attr_reader :name, :command, :description
+    attr_reader :name, :command, :description, :group_name
 
-    def initialize(name:, command:, description:)
+    def initialize(name:, command:, description:, group_name:)
       @name = name
       @command = command
       @description = description
+      @group_name = group_name
     end
   end
 end
