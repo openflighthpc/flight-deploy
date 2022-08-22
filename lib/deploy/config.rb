@@ -47,11 +47,6 @@ module Deploy
         Pathname.new('../../var/inventory/').expand_path(__dir__)
       end
 
-      def ansible_dir
-        raise "Ansible directory not set in config" if !config.ansible_dir
-        config.ansible_dir
-      end
-
       def log_dir
         File.join(root, "log/")
       end
