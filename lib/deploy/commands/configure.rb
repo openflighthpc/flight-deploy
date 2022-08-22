@@ -9,11 +9,7 @@ module Deploy
         if @options.show
           display_details
         else
-          ask = true
-          while ask
-            ask_questions
-            ask = false if prompt.yes?("\nAre these details correct?")
-          end
+          ask_questions
           save_answers
         end
       end
@@ -26,7 +22,6 @@ module Deploy
       end
 
       def ask_questions
-        puts "\n"
         @answers = prompt.collect do
           Config.fetch(:configuration_questions).each do |question|
             key(question.id).ask(question.text) do |q|
