@@ -53,8 +53,7 @@ module Deploy
               "NODE" => node.hostname
             },
             "echo #{cmd}; #{cmd}",
-            out: log_name,
-            err: log_name,
+            [:out, :err] => log_name,
           )
 
           Process.wait(sub_pid)
