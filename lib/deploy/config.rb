@@ -35,33 +35,27 @@ module Deploy
         File.write(config_path, YAML.dump(config_hash))
       end
 
-      def config_path
-        Pathname.new('../../etc/config.yml').expand_path(__dir__)
+      def fetch(*keys)
+        values = keys.map do |key|
+          config.public_send(key.to_sym)
+        end
+        values.length > 1 ? values : values.first
       end
 
       def root
         @root ||= File.expand_path('../..', __dir__)
       end
 
-      def inventory_dir
-        raise "Inventory directory not set in config" if !config.inventory_dir
-        File.join(root, config.inventory_dir)
+      def config_path
+        File.join(root, "etc/config.yml")
       end
 
-      def ansible_dir
-        raise "Ansible directory not set in config" if !config.ansible_dir
-        config.ansible_dir
+      def inventory_dir
+        File.join(root, "var", "inventory")
       end
 
       def log_dir
         File.join(root, "log/")
-      end
-
-      def fetch(*keys)
-        values = keys.map do |key|
-          config.public_send(key.to_sym)
-        end
-        values.length > 1 ? values : values.first
       end
 
       def profiles_dir
