@@ -8,9 +8,9 @@ module Deploy
         raise "No profiles to display" if !Profile.all.any?
 
         t = Table.new
-        t.headers('Name', 'Command')
+        t.headers('Name', 'Description')
         Profile.all.each do |p|
-          t.row( p.name, p.command )
+          t.row( p.name, p.description )
         end
         t.emit
       end
