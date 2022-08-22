@@ -1,6 +1,6 @@
 ---
 configuration_questions:
-- id: :cluster_name
+- id: cluster_name
   text: 'Cluster name:'
   default: my-cluster
   validation:
@@ -8,7 +8,7 @@ configuration_questions:
     format: "^[a-zA-Z0-9_\\-]+$"
     message: 'Invalid cluster name: %{value}. Must contain only alphanumeric characters,
       - and _.'
-- id: :ip_range
+- id: ip_range
   text: 'IP range:'
   validation:
     type: string

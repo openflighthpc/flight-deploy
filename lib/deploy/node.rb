@@ -7,10 +7,10 @@ module Deploy
         Dir["#{Config.inventory_dir}/*.yaml"].each do |file|
           node = YAML.load_file(file)
           a << new(
-            hostname: node[:hostname],
-            profile: node[:profile],
-            deployment_pid: node[:deployment_pid],
-            exit_status: node[:exit_status]
+            hostname: node['hostname'],
+            profile: node['profile'],
+            deployment_pid: node['deployment_pid'],
+            exit_status: node['exit_status']
           )
         end
       end.sort_by { |n| n.hostname }
@@ -26,10 +26,10 @@ module Deploy
 
     def to_h
       {
-        hostname: hostname,
-        profile: profile,
-        deployment_pid: deployment_pid,
-        exit_status: exit_status
+        'hostname' => hostname,
+        'profile' => profile,
+        'deployment_pid' => deployment_pid,
+        'exit_status' => exit_status
       }
     end
 
