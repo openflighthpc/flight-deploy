@@ -35,27 +35,27 @@ module Deploy
         File.write(config_path, YAML.dump(config_hash))
       end
 
-      def config_path
-        Pathname.new('../../etc/config.yml').expand_path(__dir__)
+      def fetch(*keys)
+        values = keys.map do |key|
+          config.public_send(key.to_sym)
+        end
+        values.length > 1 ? values : values.first
       end
 
       def root
         @root ||= File.expand_path('../..', __dir__)
       end
 
+      def config_path
+        File.join(root, "etc/config.yml")
+      end
+
       def inventory_dir
-        Pathname.new('../../var/inventory/').expand_path(__dir__)
+        File.join(root, "var", "inventory")
       end
 
       def log_dir
         File.join(root, "log/")
-      end
-
-      def fetch(*keys)
-        values = keys.map do |key|
-          config.public_send(key.to_sym)
-        end
-        values.length > 1 ? values : values.first
       end
 
       def profiles_dir
