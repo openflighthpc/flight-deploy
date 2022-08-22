@@ -44,8 +44,7 @@ module Deploy
       end
 
       def inventory_dir
-        raise "Inventory directory not set in config" if !config.inventory_dir
-        File.join(root, config.inventory_dir)
+        Pathname.new('../../var/inventory/').expand_path(__dir__)
       end
 
       def ansible_dir
