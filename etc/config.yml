@@ -1,5 +1,4 @@
 ---
-# inventory_dir:
 configuration_questions:
 - id: :cluster_name
   text: 'Cluster name:'
