@@ -6,3 +6,6 @@ etc/config.yml
 *.swo
 *.idea*
 spec/examples.txt
+log/*.log
+var/ansible_invs/*.inv
+

@@ -55,6 +55,10 @@ module Deploy
       File.open(filepath, 'w+') { |f| YAML.dump(self.to_h, f) }
     end
 
+    def delete
+      File.delete(filepath) if File.exist?(filepath)
+    end
+
     # **kwargs grabs all of the KeyWord ARGuments and puts them into a single
     # hash called `kwargs`. For each of the keys in the hash, if the Node 
     # has that key as an accessible attribute, set it to the value given for 
