@@ -40,10 +40,13 @@ module Deploy
     end
 
     command :setup do |c|
-      cli_syntax(c, ['HOSTNAME', 'PROFILE'])
-      c.summary = "Hard-coded Ansible deployment for testing"
+      cli_syntax(c, ['HOSTNAME[,HOSTNAME...]', 'PROFILE'])
+      c.summary = "Set up one or more nodes with a given profile."
       c.action Commands, :setup
-      c.description = "Hard-coded Ansible deployment for testing"
+      c.description = <<EOF
+Set up one or more nodes with a given profile. To set up multiple nodes,
+enter the nodes' hostnames separated by commas.
+EOF
     end
 
     command :list do |c|
