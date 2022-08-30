@@ -65,6 +65,10 @@ module Deploy
       def ansible_inv_dir
         File.join(root, "var", "ansible_invs")
       end
+
+      def types_dir
+        File.expand_path('../flight-deploy-types', root)
+      end
     end
   end
 end

@@ -1,6 +1,7 @@
 require 'tty-prompt'
 require 'yaml'
 require_relative '../command'
+require_relative '../type'
 
 module Deploy
   module Commands
@@ -17,13 +18,20 @@ module Deploy
       private
 
       def display_details
-        puts "Cluster name: #{Config.config.cluster_name || '(none)'}"
-        puts "IP range: #{Config.config.ip_range || '(none)'}"
+        type = Config.fetch('cluster_type')
+        raise "Cluster has not yet been configured" unless type
+        raise "Invalid cluster type has been saved - please rerun configure" unless Type.find(type)
+
+        puts "Cluster type: #{type}"
+        Type.find(type).questions.each do |question|
+          puts "#{question.text} #{ Config.fetch(question.id) || 'none' }"
+        end
       end
 
       def ask_questions
+        type = cluster_type
         @answers = prompt.collect do
-          Config.fetch(:configuration_questions).each do |question|
+          Type.find(type).questions.each do |question|
             key(question.id).ask(question.text) do |q|
               if Config.fetch(question.id)
                 q.default Config.fetch(question.id)
@@ -44,9 +52,13 @@ module Deploy
         @prompt ||= TTY::Prompt.new(help_color: :yellow)
       end
 
+      def cluster_type
+        @type ||= prompt.select('Cluster type: ', Type.all.map { |t| t.name })
+      end
+
       def save_answers
         raise 'Attempted to save answers without answering questions' unless @answers
-        Config.append_to_config(@answers)
+        Config.append_to_config({ 'cluster_type' => cluster_type }.merge(@answers))
       end
     end
   end
