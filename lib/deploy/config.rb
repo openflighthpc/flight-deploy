@@ -25,7 +25,7 @@ module Deploy
       end
 
       def config_hash
-        @config_hash ||= YAML.load_file(config_path) || {}
+        @config_hash ||= File.exists?(config_path) ? (YAML.load_file(config_path) || {}) : {}
       end
 
       def append_to_config(details_to_append)
