@@ -8,9 +8,9 @@ module Deploy
         raise "No available cluster types" unless Type.all.any?
 
         t = Table.new
-        t.headers('Name', 'Description')
+        t.headers('Name', 'ID', 'Description')
         Type.all.each do |p|
-          t.row( p.name, p.description )
+          t.row( p.name, p.id, p.description )
         end
         t.emit
       end
