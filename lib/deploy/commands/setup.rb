@@ -67,7 +67,7 @@ module Deploy
                           .readlines
                           .select { |line| line.start_with?('TASK') }
                           .last
-            node.delete if failure&.include?('Waiting for nodes to be reachable')
+            node.delete if failure.nil? || failure.include?('Waiting for nodes to be reachable')
           end
         end
         node.update(deployment_pid: pid) if File.exist?(node.filepath)
