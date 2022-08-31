@@ -43,6 +43,7 @@ module Deploy
         inv_file = inventory.filepath
 
         pid = Process.fork do
+          log_name = "#{Config.log_dir}/#{node.hostname}-#{Time.now.to_i}.log"
           sub_pid = Process.spawn(
             {
               "ANSIBLE_HOST_KEY_CHECKING" => "false",
@@ -52,7 +53,7 @@ module Deploy
               "NODE" => node.hostname
             },
             "echo #{cmd}; #{cmd}",
-            [:out, :err] => node.log_filepath,
+            [:out, :err] => log_name,
           )
           Process.wait(sub_pid)
           # Storing the exit status of the sub-fork created by `Process.spawn`
