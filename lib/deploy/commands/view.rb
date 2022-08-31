@@ -10,7 +10,6 @@ module Deploy
 
       def run
         @hostname = args[0]
-        raise "Setup has not been run for this node." unless node.log_filepath
         puts <<HEREDOC
 
 Running:
@@ -26,7 +25,7 @@ HEREDOC
       end
 
       def node
-        @node ||= Node.find(@hostname)
+        @node ||= Node.find(@hostname) || Node.new(hostname: @hostname)
       end
 
       def display_task_status

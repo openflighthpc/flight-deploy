@@ -23,8 +23,6 @@ module Deploy
         node = Node.new(
           hostname: args[0],
           profile: args[1],
-          deployment_pid: nil,
-          exit_status: nil
         )
 
         cmd = profile.command
@@ -70,7 +68,7 @@ module Deploy
             node.delete if failure.nil? || failure.include?('Waiting for nodes to be reachable')
           end
         end
-        node.update(deployment_pid: pid) if File.exist?(node.filepath)
+        node.update(deployment_pid: pid) unless node.deleted
         Process.detach(pid)
       end
     end
