@@ -41,8 +41,8 @@ module Deploy
         profile = cluster_type.find_profile(args[1])
         raise "No profile exists with given name" if !profile
 
-        cluster_name = Config.cluster_name
-        ip_range = Config.ip_range
+        cluster_name = Config.config.cluster_name
+        ip_range = Config.config.ip_range
         cmd = profile.command
 
         inventory = Inventory.load(cluster_name)
