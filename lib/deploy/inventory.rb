@@ -35,6 +35,12 @@ module Deploy
       end.join("\n\n")
     end
 
+    def remove_node(node, group_name)
+      groups[group_name].delete(node.hostname)
+      groups.delete(group_name) if groups[group_name].empty?
+      dump
+    end
+
     def dump
       File.open(filepath, 'w+') { |f| f.write(to_raw) }
     end

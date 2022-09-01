@@ -15,7 +15,7 @@ module Deploy
         # [ hostname, profile ]
 
         node = Node.find(args[0])
-        raise "Node already exists" if node
+        raise "Node already exists" if node && node.status != 'failed'
 
         profile = Profile.find(args[1])
         raise "No profile exists with given name" if !profile
@@ -23,15 +23,13 @@ module Deploy
         node = Node.new(
           hostname: args[0],
           profile: args[1],
-          deployment_pid: nil,
-          exit_status: nil
         )
 
         cmd = profile.command
         cluster_name = Config.cluster_name
         ip_range = Config.ip_range
 
-        raise "Deploy has not been configured yet" if !(cluster_name && ip_range)
+        raise "Deploy has not been configured yet" unless cluster_name && ip_range
 
         inventory = Inventory.load(cluster_name)
         # If profile doesn't exist in inventory, create it
@@ -55,14 +53,22 @@ module Deploy
             "echo #{cmd}; #{cmd}",
             [:out, :err] => log_name,
           )
-
           Process.wait(sub_pid)
           # Storing the exit status of the sub-fork created by `Process.spawn`
           # so that we can judge if it passed or failed without having to 
           # parse the Ansible logs
           node.update(deployment_pid: nil, exit_status: $?.exitstatus)
+
+          if node.status == 'failed'
+            inventory.remove_node(node, profile.group_name)
+            failure = node.log_file
+                          .readlines
+                          .select { |line| line.start_with?('TASK') }
+                          .last
+            node.delete if failure.nil? || failure.include?('Waiting for nodes to be reachable')
+          end
         end
-        node.update(deployment_pid: pid)
+        node.update(deployment_pid: pid) unless node.deleted
         Process.detach(pid)
       end
     end

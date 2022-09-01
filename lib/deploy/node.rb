@@ -42,9 +42,10 @@ module Deploy
     end
 
     def log_filepath
-      @log_filepath ||= Dir.glob("#{Config.log_dir}/#{hostname}-*.log")
-                           .sort
-                           .last
+      file_glob = Dir.glob("#{Config.log_dir}/#{hostname}-*.log")
+      raise "No log file exists for this node" if file_glob.empty?
+      @log_filepath ||= file_glob.sort
+                                 .last
     end
 
     def command
@@ -53,6 +54,11 @@ module Deploy
 
     def save
       File.open(filepath, 'w+') { |f| YAML.dump(self.to_h, f) }
+    end
+
+    def delete
+      File.delete(filepath) if File.exist?(filepath)
+      @deleted = true
     end
 
     # **kwargs grabs all of the KeyWord ARGuments and puts them into a single
@@ -76,20 +82,21 @@ module Deploy
       running = processes.any? { |p| p[0].to_i == deployment_pid }
       if running
         'deploying'
-      elsif exit_status > 0
+      elsif !exit_status || exit_status > 0
         'failed'
       else
         'complete'
       end
     end
 
-    attr_accessor :hostname, :profile, :deployment_pid, :exit_status
+    attr_accessor :hostname, :profile, :deployment_pid, :exit_status, :deleted
 
-    def initialize(hostname:, profile:, deployment_pid:, exit_status:)
+    def initialize(hostname:, profile: nil, deployment_pid: nil, exit_status: nil)
       @hostname = hostname
       @profile = profile
       @deployment_pid = deployment_pid
       @exit_status = exit_status
+      @deleted = false
     end
   end
 end
