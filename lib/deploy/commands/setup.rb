@@ -22,13 +22,22 @@ module Deploy
         ip_range = Config.ip_range
         raise "Deploy has not been configured yet" unless cluster_name && ip_range
 
+        hostnames = args[0].split(',')
+        existing = [].tap do |e|
+          hostnames.each do |name|
+            node = Node.find(name)
+            e << name if node && node.status != 'failed'
+          end
+        end
+        unless existing.empty?
+          raise "Aborting setup - the following nodes already have an applied profile: \n#{existing.join("\n")}"
+        end
+
         inventory = Inventory.load(cluster_name)
         inventory.groups[profile.group_name] ||= []
         inv_file = inventory.filepath
 
-        args[0].split(',').each do |hostname|
-          node = Node.find(hostname)
-          raise "Node already exists" if node && node.status != 'failed'
+        hostnames.each do |hostname|
 
           node = Node.new(
             hostname: hostname,
