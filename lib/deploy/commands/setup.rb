@@ -41,16 +41,23 @@ module Deploy
         profile = cluster_type.find_profile(args[1])
         raise "No profile exists with given name" if !profile
 
-        cluster_name = Config.config.cluster_name
-        ip_range = Config.config.ip_range
         cmd = profile.command
 
-        inventory = Inventory.load(cluster_name)
+        inventory = Inventory.load(Config.config.cluster_name || 'my-cluster')
+        # If profile doesn't exist in inventory, create it
         inventory.groups[profile.group_name] ||= []
         inv_file = inventory.filepath
 
-        hostnames.each do |hostname|
+        env = {
+          "ANSIBLE_HOST_KEY_CHECKING" => "false",
+          "INVFILE" => inv_file,
+        }.tap do |e|
+          Type.find(cluster_type).questions.each do |q|
+            e[q.env] = Config.fetch(q.id)
+          end
+        end
 
+        hostnames.each do |hostname|
           node = Node.new(
             hostname: hostname,
             profile: args[1],
@@ -62,13 +69,7 @@ module Deploy
           pid = Process.fork do
             log_name = "#{Config.log_dir}/#{node.hostname}-#{Time.now.to_i}.log"
             sub_pid = Process.spawn(
-              {
-                "ANSIBLE_HOST_KEY_CHECKING" => "false",
-                "INVFILE" => inv_file,
-                "CLUSTERNAME" => cluster_name,
-                "IPRANGE" => ip_range,
-                "NODE" => node.hostname
-              },
+              env.merge( {"NODE" => node.hostname} ),
               "echo #{cmd}; #{cmd}",
               [:out, :err] => log_name,
               )
