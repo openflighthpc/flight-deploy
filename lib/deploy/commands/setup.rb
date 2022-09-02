@@ -2,6 +2,7 @@ require_relative '../command'
 require_relative '../config'
 require_relative '../inventory'
 require_relative '../node'
+require_relative '../outputs'
 
 require 'logger'
 
@@ -10,6 +11,7 @@ require 'open3'
 module Deploy
   module Commands
     class Setup < Command
+      include Deploy::Outputs
       def run
         # ARGS:
         # [ hostname, profile ]
