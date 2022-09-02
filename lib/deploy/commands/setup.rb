@@ -13,6 +13,8 @@ module Deploy
       def run
         # ARGS:
         # [ hostname, profile ]
+        # OPTS:
+        # [ force ]
 
         profile = Profile.find(args[1])
         raise "No profile exists with given name" if !profile
@@ -29,8 +31,14 @@ module Deploy
             e << name if node && node.status != 'failed'
           end
         end
+
         unless existing.empty?
-          raise "Aborting setup - the following nodes already have an applied profile: \n#{existing.join("\n")}"
+          existing_string = "The following nodes already have an applied profile: \n#{existing.join("\n")}"
+          if @options.force
+            say_warning existing_string + "\nContinuing..."
+          else
+            raise existing_string
+          end
         end
 
         inventory = Inventory.load(cluster_name)

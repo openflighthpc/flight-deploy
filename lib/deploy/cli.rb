@@ -47,6 +47,7 @@ module Deploy
 Set up one or more nodes with a given profile. To set up multiple nodes,
 enter the nodes' hostnames separated by commas.
 EOF
+      c.slop.bool "--force", "Overwrite the profile for a node that has already been set up"
     end
 
     command :list do |c|
