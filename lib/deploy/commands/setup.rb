@@ -45,6 +45,7 @@ module Deploy
         prepare_cmd = File.join(Config.types_dir, cluster_type, 'prepare.sh')
         type_log_name = "#{Config.log_dir}/#{cluster_type}-#{Time.now.to_i}.log"
         sub_pid = Process.spawn(
+          { "DEPLOYDIR" => Config.root },
           prepare_cmd,
           [:out, :err] => type_log_name
         )
@@ -58,6 +59,7 @@ module Deploy
         env = {
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
           "INVFILE" => inv_file,
+          "DEPLOYDIR" => Config.root,
         }.tap do |e|
           Type.find(cluster_type).questions.each do |q|
             e[q.env] = Config.fetch(q.id)
