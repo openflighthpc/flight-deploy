@@ -25,7 +25,7 @@ module Deploy
       end
 
       def config_hash
-        @config_hash ||= YAML.load_file(config_path) || {}
+        @config_hash ||= File.exists?(config_path) ? (YAML.load_file(config_path) || {}) : {}
       end
 
       def append_to_config(details_to_append)
@@ -64,6 +64,10 @@ module Deploy
 
       def ansible_inv_dir
         File.join(root, "var", "ansible_invs")
+      end
+
+      def types_dir
+        File.expand_path('../flight-deploy-types', root)
       end
     end
   end
