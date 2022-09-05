@@ -40,8 +40,15 @@ module Deploy
 
         profile = cluster_type.find_profile(args[1])
         raise "No profile exists with given name" if !profile
-
         cmd = profile.command
+
+        prepare_cmd = File.join(Config.types_dir, cluster_type, 'prepare.sh')
+        type_log_name = "#{Config.log_dir}/#{cluster_type}-#{Time.now.to_i}.log"
+        sub_pid = Process.spawn(
+          prepare_cmd,
+          [:out, :err] => type_log_name
+        )
+        Process.wait(sub_pid)
 
         inventory = Inventory.load(Config.config.cluster_name || 'my-cluster')
         # If profile doesn't exist in inventory, create it
