@@ -54,7 +54,7 @@ These parameters must be set before you can run Flight Deploy.
 
 A brief usage guide is given here. See the `help` command for more in depth details and information specific to each command.
 
-Display the available cluster types with `avail`. You should have already picked a cluster type at the [Configuration](#configuration) stage.
+Display the available cluster types with `avail`. A brief description of the purpose of each type is given along with its name. 
 
 Display the available node profiles with `profiles`. These are what will be specified when setting up nodes. You can specify a type for which to list the profiles with `profiles TYPE`; if you don't specify, the type that was set in `configure` is used.
 
