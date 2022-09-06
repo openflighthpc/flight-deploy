@@ -35,10 +35,10 @@ module Deploy
           end
         end
 
-        cluster_type = Config.cluster_type
-        raise "A cluster type has not be chosen. Please run `deploy configure`" unless cluster_type
+        raise "A cluster type has not been chosen. Please run `deploy configure`" unless Config.cluster_type
+        cluster_type = Type.find(Config.cluster_type)
 
-        profile = Profile.find(args[1], cluster_type)
+        profile = cluster_type.find_profile(args[1])
         raise "No profile exists with given name" if !profile
 
         cluster_name = Config.cluster_name

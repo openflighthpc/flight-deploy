@@ -20,12 +20,16 @@ module Deploy
       end.sort_by { |n| n.name }
     end
 
-    def self.find(id=nil)
-      all.find { |type| type.id == id }
+    def self.find(name=nil)
+      all.find { |type| type.name == name || type.id == name }
     end
 
-    def self.find_by_name(name=nil)
-      all.find { |type| type.name == name }
+    def profiles
+      Profile.all(id)
+    end
+
+    def find_profile(name=nil)
+      profiles.find { |profile| profile.name == name }
     end
 
     def questions

@@ -20,10 +20,6 @@ module Deploy
       end.sort_by { |n| n.name }
     end
 
-    def self.find(name=nil, cluster_type=nil)
-      all(cluster_type).find { |profile| profile.name == name }
-    end
-
     attr_reader :name, :command, :description, :group_name
 
     def initialize(name:, command:, description:, group_name:)
