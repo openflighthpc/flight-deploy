@@ -53,7 +53,8 @@ module Deploy
       end
 
       def cluster_type
-        @type ||= prompt.select('Cluster type: ', Type.all.map { |t| t.name })
+        @type ||= Type.find_by_name( prompt.select('Cluster type: ', Type.all.map { |t| t.name }) )
+                      .id
       end
 
       def save_answers

@@ -2,10 +2,9 @@ module Deploy
   class Profile
     def self.all(cluster_type=nil)
       raise "No cluster type given" unless cluster_type
-      cluster_type = Type.find(cluster_type)
-      raise "Invalid cluster type" unless cluster_type
+      raise "Invalid cluster type" unless Type.find(cluster_type)
       @all_profiles ||= [].tap do |a|
-        Dir["#{Config.types_dir}/#{cluster_type.id}/profiles/*.yaml"].each do |file|
+        Dir["#{Config.types_dir}/#{cluster_type}/profiles/*.yaml"].each do |file|
           begin
             profile = YAML.load_file(file)
             a << new(

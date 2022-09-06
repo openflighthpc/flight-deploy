@@ -9,7 +9,7 @@ module Deploy
           cluster_type = args[0]
         elsif Config.cluster_type
           cluster_type = Config.cluster_type
-          puts "Displaying profiles for cluster type: #{cluster_type}"
+          puts "Displaying profiles for cluster type: #{Type.find(cluster_type).name}"
         else
           raise "Cluster type has not been defined. Pass desired type as an argument or run `configure`."
         end
