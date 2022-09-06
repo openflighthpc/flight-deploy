@@ -37,13 +37,16 @@ module Deploy
 
         raise "A cluster type has not been chosen. Please run `deploy configure`" unless Config.cluster_type
         cluster_type = Type.find(Config.cluster_type)
+        raise "Invalid cluster type. Please rerun `deploy configure`" unless cluster_type
+        cluster_type.questions.each do |q|
+          raise "The #{q.text.delete(':').downcase} has not been defined. Please run `deploy configure`" unless Config.fetch(q.id)
+        end
 
-        profile = cluster_type.find_profile(args[1])
         raise "No profile exists with given name" if !profile
         cmd = profile.command
 
-        prepare_cmd = File.join(Config.types_dir, cluster_type, 'prepare.sh')
-        type_log_name = "#{Config.log_dir}/#{cluster_type}-#{Time.now.to_i}.log"
+        prepare_cmd = File.join(Config.types_dir, cluster_type.id, 'prepare.sh')
+        type_log_name = "#{Config.log_dir}/#{cluster_type.id}-#{Time.now.to_i}.log"
         sub_pid = Process.spawn(
           { "DEPLOYDIR" => Config.root },
           prepare_cmd,
@@ -61,7 +64,7 @@ module Deploy
           "INVFILE" => inv_file,
           "DEPLOYDIR" => Config.root,
         }.tap do |e|
-          Type.find(cluster_type).questions.each do |q|
+          cluster_type.questions.each do |q|
             e[q.env] = Config.fetch(q.id)
           end
         end
