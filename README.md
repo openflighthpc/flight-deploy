@@ -1,22 +1,58 @@
 # Flight Deploy
 
-%SUMMARY%
+Manage node provisioning.
 
 ## Overview
 
-What is it?
+Flight Deploy is an interactive node provisioning tool, providing an abstracted, command-line based system for the setup of nodes via Ansible or similar provisioning tools.
 
 ## Installation
 
-How is it installed?
+### Manual installation
+
+#### Prerequisites
+Flight Deploy is developed and tested with Ruby version 2.7.1 and bundler 2.1.4. Other versions may work but currently are not officially supported.
+
+#### Steps
+
+The following will install from source using Git. The master branch is the current development version and may not be appropriate for a production installation. Instead a tagged version should be checked out.
+
+```bash
+git clone https://github.com/openflighthpc/flight-deploy.git
+cd flight-deploy
+git checkout <tag>
+bundle install --path=vendor
+```
+
+Flight Deploy requires the presence of an adjacent `flight-deploy-types` directory. The following will install that repository using Git.
+```bash
+cd /path/to/flight-deploy/../
+git clone https://github.com/openflighthpc/flight-deploy-types.git
+cd flight-deploy-types
+git checkout <tag>
+```
+
+This repository contains the cluster types that are used by Flight Deploy.
 
 ## Configuration
 
-Any required or optional configuration?
+To begin, run `bin/deploy configure`. Here, you will set the cluster type to be used (present in `flight-deploy-types`), as well as any required parameters specified in the metadata for that type.
+
+These parameters must be set before you can run Flight Deploy.
 
 ## Operation
 
-How do you use it?
+A brief usage guide is given here. See the `help` command for more in depth details and information specific to each command.
+
+Display the available cluster types with `avail`. A brief description of the purpose of each type is given along with its name. 
+
+Display the available node profiles with `profiles`. These are what will be specified when setting up nodes. You can specify a type for which to list the profiles with `profiles TYPE`; if you don't specify, the type that was set in `configure` is used.
+
+Set up one or more nodes with `setup HOSTNAME,HOSTNAME... PROFILE`. Hostnames should be submitted as a comma separated list of valid and accessible hostnames on the network. The profile should be a profile that exists when running `profiles` for the currently configured type.
+
+List brief information for each node that has been set up with `list`.
+
+View the deployment status for a single node with `view HOSTNAME`. A truncated/stylised version of the Ansible output will be displayed, as well as the long-form command used to deploy it. See the raw log output by including the `--raw` option.
 
 # Contributing
 
@@ -44,3 +80,4 @@ EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR
 CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR
 A PARTICULAR PURPOSE. See the [Eclipse Public License 2.0](https://opensource.org/licenses/EPL-2.0) for more
 details.
+
