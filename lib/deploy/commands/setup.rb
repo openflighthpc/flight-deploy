@@ -36,7 +36,7 @@ module Deploy
         end
 
         cluster_type = Config.cluster_type
-        raise "Deploy has not been configured yet" unless cluster_type
+        raise "A cluster type has not be chosen. Please run `deploy configure`" unless cluster_type
 
         profile = Profile.find(args[1], cluster_type)
         raise "No profile exists with given name" if !profile
