@@ -3,6 +3,7 @@ require_relative 'commands/profiles'
 require_relative 'commands/setup'
 require_relative 'commands/configure'
 require_relative 'commands/view'
+require_relative 'commands/avail'
 
 module Deploy
   module Commands

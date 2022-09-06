@@ -32,6 +32,13 @@ module Deploy
       end
     end
 
+    command :avail do |c|
+      cli_syntax(c)
+      c.summary = "List available cluster types"
+      c.action Commands, :avail
+      c.description = "Show list of available cluster types"
+    end
+
     command :profiles do |c|
       cli_syntax(c)
       c.summary = "List profiles"

@@ -8,6 +8,7 @@ module Deploy
           begin
             type = YAML.load_file(file)
             a << new(
+              id: type['id'],
               name: type['name'],
               description: type['description'],
               questions: type['questions'],
@@ -20,16 +21,17 @@ module Deploy
     end
 
     def self.find(name=nil)
-      all.find { |type| type.name == name }
+      all.find { |type| type.name == name || type.id == name }
     end
 
     def questions
       @questions.map { |q| q.to_shash }
     end
 
-    attr_reader :name, :description
+    attr_reader :id, :name, :description
 
-    def initialize(name:, description:, questions:)
+    def initialize(id:, name:, description:, questions:)
+      @id = id
       @name = name
       @description = description
       @questions = questions
