@@ -46,11 +46,9 @@ This repository contains the playbooks used by the Ansible-based types in `fligh
 
 ## Configuration
 
-To begin, run `bin/deploy configure`. Here, you will set:
-- Cluster type: which of the types under `flight-deploy-types` to use for this cluster
-- Cluster name, IP range: used by internal tools defined in the cluster type
+To begin, run `bin/deploy configure`. Here, you will set the cluster type to be used (present in `flight-deploy-types`), as well as any required parameters specified in the metadata for that type.
 
-These must be set before you can run Flight Deploy.
+These parameters must be set before you can run Flight Deploy.
 
 ## Operation
 
