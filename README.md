@@ -34,16 +34,6 @@ git checkout <tag>
 
 This repository contains the cluster types that are used by Flight Deploy.
 
-Currently, Flight Deploy also requires the presence of an adjacent `openflight-ansible-playbook` directory. The following will install that repository using Git.
-```bash
-cd /path/to/flight-deploy/../
-git clone https://github.com/openflighthpc/openflight-ansible-playbook.git
-cd openflight-ansible-playbook
-git checkout <tag>
-```
-
-This repository contains the playbooks used by the Ansible-based types in `flight-deploy-types`.
-
 ## Configuration
 
 To begin, run `bin/deploy configure`. Here, you will set the cluster type to be used (present in `flight-deploy-types`), as well as any required parameters specified in the metadata for that type.
