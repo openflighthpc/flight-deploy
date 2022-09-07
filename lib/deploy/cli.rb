@@ -40,10 +40,15 @@ module Deploy
     end
 
     command :profiles do |c|
-      cli_syntax(c)
-      c.summary = "List profiles"
+      cli_syntax(c, '[TYPE]')
+      c.summary = "List profiles for a given cluster type"
       c.action Commands, :profiles
-      c.description = "Show list of profiles by name and command"
+      c.description = <<EOF
+Show list of profiles by name and description for a given cluster type.
+
+If no cluster type is given, profiles will be shown for the type chosen 
+during configuration.
+EOF
     end
 
     command :setup do |c|
@@ -59,7 +64,7 @@ EOF
 
     command :list do |c|
       cli_syntax(c)
-      c.summary = "Display all node information."
+      c.summary = "Display all node information"
       c.action Commands, :list
       c.description = "Display the configuration profile and status of each node."
     end
@@ -67,7 +72,7 @@ EOF
 
     command :configure do |c|
       cli_syntax(c)
-      c.summary = "Set the name and IP range of the cluster."
+      c.summary = "Set the name and IP range of the cluster"
       c.action Commands, :configure
       c.description = "Set the cluster name and the IP range of your cluster nodes as an IPv4 CIDR block."
       c.slop.bool "--show", "Show the current configuration details."
@@ -75,7 +80,7 @@ EOF
 
     command :view do |c|
       cli_syntax(c, 'NODE')
-      c.summary = "View the setup status of a node."
+      c.summary = "View the setup status of a node"
       c.action Commands, :view
       c.description = "View the setup progress and status of a given node."
       c.slop.bool "--raw", "Show the entire ansible log output."

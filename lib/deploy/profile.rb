@@ -1,8 +1,10 @@
 module Deploy
   class Profile
-    def self.all
+    def self.all(cluster_type=nil)
+      raise "No cluster type given" unless cluster_type
+      raise "Invalid cluster type" unless Type.find(cluster_type)
       @all_profiles ||= [].tap do |a|
-        Dir["#{Config.profiles_dir}/*.yaml"].each do |file|
+        Dir["#{Config.types_dir}/#{cluster_type}/profiles/*.yaml"].each do |file|
           begin
             profile = YAML.load_file(file)
             a << new(
@@ -16,14 +18,6 @@ module Deploy
           end
         end
       end.sort_by { |n| n.name }
-    end
-
-    def self.find(name=nil)
-      all.find { |profile| profile.name == name }
-    end
-
-    def filepath
-      File.join(Config.profile_dir, "#{name}.yaml")
     end
 
     attr_reader :name, :command, :description, :group_name

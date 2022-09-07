@@ -18,12 +18,12 @@ module Deploy
       private
 
       def display_details
-        type = Config.fetch('cluster_type')
-        raise "Cluster has not yet been configured" unless type
-        raise "Invalid cluster type has been saved - please rerun configure" unless Type.find(type)
+        raise "Cluster has not yet been configured - please run `configure`" unless Config.cluster_type
+        type = Type.find(Config.cluster_type)
+        raise "Invalid cluster type has been saved - please rerun `configure`" unless type
 
-        puts "Cluster type: #{type}"
-        Type.find(type).questions.each do |question|
+        puts "Cluster type: #{type.name}"
+        type.questions.each do |question|
           puts "#{question.text} #{ Config.fetch(question.id) || 'none' }"
         end
       end
@@ -53,7 +53,8 @@ module Deploy
       end
 
       def cluster_type
-        @type ||= prompt.select('Cluster type: ', Type.all.map { |t| t.name })
+        @type ||= Type.find( prompt.select('Cluster type: ', Type.all.map { |t| t.name }) )
+                      .id
       end
 
       def save_answers

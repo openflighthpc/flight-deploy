@@ -16,6 +16,10 @@ module Deploy
         raise "Config file has missing values"
       end
 
+      def cluster_type
+        config.cluster_type
+      end
+
       def cluster_name
         config.cluster_name
       end
@@ -56,10 +60,6 @@ module Deploy
 
       def log_dir
         File.join(root, "log/")
-      end
-
-      def profiles_dir
-        File.join(root, "etc", "profiles")
       end
 
       def ansible_inv_dir

@@ -18,14 +18,6 @@ module Deploy
         # OPTS:
         # [ force ]
 
-        profile = Profile.find(args[1])
-        raise "No profile exists with given name" if !profile
-
-        cmd = profile.command
-        cluster_name = Config.cluster_name
-        ip_range = Config.ip_range
-        raise "Deploy has not been configured yet" unless cluster_name && ip_range
-
         hostnames = args[0].split(',')
         existing = [].tap do |e|
           hostnames.each do |name|
@@ -42,6 +34,16 @@ module Deploy
             raise existing_string
           end
         end
+
+        raise "A cluster type has not been chosen. Please run `deploy configure`" unless Config.cluster_type
+        cluster_type = Type.find(Config.cluster_type)
+
+        profile = cluster_type.find_profile(args[1])
+        raise "No profile exists with given name" if !profile
+
+        cluster_name = Config.cluster_name
+        ip_range = Config.ip_range
+        cmd = profile.command
 
         inventory = Inventory.load(cluster_name)
         inventory.groups[profile.group_name] ||= []
