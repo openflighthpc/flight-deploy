@@ -42,6 +42,7 @@ module Deploy
           raise "The #{q.text.delete(':').downcase} has not been defined. Please run `deploy configure`" unless Config.fetch(q.id)
         end
 
+        profile = cluster_type.find_profile(args[1])
         raise "No profile exists with given name" if !profile
         cmd = profile.command
 
@@ -55,7 +56,6 @@ module Deploy
         Process.wait(sub_pid)
 
         inventory = Inventory.load(Config.config.cluster_name || 'my-cluster')
-        # If profile doesn't exist in inventory, create it
         inventory.groups[profile.group_name] ||= []
         inv_file = inventory.filepath
 
@@ -86,9 +86,6 @@ module Deploy
               [:out, :err] => log_name,
               )
             Process.wait(sub_pid)
-            # Storing the exit status of the sub-fork created by `Process.spawn`
-            # so that we can judge if it passed or failed without having to
-            # parse the Ansible logs
             node.update(deployment_pid: nil, exit_status: $?.exitstatus)
 
             if node.status == 'failed'
