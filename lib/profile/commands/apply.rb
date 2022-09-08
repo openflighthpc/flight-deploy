@@ -90,7 +90,7 @@ module Profile
               node.delete if failure.nil? || failure.include?('Waiting for nodes to be reachable')
             end
           end
-          node.update(deployment_pid: pid) unless node.deleted
+          node.update(deployment_pid: pid)
           Process.detach(pid)
         end
       end
