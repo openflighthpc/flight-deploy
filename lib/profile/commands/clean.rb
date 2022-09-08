@@ -4,7 +4,9 @@ module Profile
   module Commands
     class Clean < Command
       def run
-        puts "Hey"
+        Node.all.each do |node|
+          node.delete if node.status == 'failed'
+        end
       end
     end
   end
