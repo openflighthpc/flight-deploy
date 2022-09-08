@@ -39,7 +39,7 @@ module Deploy
         cluster_type = Type.find(Config.cluster_type)
         raise "Invalid cluster type. Please rerun `deploy configure`" unless cluster_type
         cluster_type.questions.each do |q|
-          raise "The #{q.text.delete(':').downcase} has not been defined. Please run `deploy configure`" unless Config.fetch(q.id)
+          raise "The #{smart_downcase(q.text.delete(':'))} has not been defined. Please run `deploy configure`" unless Config.fetch(q.id)
         end
 
         profile = cluster_type.find_profile(args[1])
@@ -100,6 +100,12 @@ module Deploy
           node.update(deployment_pid: pid) unless node.deleted
           Process.detach(pid)
         end
+      end
+
+      def smart_downcase(str)
+        str.split.map do |word|
+          /[A-Z]{2,}/.match(word) ? word : word.downcase
+        end.join(' ')
       end
     end
   end
