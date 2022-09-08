@@ -4,6 +4,7 @@ require_relative 'commands/apply'
 require_relative 'commands/configure'
 require_relative 'commands/view'
 require_relative 'commands/avail'
+require_relative 'commands/clean'
 
 module Profile
   module Commands

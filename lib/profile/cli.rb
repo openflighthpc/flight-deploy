@@ -70,6 +70,13 @@ EOF
     end
     alias_command :ls, :list
 
+    command :clean do |c|
+      cli_syntax(c)
+      c.summary = "Remove failed nodes from list output"
+      c.action Commands, :clean
+      c.description = "Remove nodes that did not successfully deploy from the output of the list command."
+    end
+
     command :configure do |c|
       cli_syntax(c)
       c.summary = "Set the name and IP range of the cluster"
