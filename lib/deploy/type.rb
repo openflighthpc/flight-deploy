@@ -36,6 +36,21 @@ module Deploy
       @questions.map { |q| q.to_shash }
     end
 
+    def prepare
+      raise "No script found for preparing the #{name} cluster type" unless File.exists?(prepare_command)
+      log_name = "#{Config.log_dir}/#{id}-#{Time.now.to_i}.log"
+      pid = Process.spawn(
+        { "DEPLOYDIR" => Config.root },
+        prepare_command,
+        [:out, :err] => log_name
+      )
+      Process.wait(pid)
+    end
+
+    def prepare_command
+      File.join(Config.types_dir, id, 'prepare.sh')
+    end
+
     attr_reader :id, :name, :description
 
     def initialize(id:, name:, description:, questions:)

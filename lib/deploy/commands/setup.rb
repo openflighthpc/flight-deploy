@@ -46,14 +46,7 @@ module Deploy
         raise "No profile exists with given name" if !profile
         cmd = profile.command
 
-        prepare_cmd = File.join(Config.types_dir, cluster_type.id, 'prepare.sh')
-        type_log_name = "#{Config.log_dir}/#{cluster_type.id}-#{Time.now.to_i}.log"
-        sub_pid = Process.spawn(
-          { "DEPLOYDIR" => Config.root },
-          prepare_cmd,
-          [:out, :err] => type_log_name
-        )
-        Process.wait(sub_pid)
+        cluster_type.prepare
 
         inventory = Inventory.load(Config.config.cluster_name || 'my-cluster')
         inventory.groups[profile.group_name] ||= []
