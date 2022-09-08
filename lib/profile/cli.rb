@@ -52,7 +52,7 @@ EOF
     end
 
     command :apply do |c|
-      cli_syntax(c, ['HOSTNAME[,HOSTNAME...]', 'IDENTITY'])
+      cli_syntax(c, ['NODE[,NODE...]', 'IDENTITY'])
       c.summary = "Apply an identity to one or more nodes"
       c.action Commands, :apply
       c.description = <<EOF
@@ -71,10 +71,20 @@ EOF
     alias_command :ls, :list
 
     command :clean do |c|
-      cli_syntax(c)
-      c.summary = "Remove failed nodes from list output"
+      cli_syntax(c, '[NODE,NODE,...]')
+      c.summary = "Remove data for nodes that failed setup"
       c.action Commands, :clean
-      c.description = "Remove nodes that did not successfully deploy from the output of the list command."
+      c.description = <<EOF
+Remove one or more nodes that failed setup to prevent them from appearing 
+in the output of `profile list`.
+
+Specify a node to remove by passing the node's hostname as an optional 
+parameter. To remove multiple nodes, enter the nodes' hostnames separated 
+by commas. 
+
+If no nodes are specified, data for all nodes that are marked as 'FAILED' 
+will be removed.
+EOF
     end
 
     command :configure do |c|
