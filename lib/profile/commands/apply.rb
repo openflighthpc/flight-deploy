@@ -80,15 +80,7 @@ module Profile
               )
             Process.wait(sub_pid)
             node.update(deployment_pid: nil, exit_status: $?.exitstatus)
-
-            if node.status == 'failed'
-              inventory.remove_node(node, identity.group_name)
-              failure = node.log_file
-                            .readlines
-                            .select { |line| line.start_with?('TASK') }
-                            .last
-              node.delete if failure.nil? || failure.include?('Waiting for nodes to be reachable')
-            end
+            inventory.remove_node(node, profile.group_name) if node.status == 'failed'
           end
           node.update(deployment_pid: pid)
           Process.detach(pid)
