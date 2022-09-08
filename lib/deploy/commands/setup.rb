@@ -37,20 +37,32 @@ module Deploy
 
         raise "A cluster type has not been chosen. Please run `deploy configure`" unless Config.cluster_type
         cluster_type = Type.find(Config.cluster_type)
+        raise "Invalid cluster type. Please rerun `deploy configure`" unless cluster_type
+        cluster_type.questions.each do |q|
+          raise "The #{smart_downcase(q.text.delete(':'))} has not been defined. Please run `deploy configure`" unless Config.fetch(q.id)
+        end
 
         profile = cluster_type.find_profile(args[1])
         raise "No profile exists with given name" if !profile
-
-        cluster_name = Config.cluster_name
-        ip_range = Config.ip_range
         cmd = profile.command
 
-        inventory = Inventory.load(cluster_name)
+        cluster_type.prepare
+
+        inventory = Inventory.load(Config.config.cluster_name || 'my-cluster')
         inventory.groups[profile.group_name] ||= []
         inv_file = inventory.filepath
 
-        hostnames.each do |hostname|
+        env = {
+          "ANSIBLE_HOST_KEY_CHECKING" => "false",
+          "INVFILE" => inv_file,
+          "DEPLOYDIR" => Config.root,
+        }.tap do |e|
+          cluster_type.questions.each do |q|
+            e[q.env] = Config.fetch(q.id)
+          end
+        end
 
+        hostnames.each do |hostname|
           node = Node.new(
             hostname: hostname,
             profile: args[1],
@@ -62,20 +74,11 @@ module Deploy
           pid = Process.fork do
             log_name = "#{Config.log_dir}/#{node.hostname}-#{Time.now.to_i}.log"
             sub_pid = Process.spawn(
-              {
-                "ANSIBLE_HOST_KEY_CHECKING" => "false",
-                "INVFILE" => inv_file,
-                "CLUSTERNAME" => cluster_name,
-                "IPRANGE" => ip_range,
-                "NODE" => node.hostname
-              },
+              env.merge( {"NODE" => node.hostname} ),
               "echo #{cmd}; #{cmd}",
               [:out, :err] => log_name,
               )
             Process.wait(sub_pid)
-            # Storing the exit status of the sub-fork created by `Process.spawn`
-            # so that we can judge if it passed or failed without having to
-            # parse the Ansible logs
             node.update(deployment_pid: nil, exit_status: $?.exitstatus)
 
             if node.status == 'failed'
@@ -90,6 +93,12 @@ module Deploy
           node.update(deployment_pid: pid) unless node.deleted
           Process.detach(pid)
         end
+      end
+
+      def smart_downcase(str)
+        str.split.map do |word|
+          /[A-Z]{2,}/.match(word) ? word : word.downcase
+        end.join(' ')
       end
     end
   end

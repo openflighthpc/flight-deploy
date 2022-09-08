@@ -20,14 +20,6 @@ module Deploy
         config.cluster_type
       end
 
-      def cluster_name
-        config.cluster_name
-      end
-
-      def ip_range
-        config.ip_range
-      end
-
       def config_hash
         @config_hash ||= File.exists?(config_path) ? (YAML.load_file(config_path) || {}) : {}
       end
