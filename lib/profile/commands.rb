@@ -1,6 +1,6 @@
 require_relative 'commands/list'
 require_relative 'commands/identities'
-require_relative 'commands/setup'
+require_relative 'commands/apply'
 require_relative 'commands/configure'
 require_relative 'commands/view'
 require_relative 'commands/avail'

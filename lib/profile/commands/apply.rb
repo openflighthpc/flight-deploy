@@ -10,7 +10,7 @@ require 'open3'
 
 module Profile
   module Commands
-    class Setup < Command
+    class Apply < Command
       include Profile::Outputs
       def run
         # ARGS:

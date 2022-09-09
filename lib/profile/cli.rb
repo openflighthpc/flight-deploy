@@ -51,12 +51,12 @@ during configuration.
 EOF
     end
 
-    command :setup do |c|
+    command :apply do |c|
       cli_syntax(c, ['HOSTNAME[,HOSTNAME...]', 'PROFILE'])
-      c.summary = "Set up one or more nodes with a given identity."
-      c.action Commands, :setup
+      c.summary = "Apply an identity to one or more nodes"
+      c.action Commands, :apply
       c.description = <<EOF
-Set up one or more nodes with a given identity. To set up multiple nodes,
+Apply an identity to one or more nodes. To set up multiple nodes,
 enter the nodes' hostnames separated by commas.
 EOF
       c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"

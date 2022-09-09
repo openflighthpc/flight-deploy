@@ -48,7 +48,7 @@ Display the available cluster types with `avail`. A brief description of the pur
 
 Display the available node profiles with `profiles`. These are what will be specified when setting up nodes. You can specify a type for which to list the profiles with `profiles TYPE`; if you don't specify, the type that was set in `configure` is used.
 
-Set up one or more nodes with `setup HOSTNAME,HOSTNAME... PROFILE`. Hostnames should be submitted as a comma separated list of valid and accessible hostnames on the network. The profile should be a profile that exists when running `profiles` for the currently configured type.
+Set up one or more nodes with `apply HOSTNAME,HOSTNAME... PROFILE`. Hostnames should be submitted as a comma separated list of valid and accessible hostnames on the network. The profile should be a profile that exists when running `profiles` for the currently configured type.
 
 List brief information for each node that has been set up with `list`.
 
