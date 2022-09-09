@@ -1,6 +1,6 @@
 require 'highline'
 
-module Deploy
+module Profile
   module Outputs
     # A lot of this is copied from the `commander-rb/commander` upstream,
     # since `commander-openflighthpc was originally forked from an upstream

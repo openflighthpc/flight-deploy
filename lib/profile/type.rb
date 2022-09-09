@@ -1,6 +1,6 @@
 require 'shash'
 
-module Deploy
+module Profile
   class Type
     def self.all
       @all_types ||= [].tap do |a|
@@ -24,12 +24,12 @@ module Deploy
       all.find { |type| type.name == name || type.id == name }
     end
 
-    def profiles
-      Profile.all(id)
+    def identities
+      Identity.all(id)
     end
 
-    def find_profile(name)
-      profiles.find { |profile| profile.name == name }
+    def find_identity(name)
+      identities.find { |identity| identity.name == name }
     end
 
     def questions

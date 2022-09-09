@@ -3,7 +3,7 @@ require 'pathname'
 require 'yaml'
 require 'shash'
 
-module Deploy
+module Profile
   class Config
     class << self
 
@@ -59,7 +59,7 @@ module Deploy
       end
 
       def types_dir
-        File.expand_path('../flight-deploy-types', root)
+        File.expand_path('../flight-profile-types', root)
       end
     end
   end

@@ -1,17 +1,17 @@
-module Deploy
-  class Profile
+module Profile
+  class Identity
     def self.all(cluster_type=nil)
       raise "No cluster type given" unless cluster_type
       raise "Invalid cluster type" unless Type.find(cluster_type)
-      @all_profiles ||= [].tap do |a|
-        Dir["#{Config.types_dir}/#{cluster_type}/profiles/*.yaml"].each do |file|
+      @all_identities ||= [].tap do |a|
+        Dir["#{Config.types_dir}/#{cluster_type}/identities/*.yaml"].each do |file|
           begin
-            profile = YAML.load_file(file)
+            identity = YAML.load_file(file)
             a << new(
-              name: profile['name'],
-              description: profile['description'],
-              group_name: profile['group_name'],
-              command: profile['command']
+              name: identity['name'],
+              description: identity['description'],
+              group_name: identity['group_name'],
+              command: identity['command']
             )
           rescue NoMethodError
             puts "Error loading #{file}"

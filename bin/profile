@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+
+begin
+  # Fetch/expand the absolute path of the `lib/` directory.
+  lib_dir = File.expand_path(File.join(__FILE__, '../../lib'))
+  # Add `lib_dir` to the $LOAD_PATH global variable.
+  $LOAD_PATH.unshift(lib_dir)
+
+  # Load gems from the project directory instead of the user's
+  # global system gem directory.
+  ENV['BUNDLE_GEMFILE'] ||= File.join(__FILE__, '../../Gemfile')
+  require 'rubygems'
+  gem 'bundler', '2.1.4'
+  require 'bundler'
+  Bundler.setup(:default)
+
+  # Hand over to CLI class
+  require "profile/cli"
+  Profile::CLI.run!(*ARGV)
+
+rescue Interrupt
+  # If the user interrupts the process in the split second
+  # that the initial setup is going on, give them a clean
+  # warning.
+  $stderr.print "\nWARNING: Cancelled by user"
+
+  raise SignalException.new(2)
+end
