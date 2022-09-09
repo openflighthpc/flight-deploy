@@ -1,6 +1,6 @@
 require_relative '../command'
 
-module Deploy
+module Profile
   module Commands
     class View < Command
       SUCCESS_STATUSES = %w[ok changed rescued]

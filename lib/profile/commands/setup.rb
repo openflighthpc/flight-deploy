@@ -8,13 +8,13 @@ require 'logger'
 
 require 'open3'
 
-module Deploy
+module Profile
   module Commands
     class Setup < Command
-      include Deploy::Outputs
+      include Profile::Outputs
       def run
         # ARGS:
-        # [ hostname, profile ]
+        # [ hostname, identity ]
         # OPTS:
         # [ force ]
 
@@ -27,7 +27,7 @@ module Deploy
         end
 
         unless existing.empty?
-          existing_string = "The following nodes already have an applied profile: \n#{existing.join("\n")}"
+          existing_string = "The following nodes already have an applied identity: \n#{existing.join("\n")}"
           if @options.force
             say_warning existing_string + "\nContinuing..."
           else
@@ -35,21 +35,21 @@ module Deploy
           end
         end
 
-        raise "A cluster type has not been chosen. Please run `deploy configure`" unless Config.cluster_type
+        raise "A cluster type has not been chosen. Please run `profile configure`" unless Config.cluster_type
         cluster_type = Type.find(Config.cluster_type)
-        raise "Invalid cluster type. Please rerun `deploy configure`" unless cluster_type
+        raise "Invalid cluster type. Please rerun `profile configure`" unless cluster_type
         cluster_type.questions.each do |q|
-          raise "The #{smart_downcase(q.text.delete(':'))} has not been defined. Please run `deploy configure`" unless Config.fetch(q.id)
+          raise "The #{smart_downcase(q.text.delete(':'))} has not been defined. Please run `profile configure`" unless Config.fetch(q.id)
         end
 
-        profile = cluster_type.find_profile(args[1])
-        raise "No profile exists with given name" if !profile
-        cmd = profile.command
+        identity = cluster_type.find_identity(args[1])
+        raise "No identity exists with given name" if !identity
+        cmd = identity.command
 
         cluster_type.prepare
 
         inventory = Inventory.load(Config.config.cluster_name || 'my-cluster')
-        inventory.groups[profile.group_name] ||= []
+        inventory.groups[identity.group_name] ||= []
         inv_file = inventory.filepath
 
         env = {
@@ -65,10 +65,10 @@ module Deploy
         hostnames.each do |hostname|
           node = Node.new(
             hostname: hostname,
-            profile: args[1],
+            identity: args[1],
             )
 
-          inventory.groups[profile.group_name] |= [node.hostname]
+          inventory.groups[identity.group_name] |= [node.hostname]
           inventory.dump
 
           pid = Process.fork do
@@ -82,7 +82,7 @@ module Deploy
             node.update(deployment_pid: nil, exit_status: $?.exitstatus)
 
             if node.status == 'failed'
-              inventory.remove_node(node, profile.group_name)
+              inventory.remove_node(node, identity.group_name)
               failure = node.log_file
                             .readlines
                             .select { |line| line.start_with?('TASK') }

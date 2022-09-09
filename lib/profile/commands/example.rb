@@ -4,7 +4,7 @@ require_relative '../command'
 # `require_relative` imports a file specifically at the
 # given file path, rather than `require` using the $LOAD_PATH
 
-module Deploy
+module Profile
   module Commands
     class Example < Command
       def run
