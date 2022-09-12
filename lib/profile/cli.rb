@@ -52,7 +52,7 @@ EOF
     end
 
     command :apply do |c|
-      cli_syntax(c, ['HOSTNAME[,HOSTNAME...]', 'PROFILE'])
+      cli_syntax(c, ['HOSTNAME[,HOSTNAME...]', 'IDENTITY'])
       c.summary = "Apply an identity to one or more nodes"
       c.action Commands, :apply
       c.description = <<EOF

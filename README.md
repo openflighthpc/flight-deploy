@@ -46,13 +46,13 @@ A brief usage guide is given here. See the `help` command for more in depth deta
 
 Display the available cluster types with `avail`. A brief description of the purpose of each type is given along with its name. 
 
-Display the available node profiles with `profiles`. These are what will be specified when setting up nodes. You can specify a type for which to list the profiles with `profiles TYPE`; if you don't specify, the type that was set in `configure` is used.
+Display the available node identities with `identities`. These are what will be specified when setting up nodes. You can specify a type for which to list the identities with `identities TYPE`; if you don't specify, the type that was set in `configure` is used.
 
-Set up one or more nodes with `apply HOSTNAME,HOSTNAME... PROFILE`. Hostnames should be submitted as a comma separated list of valid and accessible hostnames on the network. The profile should be a profile that exists when running `profiles` for the currently configured type.
+Set up one or more nodes with `apply HOSTNAME,HOSTNAME... IDENTITY`. Hostnames should be submitted as a comma separated list of valid and accessible hostnames on the network. The identity should be one that exists when running `identities` for the currently configured type.
 
 List brief information for each node that has been set up with `list`.
 
-View the setup status for a single node with `view HOSTNAME`. A truncated/stylised version of the Ansible output will be displayed, as well as the long-form command used to profile it. See the raw log output by including the `--raw` option.
+View the setup status for a single node with `view HOSTNAME`. A truncated/stylised version of the Ansible output will be displayed, as well as the long-form command used to run it. See the raw log output by including the `--raw` option.
 
 # Contributing
 

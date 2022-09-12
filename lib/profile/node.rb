@@ -81,7 +81,7 @@ module Profile
       processes = stdout_str.split("\n").map! { |p| p.split(" ") }
       running = processes.any? { |p| p[0].to_i == deployment_pid }
       if running
-        'deploying'
+        'applying'
       elsif !exit_status || exit_status > 0
         'failed'
       else
