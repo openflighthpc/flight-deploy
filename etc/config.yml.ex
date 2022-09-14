@@ -1,3 +1,3 @@
 ---
-# inventory_dir:
-# ansible_dir: 
+# Directories containing cluster type definitions
+#type_paths:

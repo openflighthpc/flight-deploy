@@ -58,8 +58,8 @@ module Profile
         File.join(root, "var", "ansible_invs")
       end
 
-      def types_dir
-        File.expand_path('../flight-profile-types', root)
+      def type_paths
+        (config.type_paths || [File.join(root, "etc/types")])
       end
     end
   end

@@ -4,19 +4,29 @@ module Profile
   class Type
     def self.all
       @all_types ||= [].tap do |a|
-        Dir["#{Config.types_dir}/*/metadata.yaml"].each do |file|
-          begin
-            type = YAML.load_file(file)
-            a << new(
-              id: type['id'],
-              name: type['name'],
-              description: type['description'],
-              questions: type['questions'],
-            )
-          rescue NoMethodError
-            puts "Error loading #{file}"
+        Config.type_paths.each do |p|
+          Dir["#{p}/*/metadata.yaml"].each do |file|
+            begin
+              type = YAML.load_file(file)
+
+              a << new(
+                id: type['id'],
+                name: type['name'],
+                description: type['description'],
+                questions: type['questions'],
+              )
+            rescue NoMethodError
+              puts "Error loading #{file}"
+            end
           end
         end
+
+        a.each do |t|
+          if (a - [t]).any? { |u| u.id == t.id }
+            raise "Duplicate types exist across type paths; please remove all duplicate instances of: #{t.id}"
+          end
+        end
+
       end.sort_by { |n| n.name }
     end
 
