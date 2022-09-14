@@ -1,6 +1,6 @@
 require_relative './config'
 
-module Deploy
+module Profile
   class Inventory
     def self.load(name=nil)
       begin

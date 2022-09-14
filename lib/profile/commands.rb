@@ -1,22 +1,18 @@
 require_relative 'commands/list'
-require_relative 'commands/profiles'
-require_relative 'commands/setup'
+require_relative 'commands/identities'
+require_relative 'commands/apply'
 require_relative 'commands/configure'
 require_relative 'commands/view'
 require_relative 'commands/avail'
 
-module Deploy
+module Profile
   module Commands
     class << self
       def method_missing(s, *a, &b)
-        # This overwrites the default Ruby behaviour for when a method is
-        # called that is missing. If a command that the user called is "missing",
-        # do some checks before throwing it away.
+        # If a method is "missing",  do some checks before throwing it away.
         if clazz = to_class(s)
-          # This block is reached if a command is called with something other
-          # than a class. You will notice that the command definitions in
-          # Deploy::CLI are using symbols.
-          # See if the argument used can be converted to a class,
+          # If a command is called with something other than a class,
+          # see if the argument used can be converted to a class,
           # and if it can, create a new instance and run it.
           clazz.new(*a).run!
         else

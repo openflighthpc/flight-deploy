@@ -4,13 +4,13 @@ require_relative 'commands'
 
 require 'commander'
 
-module Deploy
+module Profile
   module CLI
-    PROGRAM_NAME = 'deploy'
+    PROGRAM_NAME = 'profile'
 
     # Basic Commander config
     extend Commander::CLI
-    program :application, "Flight Deploy"
+    program :application, "Flight Profile"
     program :name, PROGRAM_NAME
     program :version, "0.0.1"
     program :description, "Manage automatic profiling of cluster nodes"
@@ -39,34 +39,34 @@ module Deploy
       c.description = "Show list of available cluster types"
     end
 
-    command :profiles do |c|
+    command :identities do |c|
       cli_syntax(c, '[TYPE]')
-      c.summary = "List profiles for a given cluster type"
-      c.action Commands, :profiles
+      c.summary = "List identities for a given cluster type"
+      c.action Commands, :identities
       c.description = <<EOF
-Show list of profiles by name and description for a given cluster type.
+Show list of identities by name and description for a given cluster type.
 
-If no cluster type is given, profiles will be shown for the type chosen 
+If no cluster type is given, identities will be shown for the type chosen 
 during configuration.
 EOF
     end
 
-    command :setup do |c|
-      cli_syntax(c, ['HOSTNAME[,HOSTNAME...]', 'PROFILE'])
-      c.summary = "Set up one or more nodes with a given profile."
-      c.action Commands, :setup
+    command :apply do |c|
+      cli_syntax(c, ['HOSTNAME[,HOSTNAME...]', 'IDENTITY'])
+      c.summary = "Apply an identity to one or more nodes"
+      c.action Commands, :apply
       c.description = <<EOF
-Set up one or more nodes with a given profile. To set up multiple nodes,
+Apply an identity to one or more nodes. To set up multiple nodes,
 enter the nodes' hostnames separated by commas.
 EOF
-      c.slop.bool "--force", "Overwrite the profile for a node that has already been set up"
+      c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"
     end
 
     command :list do |c|
       cli_syntax(c)
       c.summary = "Display all node information"
       c.action Commands, :list
-      c.description = "Display the configuration profile and status of each node."
+      c.description = "Display the configuration identity and status of each node."
     end
     alias_command :ls, :list
 

@@ -1,7 +1,7 @@
 require_relative '../command'
 require_relative '../type'
 
-module Deploy
+module Profile
   module Commands
     class Avail < Command
       def run

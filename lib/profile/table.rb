@@ -1,6 +1,6 @@
 require 'tty-table'
 
-module Deploy
+module Profile
   class Table
     def initialize
       @table = TTY::Table.new(header: [''])

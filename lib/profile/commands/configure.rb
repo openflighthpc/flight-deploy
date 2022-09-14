@@ -3,7 +3,7 @@ require 'yaml'
 require_relative '../command'
 require_relative '../type'
 
-module Deploy
+module Profile
   module Commands
     class Configure < Command
       def run

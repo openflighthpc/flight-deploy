@@ -1,13 +1,10 @@
 require 'ostruct'
 
-module Deploy
+module Profile
   class Command
     attr_accessor :args, :options
 
     def initialize(args, options, command_name = nil)
-      # Object#freeze prevents an object from being modified.
-      # An error will be raised if modification is attempted.
-      # This cannot be undone.
       @args = args.freeze
       @options = OpenStruct.new(options)
     end

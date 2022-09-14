@@ -1,6 +1,6 @@
 require 'open3'
 
-module Deploy
+module Profile
   class Node
     def self.all
       @all_nodes ||= [].tap do |a|
@@ -8,7 +8,7 @@ module Deploy
           node = YAML.load_file(file)
           a << new(
             hostname: node['hostname'],
-            profile: node['profile'],
+            identity: node['identity'],
             deployment_pid: node['deployment_pid'],
             exit_status: node['exit_status']
           )
@@ -27,7 +27,7 @@ module Deploy
     def to_h
       {
         'hostname' => hostname,
-        'profile' => profile,
+        'identity' => identity,
         'deployment_pid' => deployment_pid,
         'exit_status' => exit_status
       }
@@ -81,7 +81,7 @@ module Deploy
       processes = stdout_str.split("\n").map! { |p| p.split(" ") }
       running = processes.any? { |p| p[0].to_i == deployment_pid }
       if running
-        'deploying'
+        'applying'
       elsif !exit_status || exit_status > 0
         'failed'
       else
@@ -89,11 +89,11 @@ module Deploy
       end
     end
 
-    attr_accessor :hostname, :profile, :deployment_pid, :exit_status, :deleted
+    attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :deleted
 
-    def initialize(hostname:, profile: nil, deployment_pid: nil, exit_status: nil)
+    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil)
       @hostname = hostname
-      @profile = profile
+      @identity = identity
       @deployment_pid = deployment_pid
       @exit_status = exit_status
       @deleted = false
