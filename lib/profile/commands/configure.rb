@@ -29,6 +29,7 @@ module Profile
       end
 
       def ask_questions
+        raise "No valid cluster types available" if !Type.all.any?
         type = cluster_type
         @answers = prompt.collect do
           Type.find(type).questions.each do |question|
