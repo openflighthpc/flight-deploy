@@ -4,7 +4,7 @@ module Profile
       raise "No cluster type given" unless cluster_type
       raise "Invalid cluster type" unless Type.find(cluster_type)
       @all_identities ||= [].tap do |a|
-        Dir["#{Config.types_dir}/#{cluster_type}/identities/*.yaml"].each do |file|
+        Dir["#{Type.find(cluster_type).base_path}/identities/*.yaml"].each do |file|
           begin
             identity = YAML.load_file(file)
             a << new(

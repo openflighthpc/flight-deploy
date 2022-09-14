@@ -5,15 +5,16 @@ module Profile
     def self.all
       @all_types ||= [].tap do |a|
         Config.type_paths.each do |p|
-          Dir["#{p}/*/metadata.yaml"].each do |file|
+          Dir["#{p}/*/"].each do |dir|
             begin
-              type = YAML.load_file(file)
+              type = YAML.load_file(File.join(dir, "metadata.yaml"))
 
               a << new(
                 id: type['id'],
                 name: type['name'],
                 description: type['description'],
                 questions: type['questions'],
+                base_path: dir
               )
             rescue NoMethodError
               puts "Error loading #{file}"
@@ -58,16 +59,17 @@ module Profile
     end
 
     def prepare_command
-      File.join(Config.types_dir, id, 'prepare.sh')
+      File.join(base_path, 'prepare.sh')
     end
 
-    attr_reader :id, :name, :description
+    attr_reader :id, :name, :description, :base_path
 
-    def initialize(id:, name:, description:, questions:)
+    def initialize(id:, name:, description:, questions:, base_path:)
       @id = id
       @name = name
       @description = description
       @questions = questions
+      @base_path = base_path
     end
   end
 end
