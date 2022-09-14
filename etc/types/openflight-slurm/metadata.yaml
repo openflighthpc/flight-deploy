@@ -1,0 +1,22 @@
+---
+id: openflight-slurm
+name: 'Openflight Slurm'
+description: 'Description for openflight slurm cluster type.'
+questions:
+  - id: cluster_name
+    env: CLUSTERNAME
+    text: 'Cluster name:'
+    default: my-cluster
+    validation:
+      type: string
+      format: "^[a-zA-Z0-9_\\-]+$"
+      message: 'Invalid cluster name: %{value}. Must contain only alphanumeric characters,
+      - and _.'
+  - id: ip_range
+    env: IPRANGE
+    text: 'IP range:'
+    validation:
+      type: string
+      required: true
+      format: "^[0-9\\/.]+$"
+      message: 'Invalid IP range: %{value}. Must contain only 0-9, . and /.'
