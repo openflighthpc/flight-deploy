@@ -22,7 +22,7 @@ module Profile
         existing = [].tap do |e|
           hostnames.each do |name|
             node = Node.find(name)
-            e << name if node && node.status != 'failed'
+            e << name if node
           end
         end
 
@@ -80,7 +80,6 @@ module Profile
               )
             Process.wait(sub_pid)
             node.update(deployment_pid: nil, exit_status: $?.exitstatus)
-            inventory.remove_node(node, profile.group_name) if node.status == 'failed'
           end
           node.update(deployment_pid: pid)
           Process.detach(pid)
