@@ -22,7 +22,7 @@ module Profile
         existing = [].tap do |e|
           hostnames.each do |name|
             node = Node.find(name)
-            e << name if node && node.status != 'failed'
+            e << name if node
           end
         end
 
@@ -80,17 +80,8 @@ module Profile
               )
             Process.wait(sub_pid)
             node.update(deployment_pid: nil, exit_status: $?.exitstatus)
-
-            if node.status == 'failed'
-              inventory.remove_node(node, identity.group_name)
-              failure = node.log_file
-                            .readlines
-                            .select { |line| line.start_with?('TASK') }
-                            .last
-              node.delete if failure.nil? || failure.include?('Waiting for nodes to be reachable')
-            end
           end
-          node.update(deployment_pid: pid) unless node.deleted
+          node.update(deployment_pid: pid)
           Process.detach(pid)
         end
       end

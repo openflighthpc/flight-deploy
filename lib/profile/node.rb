@@ -58,7 +58,6 @@ module Profile
 
     def delete
       File.delete(filepath) if File.exist?(filepath)
-      @deleted = true
     end
 
     # **kwargs grabs all of the KeyWord ARGuments and puts them into a single
@@ -89,14 +88,13 @@ module Profile
       end
     end
 
-    attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :deleted
+    attr_accessor :hostname, :identity, :deployment_pid, :exit_status
 
     def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil)
       @hostname = hostname
       @identity = identity
       @deployment_pid = deployment_pid
       @exit_status = exit_status
-      @deleted = false
     end
   end
 end
