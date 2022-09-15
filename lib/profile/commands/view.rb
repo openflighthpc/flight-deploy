@@ -25,7 +25,7 @@ HEREDOC
       end
 
       def node
-        @node ||= Node.find(@hostname) || Node.new(hostname: @hostname)
+        @node ||= Node.find(@hostname)
       end
 
       def display_task_status
