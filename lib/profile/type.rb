@@ -10,12 +10,19 @@ module Profile
           Dir["#{p}/*/"].each do |dir|
             begin
               type = YAML.load_file(File.join(dir, "metadata.yaml"))
+              begin
+                state = YAML.load_file(File.join(dir, "state.yaml"))['prepared']
+              rescue Errno::ENOENT
+                state = false
+              end
+
 
               a << new(
                 id: type['id'],
                 name: type['name'],
                 description: type['description'],
                 questions: type['questions'],
+                prepared: state,
                 base_path: dir
               )
             rescue NoMethodError
@@ -35,6 +42,14 @@ module Profile
 
     def self.find(name)
       all.find { |type| type.name == name || type.id == name }
+    end
+
+    def prepared?
+      !!prepared
+    end
+
+    def verify
+      File.write(File.join(base_path, 'state.yaml'), { 'prepared' => true }.to_yaml)
     end
 
     def identities
@@ -76,12 +91,17 @@ module Profile
 
     attr_reader :id, :name, :description, :base_path
 
-    def initialize(id:, name:, description:, questions:, base_path:)
+    def initialize(id:, name:, description:, questions:, base_path:, prepared:)
       @id = id
       @name = name
       @description = description
       @questions = questions
       @base_path = base_path
+      @prepared = prepared
     end
+
+    private
+
+    attr_reader :prepared
   end
 end

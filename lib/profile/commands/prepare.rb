@@ -10,9 +10,14 @@ module Profile
         cluster_type = Type.find(args[0]) || Type.find(Config.cluster_type)
         raise "Cluster type not found" unless cluster_type
 
+        raise "Cluster type is already prepared." if cluster_type.prepared?
         puts "Preparing '#{cluster_type.name}' cluster type..."
-        cluster_type.prepare
-        puts "'#{cluster_type.name}' prepared."
+        if cluster_type.prepare
+          puts "'#{cluster_type.name}' prepared."
+          cluster_type.verify
+        else
+          raise "Error occurred while preparing. Please check the log for more details."
+        end
       end
     end
   end

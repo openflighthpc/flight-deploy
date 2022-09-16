@@ -41,6 +41,9 @@ module Profile
         cluster_type.questions.each do |q|
           raise "The #{smart_downcase(q.text.delete(':'))} has not been defined. Please run `profile configure`" unless Config.fetch(q.id)
         end
+        unless cluster_type.prepared?
+          raise "Cluster type has not been prepared yet. Please run `profile prepare #{cluster_type.id}`."
+        end
 
         identity = cluster_type.find_identity(args[1])
         raise "No identity exists with given name" if !identity

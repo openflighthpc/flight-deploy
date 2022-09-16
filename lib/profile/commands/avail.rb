@@ -8,9 +8,9 @@ module Profile
         raise "No available cluster types" unless Type.all.any?
 
         t = Table.new
-        t.headers('Name', 'ID', 'Description')
+        t.headers('Name', 'ID', 'Description', 'Prepared')
         Type.all.each do |p|
-          t.row( p.name, p.id, p.description )
+          t.row( p.name, p.id, p.description, p.prepared? )
         end
         t.emit
       end
