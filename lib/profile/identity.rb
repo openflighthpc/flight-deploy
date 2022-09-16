@@ -1,10 +1,11 @@
 module Profile
   class Identity
     def self.all(cluster_type=nil)
-      raise "No cluster type given" unless cluster_type
-      raise "Invalid cluster type" unless Type.find(cluster_type)
+      cluster_type = Type.find(cluster_type) || Type.find(Config.cluster_type)
+      raise "Cluster type not found" unless cluster_type
+
       @all_identities ||= [].tap do |a|
-        Dir["#{Type.find(cluster_type).base_path}/identities/*.yaml"].each do |file|
+        Dir["#{cluster_type.base_path}/identities/*.yaml"].each do |file|
           begin
             identity = YAML.load_file(file)
             a << new(
@@ -18,6 +19,10 @@ module Profile
           end
         end
       end.sort_by { |n| n.name }
+    end
+
+    def self.find(name, cluster_type)
+      all(cluster_type).find { |ident| ident.name == name }
     end
 
     attr_reader :name, :command, :description, :group_name
