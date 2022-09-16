@@ -48,6 +48,10 @@ module Profile
 
         cluster_type.prepare
 
+        host_term = hostnames.length > 1 ? 'hosts' : 'host'
+        printable_hosts = hostnames.map { |h| "'#{h}'" }
+        puts "Applying '#{identity.name}' to #{host_term} #{printable_hosts.join(', ')}"
+
         inventory = Inventory.load(Config.config.cluster_name || 'my-cluster')
         inventory.groups[identity.group_name] ||= []
         inv_file = inventory.filepath
@@ -84,6 +88,9 @@ module Profile
           node.update(deployment_pid: pid)
           Process.detach(pid)
         end
+
+        puts "The application process has begun. Refer to `flight profile list` "\
+             "or `flight profile view` for more details"
       end
 
       def smart_downcase(str)
