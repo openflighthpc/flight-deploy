@@ -46,8 +46,6 @@ module Profile
         raise "No identity exists with given name" if !identity
         cmd = identity.command
 
-        cluster_type.prepare
-
         host_term = hostnames.length > 1 ? 'hosts' : 'host'
         printable_hosts = hostnames.map { |h| "'#{h}'" }
         puts "Applying '#{identity.name}' to #{host_term} #{printable_hosts.join(', ')}"

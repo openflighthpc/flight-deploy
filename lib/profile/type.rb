@@ -1,4 +1,5 @@
 require 'shash'
+require 'open3'
 
 module Profile
   class Type
@@ -49,14 +50,16 @@ module Profile
 
     def prepare
       raise "No script found for preparing the #{name} cluster type" unless File.exists?(prepare_command)
-      puts "Preparing '#{name}' cluster type..."
       log_name = "#{Config.log_dir}/#{id}-#{Time.now.to_i}.log"
-      pid = Process.spawn(
-        { "DEPLOYDIR" => Config.root },
-        prepare_command,
-        [:out, :err] => log_name
-      )
-      Process.wait(pid)
+
+      Open3.popen2e({ "DEPLOYDIR" => Config.root }, prepare_command)  do |stdin, stdout_stderr, wait_thr|
+        Thread.new do
+          stdout_stderr.each do |l|
+            File.open(log_name, "a+") { |f| f.write l}
+          end
+        end
+        wait_thr.value
+      end
     end
 
     def prepare_command
