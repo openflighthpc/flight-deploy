@@ -19,7 +19,7 @@ module Profile
         else
           Node.all.each do |node|
             if node.status && node.delete
-              puts "Node '#{hostname}' cleaned."
+              puts "Node '#{hostname}' removed from inventory."
             end
           end
         end
