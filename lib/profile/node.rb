@@ -58,6 +58,8 @@ module Profile
 
     def delete
       File.delete(filepath) if File.exist?(filepath)
+      inventory = Inventory.load(Config.config.cluster_name)
+      inventory.remove_node(self, Identity.find(identity, Config.config.cluster_type).group_name)
     end
 
     # **kwargs grabs all of the KeyWord ARGuments and puts them into a single
