@@ -49,6 +49,7 @@ module Profile
 
     def prepare
       raise "No script found for preparing the #{name} cluster type" unless File.exists?(prepare_command)
+      puts "Preparing '#{name}' cluster type..."
       log_name = "#{Config.log_dir}/#{id}-#{Time.now.to_i}.log"
       pid = Process.spawn(
         { "DEPLOYDIR" => Config.root },
