@@ -1,3 +1,4 @@
+require 'fileutils'
 require 'shash'
 require 'open3'
 
@@ -52,7 +53,10 @@ module Profile
       raise "No script found for preparing the #{name} cluster type" unless File.exists?(prepare_command)
       log_name = "#{Config.log_dir}/#{id}-#{Time.now.to_i}.log"
 
-      Open3.popen2e({ "DEPLOYDIR" => Config.root }, prepare_command)  do |stdin, stdout_stderr, wait_thr|
+      Open3.popen2e(
+        prepare_command,
+        chdir: run_env
+      )  do |stdin, stdout_stderr, wait_thr|
         Thread.new do
           stdout_stderr.each do |l|
             File.open(log_name, "a+") { |f| f.write l}
@@ -64,6 +68,10 @@ module Profile
 
     def prepare_command
       File.join(base_path, 'prepare.sh')
+    end
+
+    def run_env
+      FileUtils.mkdir_p(File.join(base_path, 'run_env/')).first
     end
 
     attr_reader :id, :name, :description, :base_path

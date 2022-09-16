@@ -57,7 +57,7 @@ module Profile
         env = {
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
           "INVFILE" => inv_file,
-          "DEPLOYDIR" => Config.root,
+          "RUN_ENV" => cluster_type.run_env
         }.tap do |e|
           cluster_type.questions.each do |q|
             e[q.env] = Config.fetch(q.id)
