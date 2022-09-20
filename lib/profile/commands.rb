@@ -1,10 +1,11 @@
-require_relative 'commands/list'
-require_relative 'commands/identities'
 require_relative 'commands/apply'
-require_relative 'commands/configure'
-require_relative 'commands/view'
 require_relative 'commands/avail'
 require_relative 'commands/clean'
+require_relative 'commands/configure'
+require_relative 'commands/identities'
+require_relative 'commands/list'
+require_relative 'commands/prepare'
+require_relative 'commands/view'
 
 module Profile
   module Commands

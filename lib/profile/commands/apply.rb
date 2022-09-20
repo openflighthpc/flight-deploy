@@ -41,12 +41,13 @@ module Profile
         cluster_type.questions.each do |q|
           raise "The #{smart_downcase(q.text.delete(':'))} has not been defined. Please run `profile configure`" unless Config.fetch(q.id)
         end
+        unless cluster_type.prepared?
+          raise "Cluster type has not been prepared yet. Please run `profile prepare #{cluster_type.id}`."
+        end
 
         identity = cluster_type.find_identity(args[1])
         raise "No identity exists with given name" if !identity
         cmd = identity.command
-
-        cluster_type.prepare
 
         host_term = hostnames.length > 1 ? 'hosts' : 'host'
         printable_hosts = hostnames.map { |h| "'#{h}'" }
@@ -59,7 +60,7 @@ module Profile
         env = {
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
           "INVFILE" => inv_file,
-          "DEPLOYDIR" => Config.root,
+          "RUN_ENV" => cluster_type.run_env
         }.tap do |e|
           cluster_type.questions.each do |q|
             e[q.env] = Config.fetch(q.id)

@@ -1,4 +1,6 @@
+require 'fileutils'
 require 'shash'
+require 'open3'
 
 module Profile
   class Type
@@ -8,12 +10,19 @@ module Profile
           Dir["#{p}/*/"].each do |dir|
             begin
               type = YAML.load_file(File.join(dir, "metadata.yaml"))
+              begin
+                state = YAML.load_file(File.join(dir, "state.yaml"))['prepared']
+              rescue Errno::ENOENT
+                state = false
+              end
+
 
               a << new(
                 id: type['id'],
                 name: type['name'],
                 description: type['description'],
                 questions: type['questions'],
+                prepared: state,
                 base_path: dir
               )
             rescue NoMethodError
@@ -35,6 +44,14 @@ module Profile
       all.find { |type| type.name == name || type.id == name }
     end
 
+    def prepared?
+      !!prepared
+    end
+
+    def verify
+      File.write(File.join(base_path, 'state.yaml'), { 'prepared' => true }.to_yaml)
+    end
+
     def identities
       Identity.all(id)
     end
@@ -49,28 +66,42 @@ module Profile
 
     def prepare
       raise "No script found for preparing the #{name} cluster type" unless File.exists?(prepare_command)
-      puts "Preparing '#{name}' cluster type..."
       log_name = "#{Config.log_dir}/#{id}-#{Time.now.to_i}.log"
-      pid = Process.spawn(
-        { "DEPLOYDIR" => Config.root },
+
+      Open3.popen2e(
         prepare_command,
-        [:out, :err] => log_name
-      )
-      Process.wait(pid)
+        chdir: run_env
+      )  do |stdin, stdout_stderr, wait_thr|
+        Thread.new do
+          stdout_stderr.each do |l|
+            File.open(log_name, "a+") { |f| f.write l}
+          end
+        end
+        wait_thr.value
+      end
     end
 
     def prepare_command
       File.join(base_path, 'prepare.sh')
     end
 
+    def run_env
+      FileUtils.mkdir_p(File.join(base_path, 'run_env/')).first
+    end
+
     attr_reader :id, :name, :description, :base_path
 
-    def initialize(id:, name:, description:, questions:, base_path:)
+    def initialize(id:, name:, description:, questions:, base_path:, prepared:)
       @id = id
       @name = name
       @description = description
       @questions = questions
       @base_path = base_path
+      @prepared = prepared
     end
+
+    private
+
+    attr_reader :prepared
   end
 end

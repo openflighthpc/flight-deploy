@@ -87,6 +87,19 @@ will be removed.
 EOF
     end
 
+    command :prepare do |c|
+      cli_syntax(c, 'TYPE')
+      c.summary = "Prepare dependencies for cluster type"
+      c.action Commands, :prepare
+      c.description =  <<EOF
+Complete any required dependency steps for a given cluster type.
+
+Specify a cluster type by passing the type's ID as a parameter.
+If a cluster type is not given, the currently configured type
+will be used. A type cannot be used until it has been prepared.
+EOF
+    end
+
     command :configure do |c|
       cli_syntax(c)
       c.summary = "Set the name and IP range of the cluster"
