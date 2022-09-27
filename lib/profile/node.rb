@@ -1,4 +1,7 @@
 require 'open3'
+require 'yaml'
+
+require_relative './hunter_cli'
 
 module Profile
   class Node
@@ -13,6 +16,9 @@ module Profile
             exit_status: node['exit_status']
           )
         end
+        if Config.hunter_command
+          a.concat(hunter_nodes)
+        end
       end.sort_by { |n| n.hostname }
     end
 
@@ -22,6 +28,17 @@ module Profile
 
     def self.save_all
       Node.all.map(&:save)
+    end
+
+    def self.hunter_nodes
+      result = HunterCLI.list_nodes
+        result.split("\n").map do |line|
+        parts = line.split("\t").map { |p| p.empty? ? nil : p }
+        new(
+         hostname: parts[1],
+         hunter_node: true
+        )
+      end
     end
 
     def to_h
@@ -78,6 +95,7 @@ module Profile
     end
 
     def status
+      return 'available' if hunter_node
       stdout_str, state = Open3.capture2("ps -e")
       processes = stdout_str.split("\n").map! { |p| p.split(" ") }
       running = processes.any? { |p| p[0].to_i == deployment_pid }
@@ -90,13 +108,14 @@ module Profile
       end
     end
 
-    attr_accessor :hostname, :identity, :deployment_pid, :exit_status
+    attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_node
 
-    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil)
+    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_node: false)
       @hostname = hostname
       @identity = identity
       @deployment_pid = deployment_pid
       @exit_status = exit_status
+      @hunter_node = hunter_node
     end
   end
 end

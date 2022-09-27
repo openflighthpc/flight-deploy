@@ -24,6 +24,10 @@ module Profile
         config.hunter_command
       end
 
+      def command_path
+        ENV['PATH']
+      end
+
       def config_hash
         @config_hash ||= File.exists?(config_path) ? (YAML.load_file(config_path) || {}) : {}
       end
