@@ -20,6 +20,10 @@ module Profile
         config.cluster_type
       end
 
+      def hunter_command
+        config.hunter_command
+      end
+
       def config_hash
         @config_hash ||= File.exists?(config_path) ? (YAML.load_file(config_path) || {}) : {}
       end
