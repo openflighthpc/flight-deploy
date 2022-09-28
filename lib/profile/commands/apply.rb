@@ -22,7 +22,7 @@ module Profile
         existing = [].tap do |e|
           hostnames.each do |name|
             node = Node.find(name, include_hunter: true)
-            e << name if node.identity
+            e << name if node&.identity
           end
         end
 
