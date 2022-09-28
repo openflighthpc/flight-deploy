@@ -21,7 +21,7 @@ module Profile
         hostnames = args[0].split(',')
         existing = [].tap do |e|
           hostnames.each do |name|
-            node = Node.find(name)
+            node = Node.find(name, include_hunter: true)
             e << name if node.identity
           end
         end

@@ -5,7 +5,7 @@ require_relative './hunter_cli'
 
 module Profile
   class Node
-    def self.all(hunter: false)
+    def self.all(include_hunter: false)
       @all_nodes ||= [].tap do |a|
         Dir["#{Config.inventory_dir}/*.yaml"].each do |file|
           node = YAML.load_file(file)
@@ -16,7 +16,7 @@ module Profile
             exit_status: node['exit_status']
           )
         end
-        if hunter
+        if include_hunter
           hunter_nodes.each do |node|
             a.concat([node]) unless a.any? { |n| n.hostname == node.hostname }
           end
@@ -24,8 +24,8 @@ module Profile
       end.sort_by { |n| n.hostname }
     end
 
-    def self.find(hostname=nil)
-      all.find { |node| node.hostname == hostname }
+    def self.find(hostname=nil, include_hunter: false)
+      all(include_hunter: include_hunter).find { |node| node.hostname == hostname }
     end
 
     def self.save_all
