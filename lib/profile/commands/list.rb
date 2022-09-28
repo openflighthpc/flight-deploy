@@ -6,7 +6,8 @@ module Profile
   module Commands
     class List < Command
       def run
-        raise "No nodes to display" if !Node.all.any?
+        hunter = @options.include_hunter
+        raise "No nodes to display" if !Node.all(hunter: hunter).any?
 
         t = Table.new
         t.headers('Node', 'Identity', 'Status')

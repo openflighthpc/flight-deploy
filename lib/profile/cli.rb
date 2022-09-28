@@ -67,6 +67,7 @@ EOF
       c.summary = "Display all node information"
       c.action Commands, :list
       c.description = "Display the configuration identity and status of each node."
+      c.slop.bool "--include-hunter", "Include nodes found by Flight Hunter"
     end
     alias_command :ls, :list
 

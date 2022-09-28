@@ -24,6 +24,9 @@ module Profile
       private
 
       def flight_hunter
+        if !Config.hunter_command
+          raise "Hunter command is not defined"
+        end
         Config.hunter_command
       end
     end
