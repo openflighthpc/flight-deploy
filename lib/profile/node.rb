@@ -5,7 +5,7 @@ require_relative './hunter_cli'
 
 module Profile
   class Node
-    def self.all
+    def self.all(hunter: false)
       @all_nodes ||= [].tap do |a|
         Dir["#{Config.inventory_dir}/*.yaml"].each do |file|
           node = YAML.load_file(file)
@@ -16,7 +16,7 @@ module Profile
             exit_status: node['exit_status']
           )
         end
-        if Config.hunter_command
+        if hunter
           a.concat(hunter_nodes)
         end
       end.sort_by { |n| n.hostname }
@@ -32,7 +32,7 @@ module Profile
 
     def self.hunter_nodes
       result = HunterCLI.list_nodes
-        result.split("\n").map do |line|
+      result.split("\n").map do |line|
         parts = line.split("\t").map { |p| p.empty? ? nil : p }
         new(
          hostname: parts[1],
