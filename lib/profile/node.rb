@@ -17,7 +17,9 @@ module Profile
           )
         end
         if hunter
-          a.concat(hunter_nodes)
+          hunter_nodes.each do |node|
+            a.concat([node]) unless a.any? { |n| n.hostname == node.hostname }
+          end
         end
       end.sort_by { |n| n.hostname }
     end
