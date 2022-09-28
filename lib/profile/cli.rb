@@ -12,7 +12,7 @@ module Profile
     extend Commander::CLI
     program :application, "Flight Profile"
     program :name, PROGRAM_NAME
-    program :version, "0.0.3"
+    program :version, "0.0.4-rc1"
     program :description, "Manage automatic profiling of cluster nodes"
     program :help_paging, false
     default_command :help
