@@ -31,7 +31,7 @@ module Profile
       end
     end
 
-    def initialize(*cmd, user: nil, stdin: nil, timeout: nil, env: {})
+    def initialize(*cmd, user: nil, stdin: nil, timeout: 30, env: {})
       @timeout = timeout
       @cmd = cmd
       @user = user
