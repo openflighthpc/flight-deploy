@@ -17,9 +17,10 @@ module Profile
           )
         end
         if include_hunter
-          hunter_nodes.each do |node|
-            a.concat([node]) unless a.any? { |n| n.hostname == node.hostname }
+          hunter_nodes = list_hunter_nodes.reject do |node|
+            node.hostname.empty? || a.any? { |e| e.hostname == node.hostnme }
           end
+          a.concat(hunter_nodes)
         end
       end.sort_by { |n| n.hostname }
     end
@@ -32,7 +33,7 @@ module Profile
       Node.all.map(&:save)
     end
 
-    def self.hunter_nodes
+    def self.list_hunter_nodes
       result = HunterCLI.list_nodes
       result.split("\n").map do |line|
         parts = line.split("\t").map { |p| p.empty? ? nil : p }
