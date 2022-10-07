@@ -21,7 +21,9 @@ module Profile
       end
 
       def hunter_command
-        ENV['flight_PROFILE_hunter_command'] || config.hunter_command
+        ENV['flight_PROFILE_hunter_command'] ||
+          config.hunter_command ||
+          File.join(ENV.fetch('flight_ROOT', '/opt/flight/'), 'bin/flight hunter')
       end
 
       def command_path
