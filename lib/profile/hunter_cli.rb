@@ -9,7 +9,8 @@ module Profile
     class << self
       def list_nodes
         args = [
-          "list-parsed"
+          "list",
+          "--plain"
         ]
         cmd = new(*flight_hunter, *args)
         cmd.run.tap do |result|
