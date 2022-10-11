@@ -13,20 +13,24 @@ module Profile
             hostname: node['hostname'],
             identity: node['identity'],
             deployment_pid: node['deployment_pid'],
-            exit_status: node['exit_status']
+            exit_status: node['exit_status'],
+            name: File.basename(file, '.*')
           )
         end
         if include_hunter
           hunter_nodes = list_hunter_nodes.reject do |node|
-            node.hostname.empty? || a.any? { |e| e.hostname == node.hostnme }
+            a.any? { |e| e.name == node.hunter_label }
           end
           a.concat(hunter_nodes)
         end
-      end.sort_by { |n| n.hostname }
+      end.sort_by { |n| [n.hunter_label || n.hostname ] }
     end
 
-    def self.find(hostname=nil, include_hunter: false)
-      all(include_hunter: include_hunter).find { |node| node.hostname == hostname }
+    def self.find(name=nil, include_hunter: false)
+      all_nodes = all(include_hunter: include_hunter)
+      all_nodes.find do |node|
+        node.name == name
+      end
     end
 
     def self.save_all
@@ -38,8 +42,8 @@ module Profile
       result.split("\n").map do |line|
         parts = line.split("\t").map { |p| p.empty? ? nil : p }
         new(
-         hostname: parts[1],
-         hunter_node: true
+          hostname: parts[1],
+          hunter_label: parts[4]
         )
       end
     end
@@ -54,7 +58,7 @@ module Profile
     end
 
     def filepath
-      File.join(Config.inventory_dir, "#{hostname}.yaml")
+      File.join(Config.inventory_dir, "#{name}.yaml")
     end
 
     def log_file
@@ -62,7 +66,7 @@ module Profile
     end
 
     def log_filepath
-      file_glob = Dir.glob("#{Config.log_dir}/#{hostname}-*.log")
+      file_glob = Dir.glob("#{Config.log_dir}/#{name}-*.log")
       raise "No log file exists for this node" if file_glob.empty?
       @log_filepath ||= file_glob.sort
                                  .last
@@ -98,7 +102,7 @@ module Profile
     end
 
     def status
-      return 'available' if hunter_node
+      return 'available' if hunter_label
       stdout_str, state = Open3.capture2("ps -e")
       processes = stdout_str.split("\n").map! { |p| p.split(" ") }
       running = processes.any? { |p| p[0].to_i == deployment_pid }
@@ -111,14 +115,16 @@ module Profile
       end
     end
 
-    attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_node
+    attr_reader :name
+    attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label
 
-    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_node: false)
+    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil)
       @hostname = hostname
       @identity = identity
       @deployment_pid = deployment_pid
       @exit_status = exit_status
-      @hunter_node = hunter_node
+      @hunter_label = hunter_label
+      @name = name || hunter_label || hostname
     end
   end
 end

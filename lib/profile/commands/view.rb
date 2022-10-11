@@ -9,7 +9,7 @@ module Profile
       ALL_STATUSES = SUCCESS_STATUSES + FAIL_STATUSES + SKIP_STATUSES
 
       def run
-        @hostname = args[0]
+        @name = args[0]
         puts <<HEREDOC
 
 Running:
@@ -25,8 +25,8 @@ HEREDOC
       end
 
       def node
-        @node ||= Node.find(@hostname)
-        raise "Node '#{@hostname}' not found" unless @node
+        @node ||= Node.find(@name)
+        raise "Node '#{@name}' not found" unless @node
       end
 
       def display_task_status

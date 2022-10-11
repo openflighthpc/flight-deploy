@@ -20,6 +20,14 @@ module Profile
         config.cluster_type
       end
 
+      def cluster_name
+        config.cluster_name
+      end
+
+      def use_hunter?
+        config.use_hunter
+      end
+
       def hunter_command
         command = 
           ENV['flight_PROFILE_hunter_command'] ||
