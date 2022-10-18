@@ -49,7 +49,7 @@ module Profile
         # Fetch identity
         identity = cluster_type.find_identity(args[1])
         raise "No identity exists with given name" if !identity
-        cmd = identity.command
+        cmds = identity.commands
 
         #
         # ERROR CHECKING OVER; GOOD TO START APPLYING
@@ -95,13 +95,25 @@ module Profile
 
           pid = Process.fork do
             log_name = "#{Config.log_dir}/#{node.name}-#{Time.now.to_i}.log"
-            sub_pid = Process.spawn(
-              env.merge( {"NODE" => node.hostname} ),
-              "echo #{cmd}; #{cmd}",
-              [:out, :err] => log_name,
+
+            last_exit = cmds.each do |command|
+              sub_pid = Process.spawn(
+                env.merge( { "NODE" => node.hostname} ),
+                "echo PROFILE_COMMAND #{command[:name]}: #{command[:value]}; #{command[:value]}",
+                [:out, :err] => [log_name, "a+"],
               )
-            Process.wait(sub_pid)
-            node.update(deployment_pid: nil, exit_status: $?.exitstatus)
+              Process.wait(sub_pid)
+              exit_status = $?.exitstatus
+
+              if exit_status != 0
+                break exit_status
+              end
+
+              if command == cmds.last && exit_status == 0
+                break exit_status
+              end
+            end
+            node.update(deployment_pid: nil, exit_status: last_exit)
           end
           node.update(deployment_pid: pid)
           Process.detach(pid)

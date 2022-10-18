@@ -10,16 +10,26 @@ module Profile
 
       def run
         @name = args[0]
+        log = File.read(node.log_file)
+        commands = log.split(/(?=PROFILE_COMMAND)/)
+        commands.each { |cmd| puts command_structure(cmd) }
+      end
+
+      def command_structure(command)
+        header = command.split("\n").first.sub /^PROFILE_COMMAND .*: /, ''
+        cmd_name = command[/(?<=PROFILE_COMMAND ).*?(?=:)/]
         puts <<HEREDOC
+Command:
+    #{cmd_name}
 
 Running:
-   #{node.command.chomp}
+    #{header}
 
 Progress:
-#{display_task_status.chomp}
+#{display_task_status(command).chomp}
 
 Status:
-   #{node.status.upcase}
+    #{node.status.upcase}
 
 HEREDOC
       end
@@ -29,13 +39,13 @@ HEREDOC
         raise "Node '#{@name}' not found" unless @node
       end
 
-      def display_task_status
+      def display_task_status(command)
         task_name, task_status, role, new_role = nil
         roles = []
         str = ""
-        node.log_file.readlines.each do |line|
+        command.split("\n").each_with_index do |line, idx|
           if @options.raw
-            str += line unless line == node.command
+            str += line unless idx == 0
           else
             if line.start_with?('TASK')
               role, task_name = line[ /\[(.*?)\]/, 1 ].split(' : ')
@@ -59,7 +69,6 @@ HEREDOC
         end
         str
       end
-
     end
   end
 end
