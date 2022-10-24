@@ -6,12 +6,13 @@ module Profile
   module Commands
     class List < Command
       def run
-        raise "No nodes to display" if !Node.all.any?
+        hunter = Config.use_hunter?
+        raise "No nodes to display" if !Node.all(include_hunter: hunter).any?
 
         t = Table.new
         t.headers('Node', 'Identity', 'Status')
         Node.all.each do |node|
-          t.row( node.hostname, node.identity, node.status )
+          t.row( node.name, node.identity, node.status )
         end
         t.emit
       end

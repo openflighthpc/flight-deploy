@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require_relative 'commands'
+require_relative 'version'
 
 require 'commander'
 
@@ -12,7 +13,7 @@ module Profile
     extend Commander::CLI
     program :application, "Flight Profile"
     program :name, PROGRAM_NAME
-    program :version, "0.0.3"
+    program :version, "v#{Profile::VERSION}"
     program :description, "Manage automatic profiling of cluster nodes"
     program :help_paging, false
     default_command :help

@@ -20,6 +20,26 @@ module Profile
         config.cluster_type
       end
 
+      def cluster_name
+        config.cluster_name
+      end
+
+      def use_hunter?
+        config.use_hunter
+      end
+
+      def hunter_command
+        command = 
+          ENV['flight_PROFILE_hunter_command'] ||
+            config.hunter_command ||
+            File.join(ENV.fetch('flight_ROOT', '/opt/flight/'), 'bin/flight hunter')
+        command.split(' ')
+      end
+
+      def command_path
+        ENV['PATH']
+      end
+
       def config_hash
         @config_hash ||= File.exists?(config_path) ? (YAML.load_file(config_path) || {}) : {}
       end

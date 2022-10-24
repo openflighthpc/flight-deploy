@@ -14,50 +14,57 @@ module Profile
       include Profile::Outputs
       def run
         # ARGS:
-        # [ hostname, identity ]
+        # [ names, identity ]
         # OPTS:
         # [ force ]
+        @hunter = Config.use_hunter?
+        
+        names = args[0].split(',')
 
-        hostnames = args[0].split(',')
-        existing = [].tap do |e|
-          hostnames.each do |name|
-            node = Node.find(name)
-            e << name if node
-          end
-        end
+        # If using hunter, check to see if node actually exists
+        check_nodes_exist(names) if @hunter
 
-        unless existing.empty?
-          existing_string = "The following nodes already have an applied identity: \n#{existing.join("\n")}"
-          if @options.force
-            say_warning existing_string + "\nContinuing..."
-          else
-            raise existing_string
-          end
-        end
+        # Don't let the user apply to a node that already has a profile
+        disallow_existing_nodes(names)
 
-        raise "A cluster type has not been chosen. Please run `profile configure`" unless Config.cluster_type
+        # Fetch cluster type
         cluster_type = Type.find(Config.cluster_type)
-        raise "Invalid cluster type. Please rerun `profile configure`" unless cluster_type
-        cluster_type.questions.each do |q|
-          raise "The #{smart_downcase(q.text.delete(':'))} has not been defined. Please run `profile configure`" unless Config.fetch(q.id)
-        end
+        raise "Invalid cluster type. Please run `profile configure`" unless cluster_type
         unless cluster_type.prepared?
           raise "Cluster type has not been prepared yet. Please run `profile prepare #{cluster_type.id}`."
         end
 
+        # Check all questions have been answered
+        missing_questions = cluster_type.questions.select { |q| !Config.fetch(q.id) }
+        if missing_questions.any?
+          q_names = missing_questions.map { |q| smart_downcase(q.text.delete(':')) }
+          out = <<~OUT
+          The following config keys have not been set:
+          #{q_names.join("\n")}
+          Please run `profile configure`
+          OUT
+          raise out
+        end
+        
+        # Fetch identity
         identity = cluster_type.find_identity(args[1])
         raise "No identity exists with given name" if !identity
         cmd = identity.command
 
-        host_term = hostnames.length > 1 ? 'hosts' : 'host'
-        printable_hosts = hostnames.map { |h| "'#{h}'" }
-        puts "Applying '#{identity.name}' to #{host_term} #{printable_hosts.join(', ')}"
+        #
+        # ERROR CHECKING OVER; GOOD TO START APPLYING
+        #
 
-        inventory = Inventory.load(Config.config.cluster_name || 'my-cluster')
+        hosts_term = names.length > 1 ? 'hosts' : 'host'
+        printable_names = names.map { |h| "'#{h}'" }
+        puts "Applying '#{identity.name}' to #{hosts_term} #{printable_names.join(', ')}"
+
+        inventory = Inventory.load(Config.cluster_name || 'my-cluster')
         inventory.groups[identity.group_name] ||= []
         inv_file = inventory.filepath
 
         env = {
+          "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
           "INVFILE" => inv_file,
           "RUN_ENV" => cluster_type.run_env
@@ -67,17 +74,27 @@ module Profile
           end
         end
 
-        hostnames.each do |hostname|
+        names.each do |name|
+          hostname =
+            case @hunter
+            when true
+              Node.find(name, include_hunter: true).hostname
+            when false
+              name
+            end
+
           node = Node.new(
             hostname: hostname,
+            name: name,
             identity: args[1],
-            )
+            hunter_label: Node.find(name, include_hunter: true).hunter_label
+          )
 
           inventory.groups[identity.group_name] |= [node.hostname]
           inventory.dump
 
           pid = Process.fork do
-            log_name = "#{Config.log_dir}/#{node.hostname}-#{Time.now.to_i}.log"
+            log_name = "#{Config.log_dir}/#{node.name}-#{Time.now.to_i}.log"
             sub_pid = Process.spawn(
               env.merge( {"NODE" => node.hostname} ),
               "echo #{cmd}; #{cmd}",
@@ -98,6 +115,37 @@ module Profile
         str.split.map do |word|
           /[A-Z]{2,}/.match(word) ? word : word.downcase
         end.join(' ')
+      end
+
+      private
+
+      def disallow_existing_nodes(names=[])
+        existing = [].tap do |e|
+          names.each do |name|
+            node = Node.find(name, include_hunter: @hunter)
+            e << name if node&.identity
+          end
+        end
+
+        unless existing.empty?
+          existing_string = "The following nodes already have an applied identity: \n#{existing.join("\n")}"
+          if @options.force
+            say_warning existing_string + "\nContinuing..."
+          else
+            raise existing_string
+          end
+        end
+      end
+
+      def check_nodes_exist(names=[])
+        not_found = names.select { |n| !Node.find(n, include_hunter: true) }
+        if not_found.any?
+          out = <<~OUT
+          The following nodes were not found in Profile or Hunter:
+          #{not_found.join("\n")}
+          OUT
+          raise out
+        end
       end
     end
   end
