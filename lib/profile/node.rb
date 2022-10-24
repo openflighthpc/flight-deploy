@@ -72,8 +72,14 @@ module Profile
                                  .last
     end
 
-    def command
-      File.open(log_filepath, &:readline)
+    def commands
+      log = File.read(log_filepath)
+      commands = log.split(/(?=PROFILE_COMMAND)/)
+      commands.map do |cmd|
+        name = cmd.scan(/(?<=PROFILE_COMMAND ).*?(?=:)/)
+        value = cmd.sub /^PROFILE_COMMAND .*: /, ''
+        { name => value }
+      end
     end
 
     def save
