@@ -8,14 +8,21 @@ module Profile
       def run
         hostnames = args[0]
         if hostnames
+          not_found = []
           hostnames.split(',').each do |hostname|
             node = Node.find(hostname)
-            raise "Node '#{hostname}' not found" unless node
-            if node.status == 'failed'
-              node.delete
+            not_found << hostname && next if !node
+            if node.status == 'failed' && node.delete
+              puts "Node '#{node.hostname}' removed from inventory."
             else
               say_warning "Node '#{hostname}' has not failed setup so will not be removed"
             end
+          end
+          if not_found.any?
+            say_warning <<~HEREDOC
+            The following nodes were not found:
+            #{not_found.join("\n")}
+            HEREDOC
           end
         else
           Node.all.each do |node|
