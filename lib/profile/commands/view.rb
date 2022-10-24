@@ -26,6 +26,7 @@ HEREDOC
 
       def node
         @node ||= Node.find(@hostname)
+        raise "Node '#{@hostname}' not found" unless @node
       end
 
       def display_task_status
