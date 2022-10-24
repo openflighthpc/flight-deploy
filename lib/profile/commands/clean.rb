@@ -10,6 +10,7 @@ module Profile
         if hostnames
           hostnames.split(',').each do |hostname|
             node = Node.find(hostname)
+            raise "Node '#{hostname}' not found" unless node
             if node.status == 'failed'
               node.delete
             else

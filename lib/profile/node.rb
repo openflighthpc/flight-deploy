@@ -17,9 +17,7 @@ module Profile
     end
 
     def self.find(hostname=nil)
-      search_node = all.find { |node| node.hostname == hostname }
-      raise "Node '#{hostname}' not found" unless search_node
-      search_node
+      all.find { |node| node.hostname == hostname }
     end
 
     def self.save_all
