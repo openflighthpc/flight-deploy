@@ -44,6 +44,7 @@ HEREDOC
         roles = []
         str = ""
         command.split("\n").each_with_index do |line, idx|
+          line << "\n"
           if @options.raw
             str += line unless idx == 0
           else
