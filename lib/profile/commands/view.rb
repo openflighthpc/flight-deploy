@@ -10,6 +10,7 @@ module Profile
 
       def run
         @name = args[0]
+        raise "Node '#{@name}' not found" unless node
         log = File.read(node.log_file)
         commands = log.split(/(?=PROFILE_COMMAND)/)
         commands.each { |cmd| puts command_structure(cmd) }
@@ -36,7 +37,6 @@ HEREDOC
 
       def node
         @node ||= Node.find(@name)
-        raise "Node '#{@name}' not found" unless @node
       end
 
       def display_task_status(command)
@@ -44,6 +44,7 @@ HEREDOC
         roles = []
         str = ""
         command.split("\n").each_with_index do |line, idx|
+          line << "\n"
           if @options.raw
             str += line unless idx == 0
           else
