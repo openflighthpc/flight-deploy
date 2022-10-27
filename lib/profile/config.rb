@@ -33,10 +33,10 @@ module Profile
           ENV['flight_PROFILE_hunter_command'] ||
             config.hunter_command ||
             File.join(ENV.fetch('flight_ROOT', '/opt/flight/'), 'bin/flight hunter')
-        if !File.file?(File.join(command.split.join("/")))
-          raise "Could not find '#{command.split[1]}' in #{command.split[0]}"
-        elsif !File.executable?(File.join(command.split.join("/")))
-          raise "#{command.split[1]} is not executable"
+        if !File.file?(File.join(command.split[0]))
+          raise "Could not find '#{command.split[0]}'"
+        elsif !File.executable?(File.join(command.split[0]))
+          raise "#{command.split[0]} is not executable"
         end
         command.split(' ')
       end
