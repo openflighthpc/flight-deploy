@@ -34,6 +34,12 @@ module Profile
             config.hunter_command ||
             File.join(ENV.fetch('flight_ROOT', '/opt/flight/'), 'bin/flight hunter')
         command.split(' ')
+        if !File.exists?(File.join(command[0], command[1]))
+          raise "Could not find 'hunter' in #{command[0]}"
+        elsif !File.executable?(File.join(command[0], command[1]))
+          raise "#{command[1]} is not executable"
+        end
+        command
       end
 
       def command_path
