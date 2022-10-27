@@ -62,12 +62,16 @@ module Profile
         @root ||= File.expand_path('../..', __dir__)
       end
 
+      def answers_dir
+        dir_constructor(root, 'var', 'answers/')
+      end
+
       def config_path
         File.join(root, "etc/config.yml")
       end
 
       def inventory_dir
-        File.join(root, "var", "inventory")
+        dir_constructor(root, "var", "inventory")
       end
 
       def log_dir
@@ -75,11 +79,18 @@ module Profile
       end
 
       def ansible_inv_dir
-        File.join(root, "var", "ansible_invs")
+        dir_constructor(root, "var", "ansible_invs")
       end
 
       def type_paths
         (config.type_paths || [File.join(root, "etc/types")])
+      end
+
+      private
+
+      def dir_constructor(*a)
+        dir = File.join(*a) 
+        FileUtils.mkdir_p(dir).first
       end
     end
   end

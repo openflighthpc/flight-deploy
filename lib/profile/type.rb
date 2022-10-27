@@ -2,6 +2,8 @@ require 'fileutils'
 require 'shash'
 require 'open3'
 
+require_relative './config'
+
 module Profile
   class Type
     def self.all
@@ -15,7 +17,6 @@ module Profile
               rescue Errno::ENOENT
                 state = false
               end
-
 
               a << new(
                 id: type['id'],
@@ -42,6 +43,25 @@ module Profile
 
     def self.find(name)
       all.find { |type| type.name == name || type.id == name }
+    end
+
+    def fetch_answer(id)
+      answers[id]
+    end
+
+    def save_answers(answers_hash)
+      new_answers = answers.merge(answers_hash)
+      File.write(answers_file, YAML.dump(new_answers))
+    end
+
+    def answers
+      @answers ||= YAML.load_file(answers_file)
+    rescue Errno::ENOENT
+      {}
+    end
+
+    def answers_file
+      File.join(Config.answers_dir, "#{id}.yaml")
     end
 
     def prepared?
