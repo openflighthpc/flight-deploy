@@ -24,7 +24,7 @@ module Profile
 
         puts "Cluster type: #{type.name}"
         type.questions.each do |question|
-          puts "#{question.text} #{ Config.fetch(question.id) || 'none' }"
+          puts "#{question.text} #{ type.fetch_answer(question.id) || 'none' }"
         end
       end
 
@@ -32,10 +32,10 @@ module Profile
         raise "No valid cluster types available" if !Type.all.any?
         type = cluster_type
         @answers = prompt.collect do
-          Type.find(type).questions.each do |question|
+          type.questions.each do |question|
             key(question.id).ask(question.text) do |q|
-              if Config.fetch(question.id)
-                q.default Config.fetch(question.id)
+              if type.fetch_answer(question.id)
+                q.default type.fetch_answer(question.id)
               elsif question.default
                 q.default question.default
               end
@@ -55,12 +55,12 @@ module Profile
 
       def cluster_type
         @type ||= Type.find( prompt.select('Cluster type: ', Type.all.map { |t| t.name }) )
-                      .id
       end
 
       def save_answers
         raise 'Attempted to save answers without answering questions' unless @answers
-        Config.append_to_config({ 'cluster_type' => cluster_type }.merge(@answers))
+        Config.append_to_config({ 'cluster_type' => cluster_type.id })
+        cluster_type.save_answers(@answers)
       end
     end
   end

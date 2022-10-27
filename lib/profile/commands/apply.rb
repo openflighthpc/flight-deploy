@@ -35,7 +35,7 @@ module Profile
         end
 
         # Check all questions have been answered
-        missing_questions = cluster_type.questions.select { |q| !Config.fetch(q.id) }
+        missing_questions = cluster_type.questions.select { |q| !cluster_type.fetch_answer(q.id) }
         if missing_questions.any?
           q_names = missing_questions.map { |q| smart_downcase(q.text.delete(':')) }
           out = <<~OUT
@@ -70,7 +70,11 @@ module Profile
           "RUN_ENV" => cluster_type.run_env
         }.tap do |e|
           cluster_type.questions.each do |q|
-            e[q.env] = Config.fetch(q.id)
+<<<<<<< Updated upstream
+            e[q.env] = type.fetch_answer(q.id)
+=======
+            e[q.env] = cluster_type.fetch_answer(q.id).to_s
+>>>>>>> Stashed changes
           end
         end
 

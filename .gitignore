@@ -9,5 +9,5 @@ spec/examples.txt
 log/*.log
 var/ansible_invs/*.inv
 var/inventory/*.yaml
+var/answers/*.yaml
 openflight-ansible-playbook*
-
