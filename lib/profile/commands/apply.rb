@@ -70,11 +70,7 @@ module Profile
           "RUN_ENV" => cluster_type.run_env
         }.tap do |e|
           cluster_type.questions.each do |q|
-<<<<<<< Updated upstream
-            e[q.env] = type.fetch_answer(q.id)
-=======
             e[q.env] = cluster_type.fetch_answer(q.id).to_s
->>>>>>> Stashed changes
           end
         end
 
