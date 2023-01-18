@@ -99,7 +99,9 @@ module Profile
             ip: ip
           )
 
-          inventory.groups[identity.group_name] |= [node.hostname + " ansible_host=" + node.ip]
+
+          inv_row = "#{node.hostname} ansible_host=#{node.ip}"
+          inventory.groups[identity.group_name] |= [inv_row]
           inventory.dump
 
           pid = Process.fork do
