@@ -91,7 +91,7 @@ module Profile
 
     def delete
       File.delete(filepath) if File.exist?(filepath)
-      inventory = Inventory.load(Config.config.cluster_name)
+      inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
       inventory.remove_node(self, Identity.find(identity, Config.config.cluster_type).group_name)
     end
 

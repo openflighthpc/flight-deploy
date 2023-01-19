@@ -59,7 +59,7 @@ module Profile
         printable_names = names.map { |h| "'#{h}'" }
         puts "Applying '#{identity.name}' to #{hosts_term} #{printable_names.join(', ')}"
 
-        inventory = Inventory.load(Config.cluster_name || 'my-cluster')
+        inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
         inventory.groups[identity.group_name] ||= []
         inv_file = inventory.filepath
 

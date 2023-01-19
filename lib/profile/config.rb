@@ -20,10 +20,6 @@ module Profile
         config.cluster_type
       end
 
-      def cluster_name
-        config.cluster_name
-      end
-
       def use_hunter?
         config.use_hunter
       end
