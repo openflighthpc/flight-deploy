@@ -88,7 +88,7 @@ module Profile
             when true
               Node.find(name, include_hunter: true).ip
             when false
-              name
+              nil
             end
 
           node = Node.new(
@@ -99,8 +99,11 @@ module Profile
             ip: ip
           )
 
-
-          inv_row = "#{node.hostname} ansible_host=#{node.ip}"
+          if @hunter
+            inv_row = "#{node.hostname} ansible_host=#{node.ip}"
+          else
+            inv_row = "#{node.hostname}"
+          end
           inventory.groups[identity.group_name] |= [inv_row]
           inventory.dump
 

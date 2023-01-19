@@ -127,7 +127,7 @@ module Profile
     attr_reader :name
     attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label, :ip
 
-    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil, ip: "Unknown")
+    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil, ip: nil)
       @hostname = hostname
       @identity = identity
       @deployment_pid = deployment_pid
