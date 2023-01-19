@@ -95,7 +95,7 @@ module Profile
             hostname: hostname,
             name: name,
             identity: args[1],
-            hunter_label: Node.find(name, include_hunter: true).hunter_label,
+            hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
             ip: ip
           )
 
