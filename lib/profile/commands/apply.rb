@@ -83,14 +83,28 @@ module Profile
               name
             end
 
+          ip =
+            case @hunter
+            when true
+              Node.find(name, include_hunter: true).ip
+            when false
+              nil
+            end
+
           node = Node.new(
             hostname: hostname,
             name: name,
             identity: args[1],
-            hunter_label: Node.find(name, include_hunter: true).hunter_label
+            hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
+            ip: ip
           )
 
-          inventory.groups[identity.group_name] |= [node.hostname]
+          if @hunter
+            inv_row = "#{node.hostname} ansible_host=#{node.ip}"
+          else
+            inv_row = "#{node.hostname}"
+          end
+          inventory.groups[identity.group_name] |= [inv_row]
           inventory.dump
 
           pid = Process.fork do
