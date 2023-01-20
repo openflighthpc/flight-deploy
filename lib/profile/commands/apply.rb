@@ -112,7 +112,7 @@ module Profile
 
             last_exit = cmds.each do |command|
               sub_pid = Process.spawn(
-                env.merge( { "NODE" => node.hostname} ),
+                env.merge( { "NODE" => node.hostname, "HUNTER_HOSTS" => @hunter.to_s} ),
                 "echo PROFILE_COMMAND #{command[:name]}: #{command[:value]}; #{command[:value]}",
                 [:out, :err] => [log_name, "a+"],
               )
