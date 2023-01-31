@@ -20,8 +20,12 @@ module Profile
         # [ force ]
         @hunter = Config.use_hunter?
         
-        names = args[0].split(',')
-
+        strings = args[0].split(',')
+        names = []
+        strings.each do |str|
+          names.append(expand_brackets(str))
+        end
+        
         # If using hunter, check to see if node actually exists
         check_nodes_exist(names) if @hunter
 
@@ -197,6 +201,28 @@ module Profile
           OUT
           raise out
         end
+      end
+      
+      def expand_brackets(str)
+        labels = []
+        contents = str[/\[.*\]/] 
+        if contents.nil?
+          labels = [str]
+        else
+          left = str[/[^\[]*/]
+          right = str[/].*/][1..-1]
+          if contents.match(/^\[[0-9]+-[0-9]+\]$/)
+            nums = contents[1..-2].split("-")
+            (nums.last.to_i - nums.first.to_i + 1).times do |index|
+              cur = (index+nums.first.to_i).to_s
+              label = left + "0" * [(nums.first.length - cur.length), 0].max + cur + right
+              labels.append(label)
+            end
+          else
+            raise "Invalid integer range, ensure any range used is of the form [START-END]"
+          end
+        end
+        labels
       end
     end
   end
