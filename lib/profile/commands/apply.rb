@@ -213,11 +213,10 @@ module Profile
           right = str[/].*/][1..-1]
           if contents.match(/^\[[0-9]+-[0-9]+\]$/)
             nums = contents[1..-2].split("-")
-            (nums.last.to_i - nums.first.to_i + 1).times do |index|
-              cur = (index+nums.first.to_i).to_s
-              label = left + "0" * [(nums.first.length - cur.length), 0].max + cur + right
-              labels.append(label)
             if nums.first.to_i < nums.last.to_i
+              (nums.first..nums.last).each do |index|
+                labels.append(left + index + right)
+              end
             else
               raise "Invalid range, ensure that the end index is greater than the start index"
             end
