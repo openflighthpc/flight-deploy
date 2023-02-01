@@ -219,7 +219,7 @@ module Profile
               labels.append(label)
             end
           else
-            raise "Invalid integer range, ensure any range used is of the form [START-END]"
+            raise "Invalid range, ensure any range used is of the form [START-END]"
           end
         end
         labels
