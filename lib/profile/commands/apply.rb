@@ -217,6 +217,9 @@ module Profile
               cur = (index+nums.first.to_i).to_s
               label = left + "0" * [(nums.first.length - cur.length), 0].max + cur + right
               labels.append(label)
+            if nums.first.to_i < nums.last.to_i
+            else
+              raise "Invalid range, ensure that the end index is greater than the start index"
             end
           else
             raise "Invalid range, ensure any range used is of the form [START-END]"
