@@ -47,54 +47,81 @@ module Profile
         end
         
         # Fetch identity
-        identity = cluster_type.find_identity(args[1])
-        raise "No identity exists with given name" if !identity
-        cmds = identity.commands
+        unless @options.auto
+          identity = cluster_type.find_identity(args[1])
+          raise "No identity exists with given name" if !identity
+          cmds = identity.commands
 
-        #
-        # ERROR CHECKING OVER; GOOD TO START APPLYING
-        #
+          #
+          # ERROR CHECKING OVER; GOOD TO START APPLYING
+          #
 
-        hosts_term = names.length > 1 ? 'hosts' : 'host'
-        printable_names = names.map { |h| "'#{h}'" }
-        puts "Applying '#{identity.name}' to #{hosts_term} #{printable_names.join(', ')}"
+          hosts_term = names.length > 1 ? 'hosts' : 'host'
+          printable_names = names.map { |h| "'#{h}'" }
+          puts "Applying '#{identity.name}' to #{hosts_term} #{printable_names.join(', ')}"
 
-        inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
-        inventory.groups[identity.group_name] ||= []
-        inv_file = inventory.filepath
+          inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
+          inventory.groups[identity.group_name] ||= []
+          inv_file = inventory.filepath
 
-        env = {
-          "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
-          "ANSIBLE_HOST_KEY_CHECKING" => "false",
-          "INVFILE" => inv_file,
-          "RUN_ENV" => cluster_type.run_env
-        }.tap do |e|
-          cluster_type.questions.each do |q|
-            e[q.env] = cluster_type.fetch_answer(q.id).to_s
+          env = {
+            "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
+            "ANSIBLE_HOST_KEY_CHECKING" => "false",
+            "INVFILE" => inv_file,
+            "RUN_ENV" => cluster_type.run_env
+          }.tap do |e|
+            cluster_type.questions.each do |q|
+              e[q.env] = cluster_type.fetch_answer(q.id).to_s
+            end
           end
         end
 
         names.each do |name|
-          hostname =
-            case @hunter
-            when true
-              Node.find(name, include_hunter: true).hostname
-            when false
-              name
+        
+          if @options.auto
+            Node.find(name, include_hunter: true).groups.each do |group|
+              identity = cluster_type.find_identity(group)
+              if identity
+                cmds = identity.commands
+                break
+              end
             end
 
-          ip =
-            case @hunter
-            when true
-              Node.find(name, include_hunter: true).ip
-            when false
-              nil
+            if !identity
+              puts "Skipping '#{name}' as none of its groups match a valid identity type"
+              next
             end
+
+            puts "Applying '#{identity.name}' to host #{name}"
+
+            inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
+            inventory.groups[identity.group_name] ||= []
+            inv_file = inventory.filepath
+
+            env = {
+              "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
+              "ANSIBLE_HOST_KEY_CHECKING" => "false",
+              "INVFILE" => inv_file,
+              "RUN_ENV" => cluster_type.run_env
+            }.tap do |e|
+              cluster_type.questions.each do |q|
+                e[q.env] = cluster_type.fetch_answer(q.id).to_s
+              end
+            end
+          end
+          
+          if @hunter
+            hostname = Node.find(name, include_hunter: true).hostname
+            ip = Node.find(name, include_hunter: true).ip
+          else
+            hostname = name
+            ip = nil
+          end
 
           node = Node.new(
             hostname: hostname,
             name: name,
-            identity: args[1],
+            identity: identity.name,
             hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
             ip: ip
           )
