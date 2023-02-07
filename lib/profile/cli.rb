@@ -53,7 +53,7 @@ EOF
     end
 
     command :apply do |c|
-      cli_syntax(c, ['NODE[,NODE...]', 'IDENTITY'])
+      cli_syntax(c, ['[NODE,NODE...]', '[IDENTITY]'])
       c.summary = "Apply an identity to one or more nodes"
       c.action Commands, :apply
       c.description = <<EOF
