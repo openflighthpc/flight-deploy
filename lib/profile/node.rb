@@ -15,7 +15,8 @@ module Profile
             deployment_pid: node['deployment_pid'],
             exit_status: node['exit_status'],
             name: File.basename(file, '.*'),
-            ip: node['ip']
+            ip: node['ip'],
+            groups: node['groups']
           )
         end
         if include_hunter
@@ -44,8 +45,9 @@ module Profile
         parts = line.split("\t").map { |p| p.empty? ? nil : p }
         new(
           hostname: parts[1],
-          hunter_label: parts[4],
-          ip: parts[2]
+          ip: parts[2],
+          groups: parts[3].split("|"),
+          hunter_label: parts[4]
         )
       end
     end
@@ -56,7 +58,8 @@ module Profile
         'identity' => identity,
         'deployment_pid' => deployment_pid,
         'exit_status' => exit_status,
-        'ip' => ip
+        'ip' => ip,
+        'groups' => groups
       }
     end
 
@@ -125,9 +128,9 @@ module Profile
     end
 
     attr_reader :name
-    attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label, :ip
+    attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label, :ip, :groups
 
-    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil, ip: nil)
+    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil, ip: nil, groups: [])
       @hostname = hostname
       @identity = identity
       @deployment_pid = deployment_pid
@@ -135,6 +138,7 @@ module Profile
       @hunter_label = hunter_label
       @name = name || hunter_label || hostname
       @ip = ip
+      @groups = groups
     end
   end
 end
