@@ -61,6 +61,7 @@ Apply an identity to one or more nodes. To set up multiple nodes,
 enter the nodes' hostnames separated by commas.
 EOF
       c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"
+      c.slop.bool "--auto", "Automatically apply an identity to each given node by matching one of its groups to an identity name"
     end
 
     command :list do |c|

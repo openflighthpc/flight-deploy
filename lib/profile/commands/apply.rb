@@ -16,7 +16,7 @@ module Profile
         # ARGS:
         # [ names, identity ]
         # OPTS:
-        # [ force ]
+        # [ force, auto ]
         @hunter = Config.use_hunter?
         
         names = args[0].split(',')
