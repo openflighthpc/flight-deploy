@@ -18,8 +18,21 @@ module Profile
         # OPTS:
         # [ force, auto ]
         @hunter = Config.use_hunter?
-        
-        names = args[0].split(',')
+
+        if args.to_a.length < 2 && !@options.auto
+          raise "Insufficient arguments for a manual apply"
+        end
+
+        if @options.auto
+          unless @hunter
+            raise "Auto-apply requires use_hunter to be enabled"
+          end
+          if args.empty?
+            names = Node.all(include_hunter: true).map{ |n| n.name }
+          end
+        else
+          names = args[0].split(',')
+        end
 
         # If using hunter, check to see if node actually exists
         check_nodes_exist(names) if @hunter
@@ -79,6 +92,7 @@ module Profile
         names.each do |name|
         
           if @options.auto
+            identity = nil
             Node.find(name, include_hunter: true).groups.each do |group|
               identity = cluster_type.find_identity(group)
               if identity
