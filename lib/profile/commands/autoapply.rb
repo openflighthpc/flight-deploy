@@ -10,22 +10,24 @@ require 'open3'
 
 module Profile
   module Commands
-    class Apply < Command
+    class Autoapply < Command
       include Profile::Outputs
       def run
         # ARGS:
-        # [ names, identity ]
+        # [ names ]
         # OPTS:
         # [ force ]
         @hunter = Config.use_hunter?
+        raise "use_hunter must be enabled to allow use of auto-apply" unless @hunter
 
-        names = args[0].split(',')
+        if args[0]
+          names = args[0].split(',')
+        else
+          names = Node.all(include_hunter: true).map{ |n| n.name }
+        end
 
-        # If using hunter, check to see if node actually exists
-        check_nodes_exist(names) if @hunter
-
-        # Don't let the user apply to a node that already has a profile
-        disallow_existing_nodes(names)
+        # Check to see if nodes actually exist
+        check_nodes_exist(names)
 
         # Fetch cluster type
         cluster_type = Type.find(Config.cluster_type)
@@ -45,27 +47,41 @@ module Profile
           OUT
           raise out
         end
-
-        identity = cluster_type.find_identity(args[1])
-        raise "No identity exists with given name" if !identity
         
-        hosts_term = names.length > 1 ? 'hosts' : 'host'
-        printable_names = names.map { |h| "'#{h}'" }
-        puts "Applying '#{identity.name}' to #{hosts_term} #{printable_names.join(', ')}"
-        
-        names.each do |name|
-          if @hunter
-            node = Node.find(name, include_hunter: true)
-          else
-            node = Node.new(hostname: name)
+        # Organise nodes into 2D priority array
+        priority_sets = []
+        nodes = names.map{ |name| Node.find(name, include_hunter: true) }
+        nodes.each do |node|
+          if @options.force || !existing(names).include?(node.name)
+            identity = node.find_identity(cluster_type)
+            if identity
+              priority_sets[identity.priority] = priority_sets[identity.priority].to_a.append(node)
+              puts "Applying '#{identity.name}' to host '#{node.name}'"
+            else
+              puts "No identity found for node '#{node.name}', skipping"
+            end
           end
-          node.identity = args[1]
-          
-          node.apply_identity(identity, cluster_type)
         end
-
+        
         puts "The application process has begun. Refer to `flight profile list` "\
-             "or `flight profile view` for more details"
+        "or `flight profile view` for more details"
+        
+        # Iterate through each set of same-priority nodes, applying them in parallel
+        pid = Process.fork do
+          priority_sets.each do |set|
+            set.each do |node|
+              identity = node.find_identity(cluster_type)
+              node.apply_identity(identity, cluster_type)
+            end
+            statuses = set.map{ |node| node.status == "complete" }
+            while !statuses.all?
+              if statuses.include?("failed")
+                raise "A node has failed to apply, aborting"
+              end
+              statuses = set.map{ |node| node.status == "complete" }
+            end
+          end
+        end
       end
 
       def smart_downcase(str)
@@ -76,20 +92,11 @@ module Profile
 
       private
 
-      def disallow_existing_nodes(names=[])
-        existing = [].tap do |e|
+      def existing(names)
+        [].tap do |e|
           names.each do |name|
             node = Node.find(name, include_hunter: @hunter)
             e << name if node&.identity
-          end
-        end
-
-        unless existing.empty?
-          existing_string = "The following nodes already have an applied identity: \n#{existing.join("\n")}"
-          if @options.force
-            say_warning existing_string + "\nContinuing..."
-          else
-            raise existing_string
           end
         end
       end
@@ -104,6 +111,7 @@ module Profile
           raise out
         end
       end
+      
     end
   end
 end

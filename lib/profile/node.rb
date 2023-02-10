@@ -126,6 +126,69 @@ module Profile
         'complete'
       end
     end
+    
+    def apply_identity(identity_type, cluster_type)
+      # Assumes use_hunter is true
+      cmds = identity_type.commands
+
+      inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
+      inventory.groups[identity_type.group_name] ||= []
+      inv_file = inventory.filepath
+
+      env = {
+        "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
+        "ANSIBLE_HOST_KEY_CHECKING" => "false",
+        "INVFILE" => inv_file,
+        "RUN_ENV" => cluster_type.run_env
+      }.tap do |e|
+        cluster_type.questions.each do |q|
+          e[q.env] = cluster_type.fetch_answer(q.id).to_s
+        end
+      end
+
+      if Config.use_hunter?
+        inv_row = "#{hostname} ansible_host=#{ip}"
+      else
+        inv_row = "#{hostname}"
+      end
+      inventory.groups[identity_type.group_name] |= [inv_row]
+      inventory.dump
+
+      pid = Process.fork do
+        log_name = "#{Config.log_dir}/#{name}-#{Time.now.to_i}.log"
+
+        last_exit = cmds.each do |command|
+          sub_pid = Process.spawn(
+            env.merge( { "NODE" => hostname} ),
+            "echo PROFILE_COMMAND #{command[:name]}: #{command[:value]}; #{command[:value]}",
+            [:out, :err] => [log_name, "a+"],
+          )
+          Process.wait(sub_pid)
+          exit_status = $?.exitstatus
+
+          if exit_status != 0
+            break exit_status
+          end
+
+          if command == cmds.last && exit_status == 0
+            break exit_status
+          end
+        end
+        update(deployment_pid: nil, exit_status: last_exit)
+      end
+      update(deployment_pid: pid)
+      Process.detach(pid)
+    end
+    
+    def find_identity(cluster_type)
+      groups.each do |group|
+        identity = cluster_type.find_identity(group)
+        if identity
+          return identity
+        end
+      end
+      nil
+    end
 
     attr_reader :name
     attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label, :ip, :groups

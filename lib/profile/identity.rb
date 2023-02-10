@@ -12,7 +12,8 @@ module Profile
               name: identity['name'],
               description: identity['description'],
               group_name: identity['group_name'],
-              commands: identity['commands']
+              commands: identity['commands'],
+              priority: identity['priority']
             )
           rescue NoMethodError
             puts "Error loading #{file}"
@@ -25,9 +26,9 @@ module Profile
       all(cluster_type).find { |ident| ident.name == name }
     end
 
-    attr_reader :name, :commands, :description, :group_name
+    attr_reader :name, :commands, :description, :group_name, :priority
 
-    def initialize(name:, commands:, description:, group_name:)
+    def initialize(name:, commands:, description:, group_name:, priority:)
       @name = name
       @commands = [].tap do |l|
         commands.each do |cmd|
@@ -36,6 +37,7 @@ module Profile
       end
       @description = description
       @group_name = group_name
+      @priority = priority
     end
   end
 end
