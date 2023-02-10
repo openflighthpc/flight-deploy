@@ -59,8 +59,7 @@ module Profile
           else
             node = Node.new(hostname: name)
           end
-          node.identity = args[1]
-          
+
           node.apply_identity(identity, cluster_type)
         end
 

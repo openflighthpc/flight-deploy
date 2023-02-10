@@ -12,7 +12,7 @@ module Profile
         t = Table.new
         t.headers('Node', 'Identity', 'Status')
         Node.all.each do |node|
-          t.row( node.name, node.identity, node.status )
+          t.row( node.name, node.identity_name, node.status )
         end
         t.emit
       end

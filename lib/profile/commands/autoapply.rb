@@ -96,7 +96,7 @@ module Profile
         [].tap do |e|
           names.each do |name|
             node = Node.find(name, include_hunter: @hunter)
-            e << name if node&.identity
+            e << name if node&.identity_name
           end
         end
       end

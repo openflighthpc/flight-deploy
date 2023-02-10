@@ -11,7 +11,7 @@ module Profile
           node = YAML.load_file(file)
           a << new(
             hostname: node['hostname'],
-            identity: node['identity'],
+            identity_name: node['identity_name'],
             deployment_pid: node['deployment_pid'],
             exit_status: node['exit_status'],
             name: File.basename(file, '.*'),
@@ -55,7 +55,7 @@ module Profile
     def to_h
       {
         'hostname' => hostname,
-        'identity' => identity,
+        'identity_name' => identity_name,
         'deployment_pid' => deployment_pid,
         'exit_status' => exit_status,
         'ip' => ip,
@@ -95,7 +95,7 @@ module Profile
     def delete
       File.delete(filepath) if File.exist?(filepath)
       inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
-      inventory.remove_node(self, Identity.find(identity, Config.config.cluster_type).group_name)
+      inventory.remove_node(self, Identity.find(identity_name, Config.config.cluster_type).group_name)
     end
 
     # **kwargs grabs all of the KeyWord ARGuments and puts them into a single
@@ -127,12 +127,12 @@ module Profile
       end
     end
     
-    def apply_identity(identity_type, cluster_type)
-      # Assumes use_hunter is true
-      cmds = identity_type.commands
+    def apply_identity(identity, cluster_type)
+      identity_name = identity.name
+      cmds = identity.commands
 
       inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
-      inventory.groups[identity_type.group_name] ||= []
+      inventory.groups[identity.group_name] ||= []
       inv_file = inventory.filepath
 
       env = {
@@ -151,7 +151,7 @@ module Profile
       else
         inv_row = "#{hostname}"
       end
-      inventory.groups[identity_type.group_name] |= [inv_row]
+      inventory.groups[identity.group_name] |= [inv_row]
       inventory.dump
 
       pid = Process.fork do
@@ -191,11 +191,11 @@ module Profile
     end
 
     attr_reader :name
-    attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label, :ip, :groups
+    attr_accessor :hostname, :identity_name, :deployment_pid, :exit_status, :hunter_label, :ip, :groups
 
-    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil, ip: nil, groups: [])
+    def initialize(hostname:, identity_name: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil, ip: nil, groups: [])
       @hostname = hostname
-      @identity = identity
+      @identity_name = identity_name
       @deployment_pid = deployment_pid
       @exit_status = exit_status
       @hunter_label = hunter_label
