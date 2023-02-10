@@ -1,4 +1,5 @@
 require_relative 'commands/apply'
+require_relative 'commands/autoapply'
 require_relative 'commands/avail'
 require_relative 'commands/clean'
 require_relative 'commands/configure'

@@ -53,7 +53,7 @@ EOF
     end
 
     command :apply do |c|
-      cli_syntax(c, ['[NODE,NODE...]', '[IDENTITY]'])
+      cli_syntax(c, ['NODE[,NODE...]', 'IDENTITY'])
       c.summary = "Apply an identity to one or more nodes"
       c.action Commands, :apply
       c.description = <<EOF
@@ -61,7 +61,19 @@ Apply an identity to one or more nodes. To set up multiple nodes,
 enter the nodes' hostnames separated by commas.
 EOF
       c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"
-      c.slop.bool "--auto", "Automatically apply an identity to each given node by matching one of its groups to an identity name"
+    end
+    
+    command "auto-apply" do |c|
+      cli_syntax(c, ['[NODE,NODE...]'])
+      c.summary = "Automatically apply an identity to each given node by matching one of its groups to an identity name"
+      c.action Commands, :autoapply
+      c.description = <<EOF
+Automatically apply an identity to one or more nodes 
+by matching one of its groups to an identity name. 
+A comma-separated list of nodes may be given as an argument, 
+if not given then will autoapply all nodes.
+EOF
+      c.slop.bool "--force", "Overwrite the identity for nodes that have already been set up"
     end
 
     command :list do |c|
