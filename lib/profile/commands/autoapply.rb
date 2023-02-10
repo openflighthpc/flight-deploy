@@ -71,14 +71,19 @@ module Profile
           priority_sets.each do |set|
             set.each do |node|
               identity = node.find_identity(cluster_type)
+              node.identity_name = identity.name
               node.apply_identity(identity, cluster_type)
             end
-            statuses = set.map{ |node| node.status == "complete" }
-            while !statuses.all?
+            statuses = set.map(&:status)
+            while !statuses.map{ |status| status == "complete"}.all?
               if statuses.include?("failed")
                 raise "A node has failed to apply, aborting"
               end
-              statuses = set.map{ |node| node.status == "complete" }
+              puts statuses.inspect
+              puts statuses.map{ |status| status == "complete"}.inspect
+              puts statuses.map{ |status| status == "complete"}.all?.inspect
+              sleep(5)
+              statuses = set.map(&:status)
             end
           end
         end

@@ -60,6 +60,7 @@ module Profile
             node = Node.new(hostname: name)
           end
 
+          node.identity_name = identity.name
           node.apply_identity(identity, cluster_type)
         end
 
@@ -79,7 +80,7 @@ module Profile
         existing = [].tap do |e|
           names.each do |name|
             node = Node.find(name, include_hunter: @hunter)
-            e << name if node&.identity
+            e << name if node&.identity_name
           end
         end
 
