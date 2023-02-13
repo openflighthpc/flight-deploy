@@ -39,6 +39,10 @@ module Profile
       Node.all.map(&:save)
     end
 
+    def clear_all
+      @all_nodes = nil
+    end
+
     def self.list_hunter_nodes
       result = HunterCLI.list_nodes
       result.split("\n").map do |line|

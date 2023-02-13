@@ -74,16 +74,15 @@ module Profile
               node.identity_name = identity.name
               node.apply_identity(identity, cluster_type)
             end
-            statuses = set.map(&:status)
+            
+            statuses = set.map{ |node| Node.find(node.name).status }
             while !statuses.map{ |status| status == "complete"}.all?
               if statuses.include?("failed")
                 raise "A node has failed to apply, aborting"
               end
-              puts statuses.inspect
-              puts statuses.map{ |status| status == "complete"}.inspect
-              puts statuses.map{ |status| status == "complete"}.all?.inspect
               sleep(5)
-              statuses = set.map(&:status)
+              Node.clear_all
+              statuses = set.map{ |node| Node.find(node.name).status }
             end
           end
         end
