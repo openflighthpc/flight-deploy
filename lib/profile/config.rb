@@ -25,7 +25,7 @@ module Profile
       end
 
       def use_hunter?
-        config.use_hunter
+        config.use_hunter || false
       end
 
       def hunter_command
