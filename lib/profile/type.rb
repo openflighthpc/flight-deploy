@@ -27,7 +27,7 @@ module Profile
                 base_path: dir
               )
             rescue NoMethodError
-              puts "Error loading #{file}"
+              puts "Error loading #{dir}"
             end
           end
         end
