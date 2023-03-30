@@ -10,25 +10,26 @@ module Profile
       @all_types ||= [].tap do |a|
         Config.type_paths.each do |p|
           Dir["#{p}/*/"].each do |dir|
-            begin
-              type = YAML.load_file(File.join(dir, "metadata.yaml"))
-              begin
-                state = YAML.load_file(File.join(dir, "state.yaml"))['prepared']
-              rescue Errno::ENOENT
-                state = false
-              end
+            metadata_file = File.join(dir, "metadata.yaml")
+            next unless File.file?(metadata_file)
+            type = YAML.load_file(metadata_file)
 
-              a << new(
-                id: type['id'],
-                name: type['name'],
-                description: type['description'],
-                questions: type['questions'],
-                prepared: state,
-                base_path: dir
-              )
-            rescue NoMethodError
-              puts "Error loading #{file}"
-            end
+            state_file = File.join(dir, "state.yaml")
+            state = case File.file?(state_file)
+                    when true
+                      state = YAML.load_file(state_file)
+                    when false
+                      false
+                    end
+
+            a << new(
+              id: type['id'],
+              name: type['name'],
+              description: type['description'],
+              questions: type['questions'],
+              prepared: state,
+              base_path: dir
+            )
           end
         end
 
