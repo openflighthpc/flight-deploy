@@ -95,12 +95,6 @@ module Profile
       inventory.remove_node(self, Identity.find(identity, Config.config.cluster_type).group_name)
     end
 
-    # **kwargs grabs all of the KeyWord ARGuments and puts them into a single
-    # hash called `kwargs`. For each of the keys in the hash, if the Node 
-    # has that key as an accessible attribute, set it to the value given for 
-    # that key. `send` is a way to call a method on an object where the method
-    # name is stored as a string. `public_send` is the same thing, but it's 
-    # safer because it cannot call private methods.
     def update(**kwargs)
        kwargs.each do |k, v|
          if respond_to?("#{k}=")

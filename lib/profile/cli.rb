@@ -18,12 +18,7 @@ module Profile
     program :help_paging, false
     default_command :help
 
-    # Block to define methods as class methods,
-    # equivalent to defining a method with `def self.method`
     class << self
-      # Method to uniformly define a command's syntax.
-      # Takes the command and the args string as arguments, and 
-      # sets the command's syntax in the same way every time.
       def cli_syntax(command, args_str = nil)
         command.syntax = [
           PROGRAM_NAME,
