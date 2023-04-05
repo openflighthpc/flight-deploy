@@ -58,6 +58,17 @@ EOF
       c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"
     end
 
+    command :remove do |c|
+      cli_syntax(c, 'NODE[,NODE...]')
+      c.summary = "Remove a node from the cluster"
+      c.action Commands, :remove
+      c.description = <<EOF
+Remove from the cluster a node that has applied to with Profile.
+The type that the cluster is configured to use must have a
+`remove.sh` script available.
+EOF
+    end
+
     command :list do |c|
       cli_syntax(c)
       c.summary = "Display all node information"

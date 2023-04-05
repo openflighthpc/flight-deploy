@@ -32,13 +32,10 @@ module Profile
         data.fetch(:type_paths) || [File.join(root, "etc/types")]
       end
 
-<<<<<<< Updated upstream
-=======
       def log_dir
         data.fetch(:log_dir) || dir_constructor(root, 'var', 'log')
       end
 
->>>>>>> Stashed changes
       def hunter_command
         command = 
           ENV['flight_PROFILE_hunter_command'] ||
@@ -66,10 +63,6 @@ module Profile
 
       def answers_dir
         dir_constructor(root, 'var', 'answers/')
-      end
-
-      def log_dir
-        File.join(root, "log/")
       end
 
       def save_data
