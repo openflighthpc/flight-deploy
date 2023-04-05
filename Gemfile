@@ -7,4 +7,4 @@ gem 'commander-openflighthpc', '~> 2.2.0'
 gem 'tty-table'
 gem 'tty-prompt'
 gem 'shash', '~> 0.0.7'
-
+gem 'xdg', git: 'https://github.com/bkuhlmann/xdg', tag: '3.0.2'

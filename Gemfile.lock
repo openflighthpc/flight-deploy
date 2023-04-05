@@ -1,4 +1,11 @@
 GIT
+  remote: https://github.com/bkuhlmann/xdg
+  revision: 9f3aa51e75d6aec4ec100752f5a2afdeecb4faed
+  tag: 3.0.2
+  specs:
+    xdg (3.0.2)
+
+GIT
   remote: https://github.com/openflighthpc/flight-subprocess.git
   revision: 28cd69e743e15b13b396de4a34e1c5a097d50108
   tag: 0.1.4
@@ -56,6 +63,7 @@ DEPENDENCIES
   shash (~> 0.0.7)
   tty-prompt
   tty-table
+  xdg!
 
 BUNDLED WITH
    2.1.4
