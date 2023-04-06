@@ -3,6 +3,7 @@ require_relative '../config'
 require_relative '../inventory'
 require_relative '../node'
 require_relative '../outputs'
+require_relative '../process_spawner.rb'
 
 require 'logger'
 
@@ -67,7 +68,8 @@ module Profile
           "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
           "INVFILE" => inv_file,
-          "RUN_ENV" => cluster_type.run_env
+          "RUN_ENV" => cluster_type.run_env,
+          "HUNTER_HOSTS" => @hunter.to_s
         }.tap do |e|
           cluster_type.questions.each do |q|
             e[q.env] = cluster_type.fetch_answer(q.id).to_s
@@ -107,28 +109,21 @@ module Profile
           inventory.groups[identity.group_name] |= [inv_row]
           inventory.dump
 
-          pid = Process.fork do
-            log_name = "#{Config.log_dir}/#{node.name}-#{Time.now.to_i}.log"
+          log_name = "#{Config.log_dir}/#{node.name}-#{Time.now.to_i}.log"
 
-            last_exit = cmds.each do |command|
-              sub_pid = Process.spawn(
-                env.merge( { "NODE" => node.hostname, "HUNTER_HOSTS" => @hunter.to_s} ),
-                "echo PROFILE_COMMAND #{command[:name]}: #{command[:value]}; #{command[:value]}",
-                [:out, :err] => [log_name, "a+"],
-              )
-              Process.wait(sub_pid)
-              exit_status = $?.exitstatus
-
-              if exit_status != 0
-                break exit_status
-              end
-
-              if command == cmds.last && exit_status == 0
-                break exit_status
-              end
-            end
+          pid = ProcessSpawner.run(
+            cmds,
+            log_name,
+            env.merge({ "NODE" => node.hostname })
+          ) do |last_exit|
+            # ProcessSpawner yields the exit status of either:
+            # - the first command to fail; or
+            # - the final command
+            # We yield it in a block so that the rest of the `apply`
+            # logic can continue asynchronously.
             node.update(deployment_pid: nil, exit_status: last_exit)
           end
+
           node.update(deployment_pid: pid)
           Process.detach(pid)
         end
