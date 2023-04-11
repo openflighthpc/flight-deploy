@@ -61,6 +61,7 @@ module Profile
         raise 'Attempted to save answers without answering questions' unless @answers
         Config.data.set(:cluster_type, value: cluster_type.id)
         Config.save_data
+        cluster_type.save_answers(@answers)
       end
     end
   end
