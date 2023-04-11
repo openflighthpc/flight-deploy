@@ -5,17 +5,17 @@ module Profile
       def run(commands, log_file: nil, env: {})
         Process.fork do
           with_clean_env do
-            last_exit = commands.each do |command|
+            last_exit = commands.each_with_index do |command, idx|
               sub_pid = Process.spawn(
                 env,
                 "echo PROFILE_COMMAND #{command[:name]}: #{command[:value]}; #{command[:value]}",
-                [:out, :err] => [log_name, "a+"]
+                [:out, :err] => [log_file, "a+"]
               )
 
               Process.wait(sub_pid)
               exit_status = $?.exitstatus
 
-              if exit_status != 0 || command ==  cmd.last
+              if exit_status != 0 || idx == commands.size - 1
                 break exit_status
               end
             end

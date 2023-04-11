@@ -109,12 +109,12 @@ module Profile
           inventory.groups[identity.group_name] |= [inv_row]
           inventory.dump
 
-          log_name = "#{Config.log_dir}/#{node.name}-#{Time.now.to_i}.log"
+          log_file = "#{Config.log_dir}/#{node.name}-#{Time.now.to_i}.log"
 
           pid = ProcessSpawner.run(
             cmds,
-            log_name,
-            env.merge({ "NODE" => node.hostname })
+            log_file: log_file,
+            env: env.merge({ "NODE" => node.hostname })
           ) do |last_exit|
             # ProcessSpawner yields the exit status of either:
             # - the first command to fail; or
