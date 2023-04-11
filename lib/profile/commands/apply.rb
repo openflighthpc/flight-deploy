@@ -112,7 +112,7 @@ module Profile
           log_file = "#{Config.log_dir}/#{node.name}-#{Time.now.to_i}.log"
 
           pid = ProcessSpawner.run(
-            cmds,
+            cmds["apply"],
             log_file: log_file,
             env: env.merge({ "NODE" => node.hostname })
           ) do |last_exit|

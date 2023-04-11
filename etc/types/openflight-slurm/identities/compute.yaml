@@ -1,5 +1,0 @@
-name: compute
-description: Set up as a compute node with Flight Runway and job-running tools
-group_name: nodes
-commands:
-- main: "ansible-playbook -i $INVFILE --limit $NODE --extra-vars=\"cluster_name=$CLUSTERNAME compute_ip_range=$IPRANGE\" $RUN_ENV/openflight-ansible-playbook/main.yml"

@@ -8,7 +8,7 @@ module Profile
             last_exit = commands.each_with_index do |command, idx|
               sub_pid = Process.spawn(
                 env,
-                "echo PROFILE_COMMAND #{command[:name]}: #{command[:value]}; #{command[:value]}",
+                "echo PROFILE_COMMAND #{command["name"]}: #{command["command"]}; #{command["command"]}",
                 [:out, :err] => [log_file, "a+"]
               )
 

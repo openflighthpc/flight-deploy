@@ -15,6 +15,7 @@ module Profile
         else
           raise "Cluster type has not been defined. Pass desired type as an argument or run `profile configure`."
         end
+
         raise "No identities to display" unless cluster_type.identities.any?
 
         t = Table.new

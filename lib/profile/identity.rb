@@ -5,14 +5,17 @@ module Profile
       raise "Cluster type not found" unless cluster_type
 
       @all_identities ||= [].tap do |a|
-        Dir["#{cluster_type.base_path}/identities/*.yaml"].each do |file|
+        glob = File.join(cluster_type.base_path, "identities", "*")
+        Dir.glob(glob).each do |identity|
           begin
-            identity = YAML.load_file(file)
+            metadata = YAML.load_file(File.join(identity, "metadata.yaml"))
+            cmds = YAML.load_file(File.join(identity, "commands.yaml"))
+
             a << new(
-              name: identity['name'],
-              description: identity['description'],
-              group_name: identity['group_name'],
-              commands: identity['commands']
+              name: metadata['name'],
+              description: metadata['description'],
+              group_name: metadata['group_name'],
+              commands: cmds
             )
           rescue NoMethodError
             puts "Error loading #{file}"
@@ -29,11 +32,7 @@ module Profile
 
     def initialize(name:, commands:, description:, group_name:)
       @name = name
-      @commands = [].tap do |l|
-        commands.each do |cmd|
-          l << { name: cmd.keys.first, value: cmd.values.first }
-        end
-      end
+      @commands = commands
       @description = description
       @group_name = group_name
     end

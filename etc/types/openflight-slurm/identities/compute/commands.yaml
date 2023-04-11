@@ -1,0 +1,3 @@
+apply:
+- name: main
+  command: "ansible-playbook -i $INVFILE --limit $NODE --extra-vars=\"cluster_name=$CLUSTERNAME compute_ip_range=$IPRANGE\" $RUN_ENV/openflight-ansible-playbook/main.yml"
