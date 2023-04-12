@@ -109,7 +109,7 @@ module Profile
           inventory.groups[identity.group_name] |= [inv_row]
           inventory.dump
 
-          log_file = "#{Config.log_dir}/#{node.name}-#{Time.now.to_i}.log"
+          log_file = "#{Config.log_dir}/#{node.name}-apply-#{Time.now.to_i}.log"
 
           pid = ProcessSpawner.run(
             cmds["apply"],

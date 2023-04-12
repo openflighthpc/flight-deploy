@@ -62,7 +62,7 @@ module Profile
         nodes = names.map { |n| Node.find(n) }
 
         nodes.each do |node|
-          log_file = "#{Config.log_dir}/#{node.name}-#{Time.now.to_i}.log"
+          log_file = "#{Config.log_dir}/#{node.name}-remove-#{Time.now.to_i}.log"
 
           pid = ProcessSpawner.run(
             node.fetch_identity.commands["remove"],

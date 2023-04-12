@@ -110,7 +110,12 @@ module Profile
       processes = stdout_str.split("\n").map! { |p| p.split(" ") }
       running = processes.any? { |p| p[0].to_i == deployment_pid }
       if running
-        'applying'
+        case log_filepath.split("-")[-2]
+        when 'remove'
+          'removing'
+        when 'apply'
+          'applying'
+        end
       elsif !exit_status || exit_status > 0
         'failed'
       else
