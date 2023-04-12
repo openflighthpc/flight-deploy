@@ -122,6 +122,10 @@ module Profile
       Identity.find(identity, Config.cluster_type)
     end
 
+    def destroy
+      File.delete(filepath)
+    end
+
     attr_reader :name
     attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label, :ip
 

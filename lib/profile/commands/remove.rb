@@ -70,6 +70,7 @@ module Profile
             env: env.merge({ "NODE" => node.hostname })
           ) do |last_exit|
             node.update(deployment_pid: nil, exit_status: last_exit)
+            node.destroy if last_exit == 0
           end
 
           node.update(deployment_pid: pid)
