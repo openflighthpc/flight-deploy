@@ -26,7 +26,7 @@ module Profile
         end
 
         # Check all questions have been answered
-        unless cluster_type.configured
+        unless cluster_type.configured?
           out = <<~OUT
           Cluster type missing required configuration
           Please run `profile configure`
@@ -44,6 +44,9 @@ module Profile
         printable_names = names.map { |h| "'#{h}'" }
         puts "Removing #{hosts_term} #{printable_names.join(', ')}"
 
+        inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
+        inv_file = inventory.filepath
+
         env = {
           "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
@@ -52,7 +55,7 @@ module Profile
           "HUNTER_HOSTS" => @hunter.to_s
         }.tap do |e|
           cluster_type.questions.each do |q|
-            e[q.env] = cluster_Type.fetch_answer(q.id).to_s
+            e[q.env] = cluster_type.fetch_answer(q.id).to_s
           end
         end
 
@@ -62,7 +65,7 @@ module Profile
           log_file = "#{Config.log_dir}/#{node.name}-#{Time.now.to_i}.log"
 
           pid = ProcessSpawner.run(
-            node.identity.commands["remove"],
+            node.fetch_identity.commands["remove"],
             log_file: log_file,
             env: env.merge({ "NODE" => node.hostname })
           ) do |last_exit|
@@ -92,7 +95,7 @@ module Profile
       end
 
       def check_nodes_removable(names)
-        not_removable = names.select { |n| !Node.find(n).identity.removable? }
+        not_removable = names.select { |n| !Node.find(n).fetch_identity.removable? }
         if not_removable.any?
           out = <<~OUT
           The following nodes have an identity that doesn't currently support

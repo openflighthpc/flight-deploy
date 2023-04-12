@@ -92,7 +92,7 @@ module Profile
     def delete
       File.delete(filepath) if File.exist?(filepath)
       inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
-      inventory.remove_node(self, Identity.find(identity, Config.config.cluster_type).group_name)
+      inventory.remove_node(self, Identity.find(identity, Config.cluster_type).group_name)
     end
 
     def update(**kwargs)
@@ -116,6 +116,10 @@ module Profile
       else
         'complete'
       end
+    end
+
+    def fetch_identity
+      Identity.find(identity, Config.cluster_type)
     end
 
     attr_reader :name
