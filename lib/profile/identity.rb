@@ -28,6 +28,10 @@ module Profile
       all(cluster_type).find { |ident| ident.name == name }
     end
 
+    def removable?
+      !!commands['apply']
+    end
+
     attr_reader :name, :commands, :description, :group_name
 
     def initialize(name:, commands:, description:, group_name:)
