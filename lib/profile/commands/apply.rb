@@ -28,6 +28,9 @@ module Profile
         # Don't let the user apply to a node that already has a profile
         disallow_existing_nodes(names)
 
+        # Check that any existing nodes aren't already busy
+        check_nodes_not_busy(names)
+
         # Fetch cluster type
         cluster_type = Type.find(Config.cluster_type)
         raise "Invalid cluster type. Please run `profile configure`" unless cluster_type
@@ -140,16 +143,24 @@ module Profile
 
       private
 
-      def disallow_existing_nodes(names=[])
+      def existing_nodes(names)
         existing = [].tap do |e|
           names.each do |name|
             node = Node.find(name, include_hunter: @hunter)
-            e << name if node&.identity
+            e << node if node&.identity
           end
         end
+      end
+
+      def disallow_existing_nodes(names)
+        existing = existing_nodes(names)
 
         unless existing.empty?
-          existing_string = "The following nodes already have an applied identity: \n#{existing.join("\n")}"
+          existing_string = <<~OUT
+          "The following nodes already have an applied identity:
+          #{existing.map(&:name).join("\n")}"
+          OUT
+
           if @options.force
             say_warning existing_string + "\nContinuing..."
           else
@@ -158,7 +169,20 @@ module Profile
         end
       end
 
-      def check_nodes_exist(names=[])
+      def check_nodes_not_busy(names)
+        existing = existing_nodes(names)
+        busy = existing.select { |node| ['removing', 'applying'].include?(node.status) }
+
+        unless busy.empty?
+          busy_string = <<~OUT
+          The following nodes are currently undergoing another process:
+          #{busy.map(&:name)}
+          OUT
+          raise out
+        end
+      end
+
+      def check_nodes_exist(names)
         not_found = names.select { |n| !Node.find(n, include_hunter: true) }
         if not_found.any?
           out = <<~OUT

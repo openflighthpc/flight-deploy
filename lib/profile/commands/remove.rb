@@ -18,7 +18,7 @@ module Profile
 
         names = args[0].split(',')
 
-        # Fetch cluster  type
+        # Fetch cluster type
         cluster_type = Type.find(Config.cluster_type)
         raise "Invalid cluster type. Please run `profile configure`" unless cluster_type
         unless cluster_type.prepared?
@@ -35,10 +35,15 @@ module Profile
         end
 
         # Check nodes exist
-        check_nodes_exist(names)
+        check_names_exist(names)
+
+        nodes = names.map { |n| Node.find(n) }
 
         # Check nodes can be removed
-        check_nodes_removable(names)
+        check_nodes_removable(nodes)
+
+        # Check nodes can aren't in the middle of doing something else
+        check_nodes_not_busy(nodes)
 
         hosts_term = names.length > 1 ? 'hosts' : 'host'
         printable_names = names.map { |h| "'#{h}'" }
@@ -58,8 +63,6 @@ module Profile
             e[q.env] = cluster_type.fetch_answer(q.id).to_s
           end
         end
-
-        nodes = names.map { |n| Node.find(n) }
 
         nodes.each do |node|
           log_file = "#{Config.log_dir}/#{node.name}-remove-#{Time.now.to_i}.log"
@@ -83,7 +86,7 @@ module Profile
 
       private
 
-      def check_nodes_exist(names)
+      def check_names_exist(names)
         not_found = names.select { |n| !Node.find(n)&.identity }
         if not_found.any?
           out = <<~OUT
@@ -95,13 +98,25 @@ module Profile
         end
       end
 
-      def check_nodes_removable(names)
-        not_removable = names.select { |n| !Node.find(n).fetch_identity.removable? }
+      def check_nodes_removable(nodes)
+        not_removable = nodes.select { |node| !node.fetch_identity.removable? }
         if not_removable.any?
           out = <<~OUT
           The following nodes have an identity that doesn't currently support
           the `profile remove` command:
-          #{not_removable.join("\n")}
+          #{not_removable.map(&:name).join("\n")}
+          OUT
+          raise out
+        end
+      end
+
+      def check_nodes_not_busy(nodes)
+        busy = nodes.select { |node| node.status != 'complete' }
+        if busy.any?
+          out = <<~OUT
+          The following nodes are either in a failed process state
+          or are currently undergoing a remove/apply process:
+          #{busy.map(&:name).join("\n")}
           OUT
           raise out
         end

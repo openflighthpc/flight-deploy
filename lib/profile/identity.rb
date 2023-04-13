@@ -29,7 +29,7 @@ module Profile
     end
 
     def removable?
-      !!commands['apply']
+      !!commands['remove']
     end
 
     attr_reader :name, :commands, :description, :group_name
