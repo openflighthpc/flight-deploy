@@ -1,4 +1,5 @@
 require_relative '../command'
+require_relative '../hunter_cli'
 require_relative '../inventory'
 require_relative '../node'
 
@@ -12,6 +13,7 @@ module Profile
       def run
         # ARGS:
         # [ names ]
+        @hunter = Config.use_hunter?
 
         names = args[0].split(',')
 
