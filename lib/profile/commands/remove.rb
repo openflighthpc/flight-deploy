@@ -73,7 +73,7 @@ module Profile
 
             node.destroy if last_exit == 0
             if @hunter && @options.remove_hunter_entry
-              node.hunter_label && HunterCLI.remove_node(node.hunter_label)
+              HunterCLI.remove_node(node.name)
             end
           end
 
