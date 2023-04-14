@@ -42,7 +42,7 @@ module Profile
         missing_questions = cluster_type.questions.select { |q| !cluster_type.fetch_answer(q.id) }
         if missing_questions.any?
           q_names = missing_questions.map { |q| smart_downcase(q.text.delete(':')) }
-          out = <<~OUT
+          out = <<~OUT.chomp
           The following config keys have not been set:
           #{q_names.join("\n")}
           Please run `profile configure`
@@ -156,9 +156,9 @@ module Profile
         existing = existing_nodes(names)
 
         unless existing.empty?
-          existing_string = <<~OUT
+          existing_string = <<~OUT.chomp
           "The following nodes already have an applied identity:
-          #{existing.map(&:name).join("\n")}"
+          #{existing.map(&:name).join("\n")}
           OUT
 
           if @options.force
@@ -174,9 +174,9 @@ module Profile
         busy = existing.select { |node| ['removing', 'applying'].include?(node.status) }
 
         unless busy.empty?
-          busy_string = <<~OUT
+          busy_string = <<~OUT.chomp
           The following nodes are currently undergoing another process:
-          #{busy.map(&:name)}
+          #{busy.map(&:name).join("\n")}
           OUT
           raise out
         end
@@ -185,7 +185,7 @@ module Profile
       def check_nodes_exist(names)
         not_found = names.select { |n| !Node.find(n, include_hunter: true) }
         if not_found.any?
-          out = <<~OUT
+          out = <<~OUT.chomp
           The following nodes were not found in Profile or Hunter:
           #{not_found.join("\n")}
           OUT

@@ -24,7 +24,7 @@ module Profile
 
         # Check all questions have been answered
         unless cluster_type.configured?
-          out = <<~OUT
+          out = <<~OUT.chomp
           Cluster type missing required configuration
           Please run `profile configure`
           OUT
@@ -90,7 +90,7 @@ module Profile
       def check_names_exist(names)
         not_found = names.select { |n| !Node.find(n)&.identity }
         if not_found.any?
-          out = <<~OUT
+          out = <<~OUT.chomp
           The following nodes either do not exist or
           do not have an identity applied to them:
           #{not_found.join("\n")}
@@ -102,7 +102,7 @@ module Profile
       def check_nodes_removable(nodes)
         not_removable = nodes.select { |node| !node.fetch_identity.removable? }
         if not_removable.any?
-          out = <<~OUT
+          out = <<~OUT.chomp
           The following nodes have an identity that doesn't currently support
           the `profile remove` command:
           #{not_removable.map(&:name).join("\n")}
@@ -114,7 +114,7 @@ module Profile
       def check_nodes_not_busy(nodes)
         busy = nodes.select { |node| node.status != 'complete' }
         if busy.any?
-          out = <<~OUT
+          out = <<~OUT.chomp
           The following nodes are either in a failed process state
           or are currently undergoing a remove/apply process:
           #{busy.map(&:name).join("\n")}
