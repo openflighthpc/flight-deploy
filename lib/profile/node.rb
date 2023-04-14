@@ -71,7 +71,7 @@ module Profile
     def log_filepath
       file_glob = Dir.glob("#{Config.log_dir}/#{name}-*.log")
       raise "No log file exists for this node" if file_glob.empty?
-      @log_filepath ||= file_glob.sort
+      @log_filepath ||= file_glob.sort_by { |l| l.split(/[-.]/)[-2] }
                                  .last
     end
 
