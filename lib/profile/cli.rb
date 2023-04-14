@@ -61,6 +61,7 @@ EOF
     command :remove do |c|
       cli_syntax(c, 'NODE[,NODE...]')
       c.summary = "Remove a node from the cluster"
+      c.slop.bool "--remove-hunter-entry", "Delete the node from Flight Hunter (if applicable)"
       c.action Commands, :remove
       c.description = <<EOF
 Remove from the cluster a node that has applied to with Profile.

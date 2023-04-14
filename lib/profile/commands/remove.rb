@@ -1,8 +1,6 @@
 require_relative '../command'
-require_relative '../config'
 require_relative '../inventory'
 require_relative '../node'
-require_relative '../outputs'
 
 require 'logger'
 
@@ -11,7 +9,6 @@ require 'open3'
 module Profile
   module Commands
     class Remove < Command
-      include Profile::Outputs
       def run
         # ARGS:
         # [ names ]
@@ -73,7 +70,11 @@ module Profile
             env: env.merge({ "NODE" => node.hostname })
           ) do |last_exit|
             node.update(deployment_pid: nil, exit_status: last_exit)
+
             node.destroy if last_exit == 0
+            if @hunter && @options.remove_hunter_entry
+              node.hunter_label && HunterCLI.remove_node(node.hunter_label)
+            end
           end
 
           node.update(deployment_pid: pid)
