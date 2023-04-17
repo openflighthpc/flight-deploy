@@ -74,7 +74,7 @@ module Profile
             node.update(deployment_pid: nil, exit_status: last_exit)
 
             node.destroy if last_exit == 0
-            if @hunter && @options.remove_hunter_entry
+            if last_exit == 0 && @hunter && @options.remove_hunter_entry
               HunterCLI.remove_node(node.name)
             end
           end
