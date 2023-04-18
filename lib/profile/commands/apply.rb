@@ -178,7 +178,13 @@ module Profile
           The following nodes are currently undergoing another process:
           #{busy.map(&:name).join("\n")}
           OUT
-          raise out
+
+          if @options.force
+            say_warning busy_string + "\nContinuing..."
+            busy.each { |n| Process.kill("HUP", n.deployment_pid) }
+          else
+            raise busy_string
+          end
         end
       end
 

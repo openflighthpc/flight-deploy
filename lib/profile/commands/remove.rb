@@ -2,6 +2,7 @@ require_relative '../command'
 require_relative '../hunter_cli'
 require_relative '../inventory'
 require_relative '../node'
+require_relative '../outputs'
 
 require 'logger'
 
@@ -10,9 +11,13 @@ require 'open3'
 module Profile
   module Commands
     class Remove < Command
+      include Profile::Outputs
+
       def run
         # ARGS:
         # [ names ]
+        # OPTS:
+        # [ force ]
         @hunter = Config.use_hunter?
 
         names = args[0].split(',')
@@ -121,7 +126,13 @@ module Profile
           or are currently undergoing a remove/apply process:
           #{busy.map(&:name).join("\n")}
           OUT
-          raise out
+
+          if @options.force
+            say_warning existing_string + "\nContinuing..."
+            busy.each { |n| Process.kill("HUP", n.deployment_pid) }
+          else
+            raise existing_string
+          end
         end
       end
     end
