@@ -1,5 +1,0 @@
-name: login
-description: Set up as a user-accessible login node with Flight Runway and Flight Web Suite
-group_name: head
-commands:
-- main: "ansible-playbook -i $INVFILE --limit $NODE --extra-vars=\"cluster_name=$CLUSTERNAME compute_ip_range=$IPRANGE\" $RUN_ENV/openflight-ansible-playbook/main.yml"

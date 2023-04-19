@@ -18,12 +18,7 @@ module Profile
     program :help_paging, false
     default_command :help
 
-    # Block to define methods as class methods,
-    # equivalent to defining a method with `def self.method`
     class << self
-      # Method to uniformly define a command's syntax.
-      # Takes the command and the args string as arguments, and 
-      # sets the command's syntax in the same way every time.
       def cli_syntax(command, args_str = nil)
         command.syntax = [
           PROGRAM_NAME,
@@ -61,6 +56,19 @@ Apply an identity to one or more nodes. To set up multiple nodes,
 enter the nodes' hostnames separated by commas.
 EOF
       c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"
+    end
+
+    command :remove do |c|
+      cli_syntax(c, 'NODE[,NODE...]')
+      c.summary = "Remove a node from the cluster"
+      c.slop.bool "--remove-hunter-entry", "Delete the node from Flight Hunter (if applicable)"
+      c.slop.bool "--force", "Bypass restrictions on removing a node"
+      c.action Commands, :remove
+      c.description = <<EOF
+Remove from the cluster a node that has applied to with Profile.
+The type that the cluster is configured to use must have a
+`remove.sh` script available.
+EOF
     end
 
     command :list do |c|

@@ -85,6 +85,10 @@ module Profile
       @questions.map { |q| q.to_shash }
     end
 
+    def configured?
+      questions.all? { |q| fetch_answer(q.id) }
+    end
+
     def prepare
       raise "No script found for preparing the #{name} cluster type" unless File.exists?(prepare_command)
       log_name = "#{Config.log_dir}/#{id}-#{Time.now.to_i}.log"

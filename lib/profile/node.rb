@@ -71,7 +71,7 @@ module Profile
     def log_filepath
       file_glob = Dir.glob("#{Config.log_dir}/#{name}-*.log")
       raise "No log file exists for this node" if file_glob.empty?
-      @log_filepath ||= file_glob.sort
+      @log_filepath ||= file_glob.sort_by { |l| l.split(/[-.]/)[-2] }
                                  .last
     end
 
@@ -92,15 +92,9 @@ module Profile
     def delete
       File.delete(filepath) if File.exist?(filepath)
       inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
-      inventory.remove_node(self, Identity.find(identity, Config.config.cluster_type).group_name)
+      inventory.remove_node(self, Identity.find(identity, Config.cluster_type).group_name)
     end
 
-    # **kwargs grabs all of the KeyWord ARGuments and puts them into a single
-    # hash called `kwargs`. For each of the keys in the hash, if the Node 
-    # has that key as an accessible attribute, set it to the value given for 
-    # that key. `send` is a way to call a method on an object where the method
-    # name is stored as a string. `public_send` is the same thing, but it's 
-    # safer because it cannot call private methods.
     def update(**kwargs)
        kwargs.each do |k, v|
          if respond_to?("#{k}=")
@@ -116,12 +110,25 @@ module Profile
       processes = stdout_str.split("\n").map! { |p| p.split(" ") }
       running = processes.any? { |p| p[0].to_i == deployment_pid }
       if running
-        'applying'
+        case log_filepath.split("-")[-2]
+        when 'remove'
+          'removing'
+        when 'apply'
+          'applying'
+        end
       elsif !exit_status || exit_status > 0
         'failed'
       else
         'complete'
       end
+    end
+
+    def fetch_identity
+      Identity.find(identity, Config.cluster_type)
+    end
+
+    def destroy
+      File.delete(filepath)
     end
 
     attr_reader :name
