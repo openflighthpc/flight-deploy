@@ -121,7 +121,7 @@ module Profile
       def check_nodes_not_busy(nodes)
         busy = nodes.select { |node| node.status != 'complete' }
         if busy.any?
-          out = <<~OUT.chomp
+          existing_string = <<~OUT.chomp
           The following nodes are either in a failed process state
           or are currently undergoing a remove/apply process:
           #{busy.map(&:name).join("\n")}
