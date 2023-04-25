@@ -25,5 +25,5 @@
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
 module Profile
-  VERSION = '0.2.0-rc2'
+  VERSION = '0.2.0-rc3'
 end
