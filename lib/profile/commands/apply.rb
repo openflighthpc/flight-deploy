@@ -127,8 +127,7 @@ module Profile
             node.update(deployment_pid: nil, exit_status: last_exit)
           end
 
-          node.update(deployment_pid: pid)
-          Process.detach(pid)
+          node.update(deployment_pid: pid.to_i)
         end
 
         puts "The application process has begun. Refer to `flight profile list` "\
