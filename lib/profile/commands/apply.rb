@@ -127,8 +127,7 @@ module Profile
             node.update(deployment_pid: nil, exit_status: last_exit)
           end
 
-          node.update(deployment_pid: pid)
-          Process.detach(pid)
+          node.update(deployment_pid: pid.to_i)
         end
 
         puts "The application process has begun. Refer to `flight profile list` "\
@@ -181,7 +180,8 @@ module Profile
 
           if @options.force
             say_warning busy_string + "\nContinuing..."
-            busy.each { |n| Process.kill("HUP", n.deployment_pid) }
+            pids = busy.map(&:deployment_pid).compact
+            pids.each { |pid| Process.kill("HUP", pid) }
           else
             raise busy_string
           end

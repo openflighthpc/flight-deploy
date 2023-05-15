@@ -1,9 +1,11 @@
 module Profile
   class ProcessSpawner
     class << self
-
       def run(commands, log_file: nil, env: {})
+        r, w = IO.pipe
         Process.fork do
+          Process.daemon
+          w.puts Process.pid
           with_clean_env do
             last_exit = commands.each_with_index do |command, idx|
               sub_pid = Process.spawn(
@@ -23,6 +25,8 @@ module Profile
             yield last_exit if block_given?
           end
         end
+
+        r.gets.chomp
       end
       
       private

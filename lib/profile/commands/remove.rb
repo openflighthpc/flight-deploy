@@ -129,7 +129,8 @@ module Profile
 
           if @options.force
             say_warning existing_string + "\nContinuing..."
-            busy.each { |n| Process.kill("HUP", n.deployment_pid) }
+            pids = busy.map(&:deployment_pid).compact
+            pids.each { |pid| Process.kill("HUP", pid) }
           else
             raise existing_string
           end
