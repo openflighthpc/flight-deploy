@@ -23,7 +23,7 @@ module Profile
         strings = args[0].split(',')
         names = []
         strings.each do |str|
-          names.append(expand_brackets(str))
+          names.append(expand_brackets(str)).flatten
         end
         
         # If using hunter, check to see if node actually exists
