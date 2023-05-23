@@ -20,7 +20,13 @@ module Profile
         # [ force ]
         @hunter = Config.use_hunter?
 
-        names = args[0].split(',')
+        strings = args[0].split(',')
+        names = []
+        strings.each do |str|
+          names.append(expand_brackets(str))
+        end
+
+        names.flatten!
 
         # Fetch cluster type
         cluster_type = Type.find(Config.cluster_type)
@@ -134,6 +140,28 @@ module Profile
           else
             raise existing_string
           end
+        end
+      end
+
+      def expand_brackets(str)
+        contents = str[/\[.*\]/]
+        return [str] if contents.nil?
+
+        left = str[/[^\[]*/]
+        right = str[/].*/][1..-1]
+
+        unless contents.match(/^\[[0-9]+-[0-9]+\]$/)
+          raise "Invalid range, ensure any range used is of the form [START-END]"
+        end
+
+        nums = contents[1..-2].split("-")
+
+        unless nums.first.to_i < nums.last.to_i
+          raise "Invalid range, ensure that the end index is greater than the start index"
+        end
+
+        (nums.first..nums.last).map do |index|
+          left + index + right
         end
       end
     end
