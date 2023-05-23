@@ -74,6 +74,7 @@ module Profile
           pid = ProcessSpawner.run(
             node.fetch_identity.commands["remove"],
             log_file: log_file,
+            wait: @options.wait,
             env: env.merge({ "NODE" => node.hostname })
           ) do |last_exit|
             node.update(deployment_pid: nil, exit_status: last_exit)
@@ -88,8 +89,16 @@ module Profile
           Process.detach(pid)
         end
 
-        puts "The removal process has begun. Refer to `flight profile list` "\
-             "or `flight profile view` for more details"
+        unless @options.wait
+          puts "The removal process has begun. Refer to `flight profile list` "\
+               "or `flight profile view` for more details"
+        end
+
+        # If `--wait` isn't included, the subprocesses are daemonised, and Ruby
+        # will have no child processes to wait for, so this call ends
+        # immediately. If `--wait` is included, the subprocesses aren't
+        # daemonised, so the terminal holds IO until the process is finished.
+        Process.waitall
       end
 
       private

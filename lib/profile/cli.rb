@@ -55,6 +55,7 @@ EOF
 Apply an identity to one or more nodes. To set up multiple nodes,
 enter the nodes' hostnames separated by commas.
 EOF
+      c.slop.bool '--wait', "Don't daemonise process"
       c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"
     end
 
@@ -63,6 +64,7 @@ EOF
       c.summary = "Remove a node from the cluster"
       c.slop.bool "--remove-hunter-entry", "Delete the node from Flight Hunter (if applicable)"
       c.slop.bool "--force", "Bypass restrictions on removing a node"
+      c.slop.bool '--wait', "Don't daemonise process"
       c.action Commands, :remove
       c.description = <<EOF
 Remove from the cluster a node that has applied to with Profile.

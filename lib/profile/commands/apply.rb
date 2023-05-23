@@ -117,6 +117,7 @@ module Profile
           pid = ProcessSpawner.run(
             cmds["apply"],
             log_file: log_file,
+            wait: @options.wait,
             env: env.merge({ "NODE" => node.hostname })
           ) do |last_exit|
             # ProcessSpawner yields the exit status of either:
@@ -130,8 +131,16 @@ module Profile
           node.update(deployment_pid: pid.to_i)
         end
 
-        puts "The application process has begun. Refer to `flight profile list` "\
-             "or `flight profile view` for more details"
+        unless @options.wait
+          puts "The application process has begun. Refer to `flight profile list` "\
+               "or `flight profile view` for more details"
+        end
+
+        # If `--wait` isn't included, the subprocesses are daemonised, and Ruby
+        # will have no child processes to wait for, so this call ends
+        # immediately. If `--wait` is included, the subprocesses aren't
+        # daemonised, so the terminal holds IO until the process is finished.
+        Process.waitall
       end
 
       def smart_downcase(str)

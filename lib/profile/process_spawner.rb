@@ -1,10 +1,10 @@
 module Profile
   class ProcessSpawner
     class << self
-      def run(commands, log_file: nil, env: {})
+      def run(commands, log_file: nil, wait: false, env: {})
         r, w = IO.pipe
         Process.fork do
-          Process.daemon
+          Process.daemon unless wait
           w.puts Process.pid
           with_clean_env do
             last_exit = commands.each_with_index do |command, idx|
