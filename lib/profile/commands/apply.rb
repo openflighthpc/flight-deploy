@@ -27,7 +27,7 @@ module Profile
         end
 
         names.flatten!
-        
+
         # If using hunter, check to see if node actually exists
         check_nodes_exist(names) if @hunter
 
@@ -204,9 +204,9 @@ module Profile
           raise out
         end
       end
-      
+
       def expand_brackets(str)
-        contents = str[/\[.*\]/] 
+        contents = str[/\[.*\]/]
         return [str] if contents.nil?
 
         left = str[/[^\[]*/]
