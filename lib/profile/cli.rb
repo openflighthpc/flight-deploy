@@ -54,6 +54,11 @@ EOF
       c.description = <<EOF
 Apply an identity to one or more nodes. To set up multiple nodes,
 enter the nodes' hostnames separated by commas.
+
+You may use a genders-style range syntax for the list of nodes.
+For example, `node[01-05] compute` will apply the `compute` identity to nodes
+`node01`, `node02`, etc., through to `node05`. Any zero-padding used in the
+lower bound is persisted across names in the range.
 EOF
       c.slop.bool '--wait', "Don't daemonise process"
       c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"
@@ -70,6 +75,11 @@ EOF
 Remove from the cluster a node that has applied to with Profile.
 The type that the cluster is configured to use must have a
 `remove.sh` script available.
+
+You may use a genders-style range syntax for the list of nodes.
+For example, `node[01-05]` will run the `remove` action for nodes `node01`,
+`node02`, etc., through to `node05`. Any zero-padding used in the lower bound is
+persisted across names in the range.
 EOF
     end
 
