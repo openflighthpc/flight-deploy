@@ -34,11 +34,10 @@ module Profile
         @answers = prompt.collect do
           type.questions.each do |question|
             key(question.id).ask(question.text) do |q|
-              if type.fetch_answer(question.id)
-                q.default type.fetch_answer(question.id)
-              elsif question.default
-                q.default question.default
-              end
+              prefill = type.fetch_answer(question.id) ||
+                        (`#{question.default_smart}`.chomp unless question.default_smart.nil?) ||
+                        question.default
+              q.default prefill
               q.required question.validation.required
               if question.validation.to_h.key?(:format)
                 q.validate Regexp.new(question.validation.format)
