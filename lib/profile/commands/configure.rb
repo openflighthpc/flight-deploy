@@ -71,7 +71,7 @@ module Profile
       end
 
       def cluster_type
-        @type ||= Type.find( prompt.select('Cluster type: ', Type.all.map { |t| t.name }) )
+        @type ||= Type.find( Config.cluster_type || prompt.select('Cluster type: ', Type.all.map { |t| t.name }) )
       end
 
       def save_answers
