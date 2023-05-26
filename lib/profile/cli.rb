@@ -109,7 +109,7 @@ EOF
     end
 
     command :prepare do |c|
-      cli_syntax(c, 'TYPE')
+      cli_syntax(c, '[TYPE]')
       c.summary = "Prepare dependencies for cluster type"
       c.action Commands, :prepare
       c.description =  <<EOF
