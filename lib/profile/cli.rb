@@ -127,6 +127,7 @@ EOF
       c.action Commands, :configure
       c.description = "Set the cluster name and the IP range of your cluster nodes as an IPv4 CIDR block."
       c.slop.bool "--show", "Show the current configuration details."
+      c.slop.string "--answers", "Specify answers by JSON string instead of using the prompt."
     end
 
     command :view do |c|
