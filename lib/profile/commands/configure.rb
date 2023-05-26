@@ -31,7 +31,7 @@ module Profile
       def ask_questions
         raise "No valid cluster types available" if !Type.all.any?
         type = cluster_type
-        smart_log = Logger.new(File.join(Config.log_dir,'configure'))
+        smart_log = Logger.new(File.join(Config.log_dir,'configure.log'))
         @answers = prompt.collect do
           type.questions.each do |question|
             key(question.id).ask(question.text) do |q|
