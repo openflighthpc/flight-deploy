@@ -8,6 +8,10 @@ module Profile
   module Commands
     class Configure < Command
       def run
+        if @options.answers
+          @answers = JSON.load(@options.answers)
+        end
+
         if @options.show
           display_details
         else
@@ -32,8 +36,8 @@ module Profile
       def ask_questions
         raise "No valid cluster types available" if !Type.all.any?
         type = cluster_type
+        raise "Valid cluster type not provided" if !type
         if @options.answers
-          @answers = JSON.load(@options.answers)
           given = @answers.keys
           required = @type.questions.each.map(&:id)
           if !(required - given).empty?
@@ -83,7 +87,16 @@ module Profile
       end
 
       def cluster_type
-        @type ||= Type.find( Config.cluster_type || prompt.select('Cluster type: ', Type.all.map { |t| t.name }) )
+        return @type if @type
+        if @options.answers
+          if @answers.key?("cluster_type")
+            @type ||= Type.find(@answers.delete("cluster_type"))
+          else
+            @type ||= Type.find(Config.cluster_type)
+          end
+        else
+          @type ||= Type.find( Config.cluster_type || prompt.select('Cluster type: ', Type.all.map { |t| t.name }) )
+        end
       end
 
       def save_answers
