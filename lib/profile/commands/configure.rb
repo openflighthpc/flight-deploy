@@ -31,14 +31,31 @@ module Profile
       def ask_questions
         raise "No valid cluster types available" if !Type.all.any?
         type = cluster_type
+        smart_log = Logger.new(File.join(Config.log_dir,'configure.log'))
         @answers = prompt.collect do
           type.questions.each do |question|
             key(question.id).ask(question.text) do |q|
-              if type.fetch_answer(question.id)
-                q.default type.fetch_answer(question.id)
-              elsif question.default
-                q.default question.default
+
+              prefill = type.fetch_answer(question.id)
+              if question.default_smart && prefill.nil?
+                process = Flight::Subprocess::Local.new(
+                  env: {},
+                  logger: smart_log,
+                  timeout: 5,
+                )
+                result = process.run(question.default_smart, nil)
+                output = result.stdout.chomp
+                if !result.success?
+                  smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr}")
+                elsif output.match(Regexp.new(question.validation.format))
+                  prefill ||= output
+                else
+                  smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
+                end
               end
+              prefill ||= question.default
+              q.default prefill
+
               q.required question.validation.required
               if question.validation.to_h.key?(:format)
                 q.validate Regexp.new(question.validation.format)
