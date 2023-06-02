@@ -37,7 +37,7 @@ module Profile
             key(question.id).ask(question.text) do |q|
 
               prefill = type.fetch_answer(question.id)
-              if question.default_smart
+              if question.default_smart && prefill.nil?
                 process = Flight::Subprocess::Local.new(
                   env: {},
                   logger: smart_log,
