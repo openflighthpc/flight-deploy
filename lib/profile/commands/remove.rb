@@ -92,7 +92,6 @@ module Profile
           end
 
           node.update(deployment_pid: pid)
-          Process.detach(pid)
         end
 
         unless @options.wait
