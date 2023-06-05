@@ -96,16 +96,11 @@ module Profile
       end
 
       def cluster_type
-        return @type if @type
-        if @options.answers
-          if @answers.key?("cluster_type")
-            @type ||= Type.find(@answers.delete("cluster_type"))
-          else
-            @type ||= Type.find(Config.cluster_type)
-          end
-        else
-          @type ||= Type.find( Config.cluster_type || prompt.select('Cluster type: ', Type.all.map { |t| t.name }) )
-        end
+        @type ||= if @options.answers
+                    Type.find(@answers.delete("cluster_type") || Config.cluster_type)
+                  else
+                    Type.find( Config.cluster_type || prompt.select('Cluster type: ', Type.all.map { |t| t.name }) )
+                  end
       end
 
       def save_answers
