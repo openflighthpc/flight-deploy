@@ -11,9 +11,20 @@ module Profile
       def run
         @name = args[0]
         raise "Node '#{@name}' not found" unless node
-        log = File.read(node.log_file)
-        commands = log.split(/(?=PROFILE_COMMAND)/)
-        commands.each { |cmd| puts command_structure(cmd) }
+
+        if @options.watch
+          begin
+            `tput smcup`
+            loop do
+              display_all
+              sleep(0.5)
+            end
+          rescue Interrupt
+            `tput rmcup`
+          end
+        else
+          display_all
+        end
       end
 
       def command_structure(command)
@@ -33,6 +44,12 @@ Status:
     #{node.status.upcase}
 
 HEREDOC
+      end
+
+      def display_all
+        log = File.read(node.log_file)
+        commands = log.split(/(?=PROFILE_COMMAND)/)
+        commands.each { |cmd| puts command_structure(cmd) }
       end
 
       def node
