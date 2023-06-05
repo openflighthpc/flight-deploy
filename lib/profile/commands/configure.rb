@@ -9,7 +9,7 @@ module Profile
     class Configure < Command
       def run
         if @options.answers
-          @answers = JSON.load(@options.answers)
+          use_cli_options if @options.answers
         end
 
         if @options.show
@@ -21,6 +21,15 @@ module Profile
       end
 
       private
+
+      def use_cli_options
+        @answers = JSON.load(@options.answers)
+      rescue JSON::ParserError
+        raise <<~ERROR.chomp
+        Error parsing answers JSON:
+        #{$!.message}
+        ERROR
+      end
 
       def display_details
         raise "Cluster has not yet been configured - please run `configure`" unless Config.cluster_type
