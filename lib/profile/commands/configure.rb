@@ -108,11 +108,19 @@ module Profile
       end
 
       def cluster_type
-        @type ||= Type.find(
-          cli_answers&.delete('cluster_type'), Config.cluster_type
-        ) || Type.find(
-          prompt.select('Cluster type: ', Type.all.map { |t| t.name })
-        )
+        @type ||=
+          if @options.reset_type && !@options.answers
+            Type.find(ask_for_cluster_type)
+          else
+            Type.find(
+              cli_answers&.delete('cluster_type'),
+              Config.cluster_type
+            ) || Type.find(ask_for_cluster_type)
+          end
+      end
+
+      def ask_for_cluster_type
+        prompt.select('Cluster type: ', Type.all.map { |t| t.name })
       end
     end
   end

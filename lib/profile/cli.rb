@@ -119,6 +119,7 @@ Specify a cluster type by passing the type's ID as a parameter.
 If a cluster type is not given, the currently configured type
 will be used. A type cannot be used until it has been prepared.
 EOF
+      c.slop.bool "--reset-type", "Select a different type to that given in config"
     end
 
     command :configure do |c|
@@ -128,6 +129,7 @@ EOF
       c.description = "Set the cluster name and the IP range of your cluster nodes as an IPv4 CIDR block."
       c.slop.bool "--show", "Show the current configuration details."
       c.slop.string "--answers", "Specify answers by JSON string instead of using the prompt."
+      c.slop.bool "--reset-type", "Select a different type to that given in config"
     end
 
     command :view do |c|
