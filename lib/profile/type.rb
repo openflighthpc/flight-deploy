@@ -42,8 +42,12 @@ module Profile
       end.sort_by { |n| n.name }
     end
 
-    def self.find(name)
+    def self.[](name)
       all.find { |type| type.name == name || type.id == name }
+    end
+
+    def self.find(*names)
+      self[names.first { |name| self[name] }]
     end
 
     def fetch_answer(id)
