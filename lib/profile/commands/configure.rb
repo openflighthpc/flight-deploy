@@ -8,9 +8,7 @@ module Profile
   module Commands
     class Configure < Command
       def run
-        if @options.answers
-          use_cli_options if @options.answers
-        end
+        use_cli_options if @options.answers
 
         if @options.show
           display_details
