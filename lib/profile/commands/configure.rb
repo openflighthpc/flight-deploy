@@ -8,25 +8,68 @@ module Profile
   module Commands
     class Configure < Command
       def run
-        use_cli_options if @options.answers
-
         if @options.show
           display_details
         else
-          ask_questions
-          save_answers
+          raise "No valid cluster type given to configure" unless cluster_type
+          answers = case @options.answers.nil?
+                    when true
+                      ask_questions
+                    when false
+                      use_cli_answers
+                    end
+          save_answers(answers)
         end
       end
 
       private
 
-      def use_cli_options
-        @answers = JSON.load(@options.answers)
-      rescue JSON::ParserError
-        raise <<~ERROR.chomp
-        Error parsing answers JSON:
-        #{$!.message}
-        ERROR
+      def use_cli_answers
+        cli_answers.tap do |a|
+          given = a&.keys || []
+          required = cluster_type.questions.each.map(&:id)
+          if !(required - given).empty?
+            raise "The following questions were not answered by the JSON data: #{(required - given).join(", ")}"
+          elsif !(given - required).empty?
+            raise "The following given answers are not recognised by the cluster type: #{(given - required).join(", ")}"
+          end
+        end
+      end
+
+      def ask_questions
+        type = cluster_type
+
+        prompt.collect do
+          type.questions.each do |question|
+            key(question.id).ask(question.text) do |q|
+              prefill = type.fetch_answer(question.id)
+              if question.default_smart && prefill.nil?
+                process = Flight::Subprocess::Local.new(
+                  env: {},
+                  logger: smart_log,
+                  timeout: 5,
+                )
+                result = process.run(question.default_smart, nil)
+                output = result.stdout.chomp
+                if !result.success?
+                  smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr}")
+                elsif output.match(Regexp.new(question.validation.format))
+                  prefill ||= output
+                else
+                  smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
+                end
+              end
+              prefill ||= question.default
+              q.default prefill
+
+              q.required question.validation.required
+              if question.validation.to_h.key?(:format)
+                q.validate Regexp.new(question.validation.format)
+                q.messages[:valid?] = question.validation.message
+              end
+            end
+          end
+        end
       end
 
       def display_details
@@ -40,72 +83,36 @@ module Profile
         end
       end
 
-      def ask_questions
-        raise "No valid cluster types available" if !Type.all.any?
-        type = cluster_type
-        raise "Valid cluster type not provided" if !type
-        if @options.answers
-          given = @answers.keys
-          required = @type.questions.each.map(&:id)
-          if !(required - given).empty?
-            raise "The following questions were not answered by the JSON data: #{(required - given).join(", ")}"
-          elsif !(given - required).empty?
-            raise "The following given answers are not recognised by the cluster type: #{(given - required).join(", ")}"
-          end
-        else
-          smart_log = Logger.new(File.join(Config.log_dir,'configure.log'))
-          @answers = prompt.collect do
-            type.questions.each do |question|
-              key(question.id).ask(question.text) do |q|
-
-                prefill = type.fetch_answer(question.id)
-                if question.default_smart && prefill.nil?
-                  process = Flight::Subprocess::Local.new(
-                    env: {},
-                    logger: smart_log,
-                    timeout: 5,
-                  )
-                  result = process.run(question.default_smart, nil)
-                  output = result.stdout.chomp
-                  if !result.success?
-                    smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr}")
-                  elsif output.match(Regexp.new(question.validation.format))
-                    prefill ||= output
-                  else
-                    smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
-                  end
-                end
-                prefill ||= question.default
-                q.default prefill
-
-                q.required question.validation.required
-                if question.validation.to_h.key?(:format)
-                  q.validate Regexp.new(question.validation.format)
-                  q.messages[:valid?] = question.validation.message
-                end
-              end
-            end
-          end
-        end
+      def save_answers(answers)
+        Config.data.set(:cluster_type, value: cluster_type.id)
+        Config.save_data
+        cluster_type.save_answers(answers)
       end
 
       def prompt
         @prompt ||= TTY::Prompt.new(help_color: :yellow)
       end
 
-      def cluster_type
-        @type ||= if @options.answers
-                    Type.find(@answers.delete("cluster_type") || Config.cluster_type)
-                  else
-                    Type.find( Config.cluster_type || prompt.select('Cluster type: ', Type.all.map { |t| t.name }) )
-                  end
+      def smart_log
+        @smart_log ||= Logger.new(File.join(Config.log_dir, 'configure.log'))
       end
 
-      def save_answers
-        raise 'Attempted to save answers without answering questions' unless @answers
-        Config.data.set(:cluster_type, value: cluster_type.id)
-        Config.save_data
-        cluster_type.save_answers(@answers)
+      def cli_answers
+        return nil unless @options.answers
+        @cli_answers ||= JSON.load(@options.answers)
+      rescue JSON::ParserError
+        raise <<~ERROR.chomp
+        Error parsing answers JSON:
+        #{$!.message}
+        ERROR
+      end
+
+      def cluster_type
+        @type ||= Type.find(
+          cli_answers&.delete('cluster_type'), Config.cluster_type
+        ) || Type.find(
+          prompt.select('Cluster type: ', Type.all.map { |t| t.name })
+        )
       end
     end
   end
