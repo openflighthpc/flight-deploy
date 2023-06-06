@@ -47,7 +47,7 @@ module Profile
     end
 
     def self.find(*names)
-      self[names.first { |name| self[name] }]
+      self[names.compact.first { |name| self[name] }]
     end
 
     def fetch_answer(id)

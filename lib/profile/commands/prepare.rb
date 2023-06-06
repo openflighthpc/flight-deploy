@@ -6,8 +6,14 @@ module Profile
       def run
         # ARGS:
         # [ type_id ]
+        # OPTS:
+        # [ reset_type ]
 
-        cluster_type = Type.find(args[0]) || Type.find(Config.cluster_type)
+        if @options.reset_type
+          cluster_type = Type.find(prompt.select('Cluster type: ', Type.all.map { |t| t.name }))
+        else
+          cluster_type = Type.find(args[0]) || Type.find(Config.cluster_type)
+        end
         raise "Cluster type not found" unless cluster_type
 
         raise "Cluster type is already prepared." if cluster_type.prepared?
