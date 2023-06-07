@@ -11,15 +11,43 @@ module Profile
       def run
         @name = args[0]
         raise "Node '#{@name}' not found" unless node
+
+        if @options.watch
+          in_clean_window do
+            loop do
+              height = `tput lines`.chomp.to_i
+              print "\r\e[#{height}A"
+              system("clear")
+              puts output.lines.pop(height)
+              sleep(0.5)
+            end
+          end
+        else
+          puts output
+        end
+      end
+
+      def output
         log = File.read(node.log_file)
         commands = log.split(/(?=PROFILE_COMMAND)/)
-        commands.each { |cmd| puts command_structure(cmd) }
+        "".tap do |output|
+          commands.each { |cmd| output << command_structure(cmd) + "\n" }
+        end
+      end
+      
+      def in_clean_window
+        system "tput smcup"
+        begin
+          yield
+        rescue Interrupt
+          system "tput rmcup"
+        end
       end
 
       def command_structure(command)
         header = command.split("\n").first.sub /^PROFILE_COMMAND .*: /, ''
         cmd_name = command[/(?<=PROFILE_COMMAND ).*?(?=:)/]
-        puts <<HEREDOC
+        <<HEREDOC
 Command:
     #{cmd_name}
 
