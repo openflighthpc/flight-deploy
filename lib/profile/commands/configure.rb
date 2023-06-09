@@ -109,13 +109,21 @@ module Profile
 
       def cluster_type
         @type ||=
-          if @options.reset_type && !@options.answers
-            Type.find(ask_for_cluster_type)
+          if @options.answers
+            if @options.reset_type
+              Type.find(cli_answers&.delete('cluster_type'))
+            else
+              Type.find(
+                cli_answers&.delete('cluster_type'),
+                Config.cluster_type
+              )
+            end
           else
-            Type.find(
-              cli_answers&.delete('cluster_type'),
-              Config.cluster_type
-            ) || Type.find(ask_for_cluster_type)
+            if @options.reset_type
+              Type.find(ask_for_cluster_type)
+            else
+              Type.find(Config.cluster_type || ask_for_cluster_type)
+            end
           end
       end
 
