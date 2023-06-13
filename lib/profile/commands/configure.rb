@@ -38,6 +38,7 @@ module Profile
 
       def ask_questions
         type = cluster_type
+        smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
         prompt.collect do
           type.questions.each do |question|
@@ -91,10 +92,6 @@ module Profile
 
       def prompt
         @prompt ||= TTY::Prompt.new(help_color: :yellow)
-      end
-
-      def smart_log
-        @smart_log ||= Logger.new(File.join(Config.log_dir, 'configure.log'))
       end
 
       def cli_answers
