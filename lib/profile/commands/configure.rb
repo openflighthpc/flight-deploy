@@ -18,6 +18,7 @@ module Profile
                     when false
                       use_cli_answers
                     end
+          validate_answers(answers)
           save_answers(answers)
         end
       end
@@ -104,6 +105,20 @@ module Profile
         raise <<~ERROR.chomp
         Error parsing answers JSON:
         #{$!.message}
+        ERROR
+      end
+
+      def validate_answers(answers)
+        bad_answers = []
+        cluster_type.questions.each do |q|
+          next unless q.validation.has_key?(:format)
+          criterion = Regexp.new(q.validation.format)
+          bad_answers << q.id unless answers[q.id].match(criterion)
+        end
+        return unless bad_answers.any?
+
+        raise <<~ERROR.chomp
+        The following answers did not pass validation: #{bad_answers.join(', ')}
         ERROR
       end
 
