@@ -54,7 +54,7 @@ module Profile
                 output = result.stdout.chomp
                 if !result.success?
                   smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr}")
-                elsif output.match(Regexp.new(question.validation.format))
+                elsif (!question.validation.has_key?(:format) || output.match(Regexp.new(question.validation.format)))
                   prefill ||= output
                 else
                   smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
