@@ -1,3 +1,5 @@
+require 'curses'
+
 require_relative '../command'
 
 module Profile
@@ -13,14 +15,17 @@ module Profile
         raise "Node '#{@name}' not found" unless node
 
         if @options.watch
-          in_clean_window do
-            loop do
-              height = `tput lines`.chomp.to_i
-              print "\r\e[#{height}A"
-              system("clear")
-              puts output.lines.pop(height)
-              sleep(0.5)
-            end
+          loop do
+            height = `tput lines`.chomp.to_i
+
+            Curses.init_screen
+            Curses.noecho
+            Curses.curs_set(0)
+            Curses.setpos(0, 0)
+
+            Curses.addstr(output.lines.pop(height).join)
+            Curses.refresh
+            sleep 2
           end
         else
           puts output
@@ -32,15 +37,6 @@ module Profile
         commands = log.split(/(?=PROFILE_COMMAND)/)
         "".tap do |output|
           commands.each { |cmd| output << command_structure(cmd) + "\n" }
-        end
-      end
-      
-      def in_clean_window
-        system "tput smcup"
-        begin
-          yield
-        rescue Interrupt
-          system "tput rmcup"
         end
       end
 
