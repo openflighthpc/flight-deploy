@@ -39,6 +39,7 @@ module Profile
 
       def ask_questions
         type = cluster_type
+        smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
         prompt.collect do
           type.questions.each do |question|
@@ -54,7 +55,7 @@ module Profile
                 output = result.stdout.chomp
                 if !result.success?
                   smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr}")
-                elsif output.match(Regexp.new(question.validation.format))
+                elsif (!question.validation.has_key?(:format) || output.match(Regexp.new(question.validation.format)))
                   prefill ||= output
                 else
                   smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
@@ -92,10 +93,6 @@ module Profile
 
       def prompt
         @prompt ||= TTY::Prompt.new(help_color: :yellow)
-      end
-
-      def smart_log
-        @smart_log ||= Logger.new(File.join(Config.log_dir, 'configure.log'))
       end
 
       def cli_answers
