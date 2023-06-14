@@ -64,7 +64,7 @@ HEREDOC
       end
 
       def node
-        @node ||= Node.find(@name)
+        Node.find(@name, reload: true)
       end
 
       def display_task_status(command)
