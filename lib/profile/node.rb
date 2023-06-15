@@ -5,30 +5,16 @@ require_relative './hunter_cli'
 
 module Profile
   class Node
-    def self.all(include_hunter: false)
-      @all_nodes ||= [].tap do |a|
-        Dir["#{Config.inventory_dir}/*.yaml"].each do |file|
-          node = YAML.load_file(file)
-          a << new(
-            hostname: node['hostname'],
-            identity: node['identity'],
-            deployment_pid: node['deployment_pid'],
-            exit_status: node['exit_status'],
-            name: File.basename(file, '.*'),
-            ip: node['ip']
-          )
-        end
-        if include_hunter
-          hunter_nodes = list_hunter_nodes.reject do |node|
-            a.any? { |e| e.name == node.hunter_label }
-          end
-          a.concat(hunter_nodes)
-        end
-      end.sort_by { |n| [n.hunter_label || n.hostname ] }
+    def self.all(include_hunter: false, reload: false)
+      if reload
+        return fetch_all(include_hunter: include_hunter)
+      end
+
+      @all_nodes ||= fetch_all(include_hunter: include_hunter)
     end
 
-    def self.find(name=nil, include_hunter: false)
-      all_nodes = all(include_hunter: include_hunter)
+    def self.find(name=nil, include_hunter: false, reload: false)
+      all_nodes = all(include_hunter: include_hunter, reload: reload)
       all_nodes.find do |node|
         node.name == name
       end
@@ -142,6 +128,30 @@ module Profile
       @hunter_label = hunter_label
       @name = name || hunter_label || hostname
       @ip = ip
+    end
+
+    private
+
+    def self.fetch_all(include_hunter:)
+      a = [].tap do |a|
+        Dir["#{Config.inventory_dir}/*.yaml"].each do |file|
+          node = YAML.load_file(file)
+          a << new(
+            hostname: node['hostname'],
+            identity: node['identity'],
+            deployment_pid: node['deployment_pid'],
+            exit_status: node['exit_status'],
+            name: File.basename(file, '.*'),
+            ip: node['ip']
+          )
+        end
+        if include_hunter
+          hunter_nodes = list_hunter_nodes.reject do |node|
+            a.any? { |e| e.name == node.hunter_label }
+          end
+          a.concat(hunter_nodes)
+        end
+      end.sort_by { |n| [n.hunter_label || n.hostname ] }
     end
   end
 end

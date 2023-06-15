@@ -171,7 +171,7 @@ module Profile
 
         unless existing.empty?
           existing_string = <<~OUT.chomp
-          "The following nodes already have an applied identity:
+          The following nodes already have an applied identity:
           #{existing.map(&:name).join("\n")}
           OUT
 
