@@ -18,12 +18,21 @@ module Profile
           in_clean_window do
             loop do
               height = `tput lines`.chomp.to_i
+              width = `tput cols`.chomp.to_i
 
               Curses.noecho
               Curses.curs_set(0)
               Curses.setpos(0, 0)
 
-              Curses.addstr(output.lines.pop(height).join)
+              truncated = output.lines.map do |line|
+                [].tap do |out|
+                  (line.length.to_f / width).ceil.times do |i|
+                    out << line[0+(width*i)..width*(i+1)]
+                  end
+                end
+              end.flatten
+
+              Curses.addstr(truncated.last(height).join)
               Curses.refresh
               sleep 2
             end
