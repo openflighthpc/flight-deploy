@@ -47,10 +47,14 @@ module Profile
         type = cluster_type
         smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
+        prefills = {}
+        type.questions.each do |question|
+          prefills[question.id] = generate_prefill(question)
+        end
         prompt.collect do
           type.questions.each do |question|
             key(question.id).ask(question.text) do |q|
-              q.default generate_prefill(question)
+              q.default prefills[question.id]
               q.required question.validation.required
               if question.validation.to_h.key?(:format)
                 q.validate Regexp.new(question.validation.format)
