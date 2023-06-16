@@ -27,6 +27,12 @@ module Profile
 
       def use_cli_answers
         cli_answers.tap do |a|
+          if @options.accept_defaults
+            cluster_type.questions.each do |question|
+              prefill = generate_prefill(question)
+              a[question.id] ||= prefill unless prefill.nil?
+            end
+          end
           given = a&.keys || []
           required = cluster_type.questions.each.map(&:id)
           if !(required - given).empty?
@@ -41,29 +47,14 @@ module Profile
         type = cluster_type
         smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
+        prefills = {}
+        type.questions.each do |question|
+          prefills[question.id] = generate_prefill(question)
+        end
         prompt.collect do
           type.questions.each do |question|
             key(question.id).ask(question.text) do |q|
-              prefill = type.fetch_answer(question.id)
-              if question.default_smart && prefill.nil?
-                process = Flight::Subprocess::Local.new(
-                  env: {},
-                  logger: smart_log,
-                  timeout: 5,
-                )
-                result = process.run(question.default_smart, nil)
-                output = result.stdout.chomp
-                if !result.success?
-                  smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr}")
-                elsif (!question.validation.has_key?(:format) || output.match(Regexp.new(question.validation.format)))
-                  prefill ||= output
-                else
-                  smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
-                end
-              end
-              prefill ||= question.default
-              q.default prefill
-
+              q.default prefills[question.id]
               q.required question.validation.required
               if question.validation.to_h.key?(:format)
                 q.validate Regexp.new(question.validation.format)
@@ -72,6 +63,29 @@ module Profile
             end
           end
         end
+      end
+
+      def generate_prefill(question)
+        smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
+
+        prefill = cluster_type.fetch_answer(question.id)
+        if question.default_smart && prefill.nil?
+          process = Flight::Subprocess::Local.new(
+            env: {},
+            logger: smart_log,
+            timeout: 5,
+          )
+          result = process.run(question.default_smart, nil)
+          output = result.stdout.chomp
+          if !result.success?
+            smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr}")
+          elsif (!question.validation.has_key?(:format) || output.match(Regexp.new(question.validation.format)))
+            prefill ||= output
+          else
+            smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
+          end
+        end
+        prefill ||= question.default
       end
 
       def display_details
