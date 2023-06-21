@@ -5,6 +5,7 @@ require_relative 'commands/configure'
 require_relative 'commands/identities'
 require_relative 'commands/list'
 require_relative 'commands/prepare'
+require_relative 'commands/remove'
 require_relative 'commands/view'
 
 module Profile

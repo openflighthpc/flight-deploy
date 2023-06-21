@@ -22,6 +22,21 @@ module Profile
         end
       end
 
+      def remove_node(node)
+        args = [
+          "remove-node",
+          node
+        ]
+        cmd = new(*flight_hunter, *args)
+        cmd.run.tap do |result|
+          if result.success?
+            return result.stdout
+          else
+            puts "ERROR"
+          end
+        end
+      end
+
       private
 
       def flight_hunter

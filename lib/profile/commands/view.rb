@@ -1,3 +1,5 @@
+require 'curses'
+
 require_relative '../command'
 
 module Profile
@@ -10,15 +12,57 @@ module Profile
 
       def run
         @name = args[0]
+        raise "Node '#{@name}' not found" unless node
+
+        if @options.watch
+          in_clean_window do
+            loop do
+              height = `tput lines`.chomp.to_i
+              width = `tput cols`.chomp.to_i
+
+              Curses.noecho
+              Curses.curs_set(0)
+              Curses.setpos(0, 0)
+
+              truncated = output.lines.map do |line|
+                [].tap do |out|
+                  (line.length.to_f / width).ceil.times do |i|
+                    out << line[0+(width*i)..width*(i+1)]
+                  end
+                end
+              end.flatten
+
+              Curses.addstr(truncated.last(height).join)
+              Curses.refresh
+              sleep 2
+            end
+          end
+        else
+          puts output
+        end
+      end
+
+      def output
         log = File.read(node.log_file)
         commands = log.split(/(?=PROFILE_COMMAND)/)
-        commands.each { |cmd| puts command_structure(cmd) }
+        "".tap do |output|
+          commands.each { |cmd| output << command_structure(cmd) + "\n" }
+        end
+      end
+
+      def in_clean_window
+        Curses.init_screen
+        begin
+          yield
+        ensure
+          Curses.close_screen
+        end
       end
 
       def command_structure(command)
         header = command.split("\n").first.sub /^PROFILE_COMMAND .*: /, ''
         cmd_name = command[/(?<=PROFILE_COMMAND ).*?(?=:)/]
-        puts <<HEREDOC
+        <<HEREDOC
 Command:
     #{cmd_name}
 
@@ -35,8 +79,7 @@ HEREDOC
       end
 
       def node
-        @node ||= Node.find(@name)
-        raise "Node '#{@name}' not found" unless @node
+        Node.find(@name, reload: true)
       end
 
       def display_task_status(command)
@@ -44,6 +87,7 @@ HEREDOC
         roles = []
         str = ""
         command.split("\n").each_with_index do |line, idx|
+          line << "\n"
           if @options.raw
             str += line unless idx == 0
           else

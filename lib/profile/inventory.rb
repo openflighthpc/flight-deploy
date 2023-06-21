@@ -36,7 +36,12 @@ module Profile
     end
 
     def remove_node(node, group_name)
-      groups[group_name].delete(node.hostname)
+      if Config.use_hunter?
+        name = "#{node.hostname} ansible_host=#{node.ip}"
+      else
+        name = node.hostname
+      end
+      groups[group_name].delete(name)
       groups.delete(group_name) if groups[group_name].empty?
       dump
     end

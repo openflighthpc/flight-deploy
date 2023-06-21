@@ -26,7 +26,7 @@ module Profile
           end
         else
           Node.all.each do |node|
-            if node.status && node.delete
+            if node.status == 'failed' && node.delete
               puts "Node '#{node.hostname}' removed from inventory."
             end
           end

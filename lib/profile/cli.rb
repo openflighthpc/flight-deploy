@@ -18,12 +18,7 @@ module Profile
     program :help_paging, false
     default_command :help
 
-    # Block to define methods as class methods,
-    # equivalent to defining a method with `def self.method`
     class << self
-      # Method to uniformly define a command's syntax.
-      # Takes the command and the args string as arguments, and 
-      # sets the command's syntax in the same way every time.
       def cli_syntax(command, args_str = nil)
         command.syntax = [
           PROGRAM_NAME,
@@ -59,8 +54,33 @@ EOF
       c.description = <<EOF
 Apply an identity to one or more nodes. To set up multiple nodes,
 enter the nodes' hostnames separated by commas.
+
+You may use a genders-style range syntax for the list of nodes.
+For example, `node[01-05] compute` will apply the `compute` identity to nodes
+`node01`, `node02`, etc., through to `node05`. Any zero-padding used in the
+lower bound is persisted across names in the range.
 EOF
+      c.slop.bool '--wait', "Don't daemonise process"
       c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"
+    end
+
+    command :remove do |c|
+      cli_syntax(c, 'NODE[,NODE...]')
+      c.summary = "Remove a node from the cluster"
+      c.slop.bool "--remove-hunter-entry", "Delete the node from Flight Hunter (if applicable)"
+      c.slop.bool "--force", "Bypass restrictions on removing a node"
+      c.slop.bool '--wait', "Don't daemonise process"
+      c.action Commands, :remove
+      c.description = <<EOF
+Remove from the cluster a node that has applied to with Profile.
+The type that the cluster is configured to use must have a
+`remove.sh` script available.
+
+You may use a genders-style range syntax for the list of nodes.
+For example, `node[01-05]` will run the `remove` action for nodes `node01`,
+`node02`, etc., through to `node05`. Any zero-padding used in the lower bound is
+persisted across names in the range.
+EOF
     end
 
     command :list do |c|
@@ -89,7 +109,7 @@ EOF
     end
 
     command :prepare do |c|
-      cli_syntax(c, 'TYPE')
+      cli_syntax(c, '[TYPE]')
       c.summary = "Prepare dependencies for cluster type"
       c.action Commands, :prepare
       c.description =  <<EOF
@@ -99,6 +119,7 @@ Specify a cluster type by passing the type's ID as a parameter.
 If a cluster type is not given, the currently configured type
 will be used. A type cannot be used until it has been prepared.
 EOF
+      c.slop.bool "--reset-type", "Select a different type to that given in config"
     end
 
     command :configure do |c|
@@ -107,6 +128,9 @@ EOF
       c.action Commands, :configure
       c.description = "Set the cluster name and the IP range of your cluster nodes as an IPv4 CIDR block."
       c.slop.bool "--show", "Show the current configuration details."
+      c.slop.string "--answers", "Specify answers by JSON string instead of using the prompt."
+      c.slop.bool "--accept-defaults", "When answering using JSON, take the default values for any answers not given."
+      c.slop.bool "--reset-type", "Select a different type to that given in config"
     end
 
     command :view do |c|
@@ -115,6 +139,7 @@ EOF
       c.action Commands, :view
       c.description = "View the setup progress and status of a given node."
       c.slop.bool "--raw", "Show the entire ansible log output."
+      c.slop.bool "--watch", "Constantly refresh and update output."
     end
   end
 end
