@@ -27,7 +27,7 @@ module Profile
               truncated = output.lines.map do |line|
                 [].tap do |out|
                   (line.length.to_f / width).ceil.times do |i|
-                    out << line[0+(width*i)..width*(i+1)]
+                    out << line[0+(width*i)...width*(i+1)]
                   end
                 end
               end.flatten
