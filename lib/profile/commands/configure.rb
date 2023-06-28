@@ -78,7 +78,7 @@ module Profile
           result = process.run(question.default_smart, nil)
           output = result.stdout.chomp
           if !result.success?
-            smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr}")
+            smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr.dump}")
           elsif (!question.validation.has_key?(:format) || output.match(Regexp.new(question.validation.format)))
             prefill ||= output
           else
