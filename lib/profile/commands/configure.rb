@@ -49,11 +49,14 @@ module Profile
 
         prefills = {}
         type.questions.each do |question|
-          prefills[question.id] = generate_prefill(question)
+          Process.fork do
+            prefills[question.id] = generate_prefill(question)
+          end
         end
         prompt.collect do
           type.questions.each do |question|
             key(question.id).ask(question.text) do |q|
+              sleep(0.25) until prefills[question.id]
               q.default prefills[question.id]
               q.required question.validation.required
               if question.validation.to_h.key?(:format)
