@@ -49,7 +49,7 @@ module Profile
 
         prefills = {}
         type.questions.each do |question|
-          Process.fork do
+          Thread.fork do
             prefills[question.id] = generate_prefill(question)
           end
         end
