@@ -6,12 +6,19 @@ module Profile
         Process.fork do
           Process.daemon unless wait
           w.puts Process.pid
+          File.delete(log_file) if File.file?(log_file)
+
           with_clean_env do
             last_exit = commands.each_with_index do |command, idx|
+              File.write(
+                log_file,
+                "PROFILE_COMMAND #{command['name']}: #{command['command']}\n",
+                mode: 'a'
+              )
+
               sub_pid = Process.spawn(
                 env,
-                "echo PROFILE_COMMAND #{command["name"]}: #{command["command"]}; #{command["command"]}",
-                [:out, :err] => [log_file, "a+"]
+                command['command']
               )
 
               Process.wait(sub_pid)
