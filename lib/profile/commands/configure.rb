@@ -88,7 +88,7 @@ module Profile
             smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
           end
         end
-        prefill ||= question.default
+        prefill = question.default || ""
       end
 
       def display_details
