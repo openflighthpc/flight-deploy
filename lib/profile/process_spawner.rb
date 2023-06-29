@@ -9,16 +9,17 @@ module Profile
           File.delete(log_file) if File.file?(log_file)
 
           with_clean_env do
-            last_exit = commands.each_with_index do |command, idx|
+            ast_exit = commands.each_with_index do |command, idx|
               File.write(
                 log_file,
-                "PROFILE_COMMAND #{command['name']}: #{command['command']}\n",
+                "PROFILE_COMMAND #{command["name"]}: #{command["command"]}\n",
                 mode: 'a'
               )
 
               sub_pid = Process.spawn(
                 env,
-                command['command']
+                command['command'],
+                [:out, :err] => ['/root/flight-profile/test_log', "a+"]
               )
 
               Process.wait(sub_pid)
