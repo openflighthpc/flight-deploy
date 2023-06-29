@@ -70,7 +70,7 @@ Running:
     #{header}
 
 Progress:
-#{display_task_status(command).chomp}
+#{new_display_task_status(command).chomp}
 
 Status:
     #{node.status.upcase}
@@ -80,6 +80,39 @@ HEREDOC
 
       def node
         Node.find(@name, reload: true)
+      end
+
+      def split_log_line(line)
+        parts =
+          line.split("\n")
+            .map { |l| l.split(' - ') }
+            .reject(&:empty?)
+            .first
+
+
+        keys = %w{time playbook task_name task_action category data}
+        keys.zip(parts).to_h
+      end
+
+      def new_display_task_status(command)
+        roles = []
+        str = ""
+        command.split("\n").each_with_index do |line, idx|
+          line << "\n"
+          if @options.raw
+            str += line unless idx == 0
+          else
+            next if line.chomp.empty?
+            next if line.include?("PROFILE_COMMAND")
+            parts = split_log_line(line)
+            if SUCCESS_STATUSES.include?(parts['category']&.downcase)
+              str += "   \u2705 #{parts['task_name']}\n"
+            elsif FAIL_STATUSES.include?(parts['category']&.downcase)
+              str += "   \u274c #{parts['task_name']}\n"
+            end
+          end
+        end
+        str
       end
 
       def display_task_status(command)
