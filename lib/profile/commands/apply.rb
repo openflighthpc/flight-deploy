@@ -74,7 +74,8 @@ module Profile
         inv_file = inventory.filepath
 
         env = {
-          "ANSIBLE_STDOUT_CALLBACK" => "log_plays",
+          "ANSIBLE_CALLBACK_PLUGINS" => File.join(Config.root, 'opt', 'ansible_callbacks'),
+          "ANSIBLE_STDOUT_CALLBACK" => "log_plays_v2",
           "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
           "INVFILE" => inv_file,
@@ -119,16 +120,20 @@ module Profile
           inventory.groups[identity.group_name] |= [inv_row]
           inventory.dump
 
+          log_symlink = "#{Config.log_dir}/#{node.name}-apply-#{Time.now.to_i}.log"
+
+          ansible_log_dir = File.join(
+            Config.log_dir,
+            'apply'
+          )
+
           ansible_log_path = File.join(
             ansible_log_dir,
             node.hostname
           )
 
           File.symlink(
-            File.join(
-              ansible_log_dir,
-              node.hostname
-            ),
+            ansible_log_path,
             log_symlink
           )
 
@@ -142,7 +147,8 @@ module Profile
           pid = ProcessSpawner.run(
             cmds["apply"],
             wait: @options.wait,
-            env: env
+            env: env,
+            log_file: ansible_log_path
           ) do |last_exit|
             # ProcessSpawner yields the exit status of either:
             # - the first command to fail; or

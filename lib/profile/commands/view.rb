@@ -70,7 +70,7 @@ Running:
     #{header}
 
 Progress:
-#{new_display_task_status(command).chomp}
+#{display_task_status(command).chomp}
 
 Status:
     #{node.status.upcase}
@@ -89,12 +89,12 @@ HEREDOC
             .reject(&:empty?)
             .first
 
-
-        keys = %w{time playbook task_name task_action category data}
+        keys = %w{time playbook task_role task_name task_action category data}
         keys.zip(parts).to_h
       end
 
-      def new_display_task_status(command)
+      def display_task_status(command)
+        new_role = nil
         roles = []
         str = ""
         command.split("\n").each_with_index do |line, idx|
@@ -104,43 +104,20 @@ HEREDOC
           else
             next if line.chomp.empty?
             next if line.include?("PROFILE_COMMAND")
+
             parts = split_log_line(line)
+
+            next if parts['task_role'] == 'None'
+
+            role = parts['task_role']
+            new_role = !roles.include?(role)
+            roles << role if new_role
+            str += "#{role}\n" if new_role
+
             if SUCCESS_STATUSES.include?(parts['category']&.downcase)
               str += "   \u2705 #{parts['task_name']}\n"
             elsif FAIL_STATUSES.include?(parts['category']&.downcase)
               str += "   \u274c #{parts['task_name']}\n"
-            end
-          end
-        end
-        str
-      end
-
-      def display_task_status(command)
-        task_name, task_status, role, new_role = nil
-        roles = []
-        str = ""
-        command.split("\n").each_with_index do |line, idx|
-          line << "\n"
-          if @options.raw
-            str += line unless idx == 0
-          else
-            if line.start_with?('TASK')
-              role, task_name = line[ /\[(.*?)\]/, 1 ].split(' : ')
-              new_role = !roles.include?(role)
-              roles << role if new_role
-            elsif ALL_STATUSES.any? { |s| line.start_with?(s) }
-              if !task_status || SUCCESS_STATUSES.include?(task_status)
-                task_status = line.split(':')
-                                  .first
-              end
-            elsif task_name && task_status
-              str += "#{role}\n" if new_role
-              if SUCCESS_STATUSES.include?(task_status)
-                str += "   \u2705 #{task_name}\n"
-              elsif FAIL_STATUSES.include?(task_status)
-                str += "   \u274c #{task_name}\n"
-              end
-              task_name, task_status = nil
             end
           end
         end
