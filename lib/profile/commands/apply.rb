@@ -74,6 +74,8 @@ module Profile
         inv_file = inventory.filepath
 
         env = {
+          "ANSIBLE_LOG_FOLDER" => Config.log_dir,
+          "ANSIBLE_STDOUT_CALLBACK" => "log_plays",
           "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
           "INVFILE" => inv_file,
@@ -119,10 +121,13 @@ module Profile
           inventory.dump
 
           log_file = "#{Config.log_dir}/#{node.name}-apply-#{Time.now.to_i}.log"
+          File.symlink(
+            File.join(Config.log_dir, node.hostname),
+            log_file
+          )
 
           pid = ProcessSpawner.run(
             cmds["apply"],
-            log_file: log_file,
             wait: @options.wait,
             env: env.merge({ "NODE" => node.hostname })
           ) do |last_exit|
