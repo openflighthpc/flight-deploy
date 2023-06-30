@@ -1,20 +1,25 @@
 module Profile
   class ProcessSpawner
     class << self
-      def run(commands, log_file: nil, wait: false, env: {})
+      def run(commands, log_files: [], wait: false, env: {})
         r, w = IO.pipe
         Process.fork do
           Process.daemon unless wait
           w.puts Process.pid
-          File.delete(log_file) if File.file?(log_file)
+
+          log_files.each do |file|
+            File.delete(File.readlink(file)) if File.file?(file)
+          end
 
           with_clean_env do
-            ast_exit = commands.each_with_index do |command, idx|
-              File.write(
-                log_file,
-                "PROFILE_COMMAND #{command["name"]}: #{command["command"]}\n",
-                mode: 'a'
-              )
+            last_exit = commands.each_with_index do |command, idx|
+              log_files.each do |file|
+                File.write(
+                  file,
+                  "PROFILE_COMMAND #{command["name"]}: #{command["command"]}\n",
+                  mode: 'a'
+                )
+              end
 
               sub_pid = Process.spawn(
                 env,
