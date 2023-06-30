@@ -64,6 +64,11 @@ module Profile
         identity = cluster_type.find_identity(args[1])
         raise "No identity exists with given name" if !identity
         cmds = identity.commands
+        applied_identities = Node.all.filter{|node| node.status == "complete"}.map(&:identity)
+        missing = identity.conflicts & applied_identities
+        if !missing.empty?
+          raise "The following identities must have been successfully applied to other nodes to perform that action: #{missing.join(", ")}"
+        end
 
         #
         # ERROR CHECKING OVER; GOOD TO START APPLYING
