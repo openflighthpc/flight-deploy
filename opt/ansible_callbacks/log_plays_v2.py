@@ -3,6 +3,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This file is a copy of https://github.com/ansible-collections/community.general/blob/c4a2801f990f6b9486878bc6f789969107cd5fca/plugins/callback/log_plays.py
+#
+# Any modifications from the original source are indicated
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -56,6 +60,9 @@ class CallbackModule(CallbackBase):
     CALLBACK_NEEDS_WHITELIST = True
 
     TIME_FORMAT = "%b %d %Y %H:%M:%S"
+    # OLD
+    #MSG_FORMAT = "%(now)s - %(playbook)s - %(task_name)s - %(task_action)s - %(category)s - %(data)s\n\n"
+    # NEW
     MSG_FORMAT = "%(now)s - %(playbook)s - %(task_role)s - %(task_name)s - %(task_action)s - %(category)s - %(data)s\n\n"
 
     def __init__(self):
@@ -91,7 +98,9 @@ class CallbackModule(CallbackBase):
             % dict(
                 now=now,
                 playbook=self.playbook,
+                # ADDITION START
                 task_role=result._task._role,
+                # ADDITION END
                 task_name=result._task.name,
                 task_action=result._task.action,
                 category=category,
