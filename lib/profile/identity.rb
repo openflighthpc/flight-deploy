@@ -15,6 +15,8 @@ module Profile
               name: metadata['name'],
               description: metadata['description'],
               group_name: metadata['group_name'],
+              dependencies: metadata['dependencies'],
+              conflicts: metadata['conflicts'],
               commands: cmds
             )
           rescue NoMethodError
