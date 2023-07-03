@@ -65,7 +65,11 @@ module Profile
         raise "No identity exists with given name" if !identity
         cmds = identity.commands
         applied_identities = Node.all.filter{|node| node.status == "complete"}.map(&:identity)
-        missing = identity.conflicts & applied_identities
+        clashes = identity.conflicts & applied_identities
+        if !clashes.empty?
+          raise "The following identities already exist and conflict with that action: #{clashes.join(", ")}"
+        end
+        missing = identity.dependencies - applied_identities
         if !missing.empty?
           raise "The following identities must have been successfully applied to other nodes to perform that action: #{missing.join(", ")}"
         end
