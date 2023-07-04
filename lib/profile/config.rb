@@ -74,6 +74,10 @@ module Profile
         @root ||= File.expand_path(File.join(__dir__, '..', '..'))
       end
 
+      def ansible_callback_dir
+        File.join(Config.root, 'opt', 'ansible_callbacks')
+      end
+
       private
 
       def dir_constructor(*a)

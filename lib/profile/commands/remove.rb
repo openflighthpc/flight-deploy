@@ -63,6 +63,8 @@ module Profile
         inv_file = inventory.filepath
 
         env = {
+          "ANSIBLE_CALLBACK_PLUGINS" => Config.ansible_callback_dir,
+          "ANSIBLE_STDOUT_CALLBACK" => "log_plays_v2",
           "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
           "INVFILE" => inv_file,
@@ -74,25 +76,53 @@ module Profile
           end
         end
 
+        # Set up log files
         nodes.each do |node|
-          log_file = "#{Config.log_dir}/#{node.name}-remove-#{Time.now.to_i}.log"
+          ansible_log_path = File.join(
+            ansible_log_dir,
+            node.hostname
+          )
+
+          log_symlink = "#{Config.log_dir}/#{node.name}-remove-#{Time.now.to_i}.log"
+
+          FileUtils.mkdir_p(ansible_log_dir)
+          FileUtils.touch(ansible_log_path)
+
+          File.symlink(
+            ansible_log_path,
+            log_symlink
+          )
+        end
+
+        # Group by identity to use different command for each
+        nodes.group_by(&:identity).each do |identity, nodes|
+          node_objs = Nodes.new(nodes)
+          env = env.merge(
+            {
+              "NODE" => nodes.map(&:hostname).join(','),
+              "ANSIBLE_LOG_FOLDER" => ansible_log_dir
+            }
+          )
 
           pid = ProcessSpawner.run(
-            node.fetch_identity.commands["remove"],
-            log_file: log_file,
+            nodes.first.fetch_identity.commands["remove"],
             wait: @options.wait,
-            env: env.merge({ "NODE" => node.hostname })
+            env: env,
+            log_files: nodes.map(&:log_filepath)
           ) do |last_exit|
-            node.update(deployment_pid: nil, exit_status: last_exit)
+            node_objs.update_all(deployment_pid: nil, exit_status: last_exit)
 
-            node.destroy if last_exit == 0
+            node_objects.destroy_all if last_exit == 0
             if last_exit == 0 && @hunter && @options.remove_hunter_entry
-              HunterCLI.remove_node(node.name)
+              # TODO: update Hunter to allow multiple
+              # node removals in one command call
+              nodes.each { |n| HunterCLI.remove_node(node.name) }
             end
           end
 
-          node.update(deployment_pid: pid)
+          node_objs.update_all(deployment_pid: pid.to_i)
         end
+
 
         unless @options.wait
           puts "The removal process has begun. Refer to `flight profile list` "\
@@ -107,6 +137,19 @@ module Profile
       end
 
       private
+
+      Nodes = Struct.new(:nodes) do
+        def update_all(**kwargs)
+          nodes.map { |node| node.update(**kwargs) }
+        end
+      end
+
+      def ansible_log_dir
+        @ansible_log_dir ||= File.join(
+          Config.log_dir,
+          'remove'
+        )
+      end
 
       def check_names_exist(names)
         not_found = names.select { |n| !Node.find(n)&.identity }
