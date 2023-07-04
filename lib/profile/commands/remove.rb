@@ -114,9 +114,7 @@ module Profile
 
             node_objects.destroy_all if last_exit == 0
             if last_exit == 0 && @hunter && @options.remove_hunter_entry
-              # TODO: update Hunter to allow multiple
-              # node removals in one command call
-              nodes.each { |n| HunterCLI.remove_node(node.name) }
+              HunterCLI.remove_node(nodes.map(&:hunter_label).join(','))
             end
           end
 
