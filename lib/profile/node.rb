@@ -61,6 +61,12 @@ module Profile
                                  .last
     end
 
+    def clear_logs
+      Dir.glob("#{Config.log_dir}/#{name}-*.log").each do |file|
+        File.delete(file) if File.symlink?(file)
+      end
+    end
+
     def commands
       log = File.read(log_filepath)
       commands = log.split(/(?=PROFILE_COMMAND)/)
