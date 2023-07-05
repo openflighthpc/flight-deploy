@@ -83,6 +83,7 @@ module Profile
             node.hostname
           )
 
+          node.clear_logs
           log_symlink = "#{Config.log_dir}/#{node.name}-remove-#{Time.now.to_i}.log"
 
           FileUtils.mkdir_p(ansible_log_dir)

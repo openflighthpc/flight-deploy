@@ -109,6 +109,7 @@ module Profile
 
           inventory.groups[identity.group_name] |= [inv_row]
 
+          node.clear_logs
           log_symlink = "#{Config.log_dir}/#{name}-apply-#{Time.now.to_i}.log"
 
           ansible_log_path = File.join(
