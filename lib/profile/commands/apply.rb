@@ -109,6 +109,14 @@ module Profile
 
           inventory.groups[identity.group_name] |= [inv_row]
 
+          node = Node.new(
+            hostname: hostname,
+            name: name,
+            identity: args[1],
+            hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
+            ip: ip
+          )
+
           node.clear_logs
           log_symlink = "#{Config.log_dir}/#{name}-apply-#{Time.now.to_i}.log"
 
@@ -125,13 +133,7 @@ module Profile
             log_symlink
           )
 
-          Node.new(
-            hostname: hostname,
-            name: name,
-            identity: args[1],
-            hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
-            ip: ip
-          )
+          node
         end
 
         inventory.dump
