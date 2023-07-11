@@ -98,7 +98,7 @@ HEREDOC
 
       def display_task_status(command)
         new_role = nil
-        roles = []
+        roles = Hash.new(0)
         str = ""
         command.split("\n").each_with_index do |line, idx|
           line << "\n"
@@ -113,9 +113,9 @@ HEREDOC
             next if parts['task_role'] == 'None'
 
             role = parts['task_role']
-            new_role = !roles.include?(role)
-            roles << role if new_role
-            str += "#{role}\n" if new_role
+            new_role = !roles.key?(role)
+            roles[role] += 1 unless parts['category'] == 'SKIPPED'
+            str += "#{role}\n" if new_role && roles[role] > 0
 
             if SUCCESS_STATUSES.include?(parts['category']&.downcase)
               str += "   \u2705 #{parts['task_name']}\n"
