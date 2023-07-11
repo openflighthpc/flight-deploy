@@ -46,7 +46,10 @@ module Profile
         log = File.read(node.log_file)
         commands = log.split(/(?=PROFILE_COMMAND)/)
         "".tap do |output|
-          commands.each { |cmd| output << command_structure(cmd) + "\n" }
+          commands.each do|cmd|
+            status = cmd == commands.last ? nil : 'COMPLETE'
+            output << command_structure(cmd, status: status) + "\n"
+          end
         end
       end
 
@@ -59,7 +62,7 @@ module Profile
         end
       end
 
-      def command_structure(command)
+      def command_structure(command, status: nil)
         header = command.split("\n").first.sub /^PROFILE_COMMAND .*: /, ''
         cmd_name = command[/(?<=PROFILE_COMMAND ).*?(?=:)/]
         <<HEREDOC
@@ -73,7 +76,7 @@ Progress:
 #{display_task_status(command).chomp}
 
 Status:
-    #{node.status.upcase}
+    #{status || node.status.upcase}
 
 HEREDOC
       end
