@@ -12,7 +12,9 @@ module Profile
 
       def run
         @name = args[0]
-        raise "Node '#{@name}' not found" unless node
+
+        # load in node to raise error before starting curses
+        node
 
         if @options.watch
           in_clean_window do
@@ -94,8 +96,15 @@ HEREDOC
 
       def node
         # attempt to find without hunter integration first to save time
-        Node.find(@name, reload: true) ||
-          Node.find(@name, reload: true, include_hunter: use_hunter?)
+        attempts = [
+          lambda { Node.find(@name, reload: true) }
+          lambda { Node.find(@name, reload: true, include_hunter: use_hunter?) }
+        ]
+
+        # Use Enumerable#lazy to return first truthy block result
+        attempts.lazy.map(&:call).reject(&:nil?).first.tap do |n|
+          raise "Node '#{@name}' not found" unless n
+        end
       end
 
       def split_log_line(line)
