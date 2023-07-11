@@ -115,7 +115,7 @@ module Profile
 
             node_objs.destroy_all if last_exit == 0
             if last_exit == 0 && @hunter && @options.remove_hunter_entry
-              HunterCLI.remove_node(nodes.map(&:hunter_label).join(','))
+              HunterCLI.remove_node(nodes.map(&:name).join(','))
             end
           end
 
