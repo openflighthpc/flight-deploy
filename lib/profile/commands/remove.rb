@@ -113,7 +113,7 @@ module Profile
           ) do |last_exit|
             node_objs.update_all(deployment_pid: nil, exit_status: last_exit)
 
-            node_objects.destroy_all if last_exit == 0
+            node_objs.destroy_all if last_exit == 0
             if last_exit == 0 && @hunter && @options.remove_hunter_entry
               HunterCLI.remove_node(nodes.map(&:hunter_label).join(','))
             end
@@ -140,6 +140,10 @@ module Profile
       Nodes = Struct.new(:nodes) do
         def update_all(**kwargs)
           nodes.map { |node| node.update(**kwargs) }
+        end
+
+        def destroy_all
+          nodes.each { |node| node.delete }
         end
       end
 
