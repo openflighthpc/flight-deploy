@@ -32,6 +32,7 @@ module Profile
                 end
               end.flatten
 
+              Curses.clear
               Curses.addstr(truncated.last(height).join)
               Curses.refresh
               sleep 2
@@ -42,7 +43,17 @@ module Profile
         end
       end
 
+      private
+
+      def use_hunter?
+        Config.use_hunter?
+      end
+
       def output
+        return <<~OUT.chomp if node.status == 'available'
+        Node '#{node.name}' is available. You can apply an identity to it with 'flight profile apply #{node.name} <identity>'.
+        OUT
+
         log = File.read(node.log_file)
         commands = log.split(/(?=PROFILE_COMMAND)/)
         "".tap do |output|
@@ -82,7 +93,9 @@ HEREDOC
       end
 
       def node
-        Node.find(@name, reload: true)
+        # attempt to find without hunter integration first to save time
+        Node.find(@name, reload: true) ||
+          Node.find(@name, reload: true, include_hunter: use_hunter?)
       end
 
       def split_log_line(line)
