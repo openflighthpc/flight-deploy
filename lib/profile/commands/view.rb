@@ -97,7 +97,7 @@ HEREDOC
       def node
         # attempt to find without hunter integration first to save time
         attempts = [
-          lambda { Node.find(@name, reload: true) }
+          lambda { Node.find(@name, reload: true) },
           lambda { Node.find(@name, reload: true, include_hunter: use_hunter?) }
         ]
 
