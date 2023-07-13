@@ -123,6 +123,10 @@ module Profile
       File.delete(filepath)
     end
 
+    def install_remove_hook
+      # TODO
+    end
+
     attr_reader :name
     attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label, :ip
 

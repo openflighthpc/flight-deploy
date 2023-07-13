@@ -62,6 +62,7 @@ lower bound is persisted across names in the range.
 EOF
       c.slop.bool '--wait', "Don't daemonise process"
       c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"
+      c.slop.bool "--remove-on-shutdown", "Trigger a removal action when given node(s) shut down"
     end
 
     command :remove do |c|
