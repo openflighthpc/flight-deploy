@@ -127,7 +127,7 @@ module Profile
     end
 
     def jwt
-      JsonWebToken.encode(name)
+      JsonWebToken.encode({"name" => name})
     end
 
     def install_remove_hook
