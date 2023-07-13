@@ -10,4 +10,4 @@
 #hunter_command:
 
 # Secret to use when encrypting strings
-#shared_secret:
+#shared_secret_path:

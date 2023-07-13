@@ -3,7 +3,7 @@ require 'jwt'
 module Profile
   class JsonWebToken
     def self.enabled?
-      Config.shared_secret.present?
+      !Config.shared_secret.nil?
     end
 
     def self.encode(payload, expiration = nil)

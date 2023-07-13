@@ -192,11 +192,11 @@ module Profile
           nodes.map { |node| node.update(**kwargs) }
         end
 
-        def each(*args, **kwargs, &block) do
+        def each(*args, **kwargs, &block)
           nodes.each(*args, **kwargs, &block)
         end
 
-        def map(*args, **kwargs, &block) do
+        def map(*args, **kwargs, &block)
           nodes.map(*args, **kwargs, &block)
         end
       end
