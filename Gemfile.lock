@@ -26,6 +26,7 @@ GEM
     curses (1.4.4)
     ed25519 (1.3.0)
     highline (2.0.3)
+    jwt (2.7.1)
     net-ssh (6.1.0)
     paint (2.1.1)
     pastel (0.8.0)
@@ -63,6 +64,7 @@ DEPENDENCIES
   commander-openflighthpc (~> 2.2.0)
   curses
   flight-subprocess!
+  jwt
   shash (~> 0.0.7)
   tty-config
   tty-prompt
