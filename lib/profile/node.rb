@@ -160,11 +160,11 @@ module Profile
       # root SSH access to the child node.
       Net::SFTP.start(ip, 'root') do |sftp|
         sftp.file.open("/root/shutdown.sh", "w") do |f|
-          puts script_eval
+          f.puts script_eval
         end
 
-        sftp.file.open("/etc/systemd/system/profile-shutdown.service, ") do |f|
-          puts systemd_unit
+        sftp.file.open("/etc/systemd/system/profile-shutdown.service", "w") do |f|
+          f.puts systemd_unit
         end
 
         # May as well reuse the SFTP's Net::SSH session object instead of
