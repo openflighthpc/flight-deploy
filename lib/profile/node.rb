@@ -1,7 +1,10 @@
 require 'open3'
 require 'yaml'
+require 'erb'
+require 'net/sftp'
 
 require_relative './hunter_cli'
+require_relative './json_web_token'
 
 module Profile
   class Node
@@ -123,8 +126,53 @@ module Profile
       File.delete(filepath)
     end
 
+    def jwt
+      JsonWebToken.encode(name)
+    end
+
     def install_remove_hook
-      # TODO
+      systemd_unit = File.read(
+        File.join(
+          Config.root,
+          'opt',
+          'profile-shutdown.service'
+        )
+      )
+
+      script_erb = ERB.new(
+        File.read(
+          File.join(
+            Config.root,
+            'opt',
+            'shutdown.sh.erb'
+          )
+        )
+      )
+
+      erb_vars = {
+        'headnode_ip' => '',
+        'child_token' => jwt
+      }
+
+      script_eval = script_erb.result(binding)
+
+      # Not using a password; this method should only be called if the user has
+      # root SSH access to the child node.
+      Net::SFTP.start(ip, 'root') do |sftp|
+        sftp.file.open("/root/shutdown.sh", "w") do |f|
+          puts script_eval
+        end
+
+        sftp.file.open("/etc/systemd/system/profile-shutdown.service, ") do |f|
+          puts systemd_unit
+        end
+
+        # May as well reuse the SFTP's Net::SSH session object instead of
+        # closing and reopening a new one.
+        # NB: We don't get standard output from these commands.
+        sftp.session.exec! "systemctl daemon-reload"
+        sftp.session.exec! "systemctl start profile-shutdown"
+      end
     end
 
     attr_reader :name
