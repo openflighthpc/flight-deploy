@@ -36,6 +36,10 @@ module Profile
         data.fetch(:log_dir) || dir_constructor(root, 'var', 'log')
       end
 
+      def shared_secret
+        data.fetch(:shared_secret)
+      end
+
       def hunter_command
         command = 
           ENV['flight_PROFILE_hunter_command'] ||
