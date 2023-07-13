@@ -8,3 +8,6 @@
 #use_hunter:
 # Path to Flight Hunter executable
 #hunter_command:
+
+# Secret to use when encrypting strings
+#shared_secret:
