@@ -74,6 +74,8 @@ module Profile
         inv_file = inventory.filepath
 
         env = {
+          "ANSIBLE_CALLBACK_PLUGINS" => File.join(Config.root, 'opt', 'ansible_callbacks'),
+          "ANSIBLE_STDOUT_CALLBACK" => "log_plays_v2",
           "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
           "INVFILE" => inv_file,
@@ -85,7 +87,7 @@ module Profile
           end
         end
 
-        names.each do |name|
+        nodes = names.map do |name|
           hostname =
             case @hunter
             when true
@@ -102,6 +104,11 @@ module Profile
               nil
             end
 
+          inv_row = hostname.dup
+          inv_row << " ansible_host=#{ip}" if @hunter
+
+          inventory.groups[identity.group_name] |= [inv_row]
+
           node = Node.new(
             hostname: hostname,
             name: name,
@@ -110,32 +117,51 @@ module Profile
             ip: ip
           )
 
-          if @hunter
-            inv_row = "#{node.hostname} ansible_host=#{node.ip}"
-          else
-            inv_row = "#{node.hostname}"
-          end
-          inventory.groups[identity.group_name] |= [inv_row]
-          inventory.dump
+          node.clear_logs
+          log_symlink = "#{Config.log_dir}/#{name}-apply-#{Time.now.to_i}.log"
 
-          log_file = "#{Config.log_dir}/#{node.name}-apply-#{Time.now.to_i}.log"
+          ansible_log_path = File.join(
+            ansible_log_dir,
+            hostname
+          )
 
-          pid = ProcessSpawner.run(
-            cmds["apply"],
-            log_file: log_file,
-            wait: @options.wait,
-            env: env.merge({ "NODE" => node.hostname })
-          ) do |last_exit|
-            # ProcessSpawner yields the exit status of either:
-            # - the first command to fail; or
-            # - the final command
-            # We yield it in a block so that the rest of the `apply`
-            # logic can continue asynchronously.
-            node.update(deployment_pid: nil, exit_status: last_exit)
-          end
+          FileUtils.mkdir_p(ansible_log_dir)
+          FileUtils.touch(ansible_log_path)
 
-          node.update(deployment_pid: pid.to_i)
+          File.symlink(
+            ansible_log_path,
+            log_symlink
+          )
+
+          node
         end
+
+        inventory.dump
+
+        env = env.merge(
+          {
+            "NODE" => nodes.map(&:hostname).join(','),
+            "ANSIBLE_LOG_FOLDER" => ansible_log_dir
+          }
+        )
+
+        node_objs = Nodes.new(nodes)
+
+        pid = ProcessSpawner.run(
+          cmds["apply"],
+          wait: @options.wait,
+          env: env,
+          log_files: nodes.map(&:log_filepath)
+        ) do |last_exit|
+          # ProcessSpawner yields the exit status of either:
+          # - the first command to fail; or
+          # - the final command
+          # We yield it in a block so that the rest of the `apply`
+          # logic can continue asynchronously.
+          node_objs.update_all(deployment_pid: nil, exit_status: last_exit)
+        end
+
+        node_objs.update_all(deployment_pid: pid.to_i)
 
         unless @options.wait
           puts "The application process has begun. Refer to `flight profile list` "\
@@ -156,6 +182,19 @@ module Profile
       end
 
       private
+
+      Nodes = Struct.new(:nodes) do
+        def update_all(**kwargs)
+          nodes.map { |node| node.update(**kwargs) }
+        end
+      end
+
+      def ansible_log_dir
+        @ansible_log_dir ||= File.join(
+          Config.log_dir,
+          'apply'
+        )
+      end
 
       def existing_nodes(names)
         existing = [].tap do |e|

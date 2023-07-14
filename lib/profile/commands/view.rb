@@ -12,7 +12,9 @@ module Profile
 
       def run
         @name = args[0]
-        raise "Node '#{@name}' not found" unless node
+
+        # load in node to raise error before starting curses
+        node
 
         if @options.watch
           in_clean_window do
@@ -32,6 +34,7 @@ module Profile
                 end
               end.flatten
 
+              Curses.clear
               Curses.addstr(truncated.last(height).join)
               Curses.refresh
               sleep 2
@@ -42,11 +45,24 @@ module Profile
         end
       end
 
+      private
+
+      def use_hunter?
+        Config.use_hunter?
+      end
+
       def output
+        return <<~OUT.chomp if node.status == 'available'
+        Node '#{node.name}' is available. You can apply an identity to it with 'flight profile apply #{node.name} <identity>'.
+        OUT
+
         log = File.read(node.log_file)
         commands = log.split(/(?=PROFILE_COMMAND)/)
         "".tap do |output|
-          commands.each { |cmd| output << command_structure(cmd) + "\n" }
+          commands.each do|cmd|
+            status = cmd == commands.last ? nil : 'COMPLETE'
+            output << command_structure(cmd, status: status) + "\n"
+          end
         end
       end
 
@@ -59,7 +75,7 @@ module Profile
         end
       end
 
-      def command_structure(command)
+      def command_structure(command, status: nil)
         header = command.split("\n").first.sub /^PROFILE_COMMAND .*: /, ''
         cmd_name = command[/(?<=PROFILE_COMMAND ).*?(?=:)/]
         <<HEREDOC
@@ -73,41 +89,60 @@ Progress:
 #{display_task_status(command).chomp}
 
 Status:
-    #{node.status.upcase}
+    #{status || node.status.upcase}
 
 HEREDOC
       end
 
       def node
-        Node.find(@name, reload: true)
+        # attempt to find without hunter integration first to save time
+        attempts = [
+          lambda { Node.find(@name, reload: true) },
+          lambda { Node.find(@name, reload: true, include_hunter: use_hunter?) }
+        ]
+
+        # Use Enumerable#lazy to return first truthy block result
+        attempts.lazy.map(&:call).reject(&:nil?).first.tap do |n|
+          raise "Node '#{@name}' not found" unless n
+        end
+      end
+
+      def split_log_line(line)
+        parts =
+          line.split("\n")
+            .map { |l| l.split(' - ') }
+            .reject(&:empty?)
+            .first
+
+        keys = %w{time playbook task_role task_name task_action category data}
+        keys.zip(parts).to_h
       end
 
       def display_task_status(command)
-        task_name, task_status, role, new_role = nil
-        roles = []
+        new_role = nil
+        roles = Hash.new(0)
         str = ""
         command.split("\n").each_with_index do |line, idx|
           line << "\n"
           if @options.raw
             str += line unless idx == 0
           else
-            if line.start_with?('TASK')
-              role, task_name = line[ /\[(.*?)\]/, 1 ].split(' : ')
-              new_role = !roles.include?(role)
-              roles << role if new_role
-            elsif ALL_STATUSES.any? { |s| line.start_with?(s) }
-              if !task_status || SUCCESS_STATUSES.include?(task_status)
-                task_status = line.split(':')
-                                  .first
-              end
-            elsif task_name && task_status
-              str += "#{role}\n" if new_role
-              if SUCCESS_STATUSES.include?(task_status)
-                str += "   \u2705 #{task_name}\n"
-              elsif FAIL_STATUSES.include?(task_status)
-                str += "   \u274c #{task_name}\n"
-              end
-              task_name, task_status = nil
+            next if line.chomp.empty?
+            next if line.include?("PROFILE_COMMAND")
+
+            parts = split_log_line(line)
+
+            next if parts['task_role'] == 'None'
+
+            role = parts['task_role']
+            new_role = !roles.key?(role)
+            roles[role] += 1 unless parts['category'] == 'SKIPPED'
+            str += "#{role}\n" if new_role && roles[role] > 0
+
+            if SUCCESS_STATUSES.include?(parts['category']&.downcase)
+              str += "   \u2705 #{parts['task_name']}\n"
+            elsif FAIL_STATUSES.include?(parts['category']&.downcase)
+              str += "   \u274c #{parts['task_name']}\n"
             end
           end
         end
