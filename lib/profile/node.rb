@@ -153,8 +153,9 @@ module Profile
       # root SSH access to the child node.
       Net::SFTP.start(ip, 'root') do |sftp|
         # Fetch headnode IP from SSH connection properties
+        headnode_ip = sftp.session.exec!("echo $SSH_CONNECTION").split[0]
         erb_vars = {
-          'headnode_ip' => sftp.session.host,
+          'headnode_ip' => headnode_ip,
           'child_token' => jwt
         }
 
