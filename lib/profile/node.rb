@@ -149,19 +149,22 @@ module Profile
         )
       )
 
-      erb_vars = {
-        'headnode_ip' => '',
-        'child_token' => jwt
-      }
-
-      script_eval = script_erb.result(binding)
-
       # Not using a password; this method should only be called if the user has
       # root SSH access to the child node.
       Net::SFTP.start(ip, 'root') do |sftp|
+        # Fetch headnode IP from SSH connection properties
+        erb_vars = {
+          'headnode_ip' => sftp.session.host,
+          'child_token' => jwt
+        }
+
+        script_eval = script_erb.result(binding)
+
         sftp.file.open("/root/shutdown.sh", "w") do |f|
           f.puts script_eval
         end
+
+        sftp.session.exec! 'chmod +x /root/shutdown.sh'
 
         sftp.file.open("/etc/systemd/system/profile-shutdown.service", "w") do |f|
           f.puts systemd_unit
