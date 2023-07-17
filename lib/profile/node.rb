@@ -131,6 +131,8 @@ module Profile
     end
 
     def install_remove_hook
+      return unless fetch_identity.commands.key?('remove')
+
       systemd_unit = File.read(
         File.join(
           Config.root,
