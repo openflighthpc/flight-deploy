@@ -42,6 +42,7 @@ module Profile
       end
 
       def shared_secret_path
+        ENV['flight_HUNTER_shared_secret_path'] ||
         data.fetch(:shared_secret_path)
       end
 
