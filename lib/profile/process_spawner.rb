@@ -16,12 +16,13 @@ module Profile
 
           with_clean_env do
             last_exit = commands.each_with_index do |command, idx|
+              cmd = expand_env(command['command'], env).squeeze('/')
               # We need to initialize the logfiles before Ansible does, so that
               # we can put our DSL lines in.
               log_files.each do |file|
                 File.write(
                   file,
-                  "PROFILE_COMMAND #{command["name"]}: #{command["command"]}\n",
+                  "PROFILE_COMMAND #{command["name"]}: #{cmd}\n",
                   mode: 'a'
                 )
               end
@@ -47,6 +48,10 @@ module Profile
       end
       
       private
+
+      def expand_env(str, env)
+        Open3.capture2(env, "echo #{str}")[0].chomp
+      end
 
       def with_clean_env(&block)
         if Kernel.const_defined?(:OpenFlight) && OpenFlight.respond_to?(:with_standard_env)
