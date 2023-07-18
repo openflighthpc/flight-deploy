@@ -71,7 +71,10 @@ module Profile
         end
         missing = identity.dependencies - applied_identities
         if !missing.empty?
-          raise "The following identities must have been successfully applied to other nodes to perform that action: #{missing.join(", ")}"
+          names.each do |name|
+            QueueMonitor.enqueue(name: name, identity: identity.name)
+          end
+          puts "The following identities have been queued awaiting a node with the #{identity.name} identity: #{names.join(", ")}"
         end
 
         #
