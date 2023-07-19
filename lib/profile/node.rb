@@ -181,6 +181,26 @@ module Profile
       end
     end
 
+    def dependencies
+      fetch_identity.dependencies
+    end
+
+    def conflicts
+      fetch_identity.conflicts
+    end
+
+    def conflicts_with?(node)
+      conflicts.include?(node.identity.name)
+    end
+
+    def errors
+      @errors ||= []
+    end
+
+    def full_errors
+      errors.map { |e| "#{name} #{e}"}.join("\n")
+    end
+
     attr_reader :name
     attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label, :ip
 

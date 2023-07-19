@@ -34,13 +34,15 @@ module Profile
       !!commands['remove']
     end
 
-    attr_reader :name, :commands, :description, :group_name
+    attr_reader :name, :commands, :description, :group_name, :dependencies, :conflicts
 
-    def initialize(name:, commands:, description:, group_name:)
+    def initialize(name:, commands:, description:, group_name:, dependencies:, conflicts:)
       @name = name
       @commands = commands
       @description = description
       @group_name = group_name
+      @dependencies = dependencies || []
+      @conflicts = conflicts || []
     end
   end
 end
