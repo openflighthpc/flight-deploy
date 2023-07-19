@@ -64,45 +64,8 @@ module Profile
         identity = cluster_type.find_identity(args[1])
         raise "No identity exists with given name" if !identity
         cmds = identity.commands
-        applied_identities = Node.all.filter{|node| node.status == "complete"}.map(&:identity)
-        clashes = identity.conflicts & applied_identities
-        if !clashes.empty?
-          raise "The following identities already exist and conflict with that action: #{clashes.join(", ")}"
-        end
-        missing = identity.dependencies - applied_identities
-        if !missing.empty?
-          names.each do |name|
-            QueueMonitor.enqueue(name: name, identity: identity.name)
-          end
-          puts "The following identities have been queued awaiting a node with the #{identity.name} identity: #{names.join(", ")}"
-        end
 
-        #
-        # ERROR CHECKING OVER; GOOD TO START APPLYING
-        #
-
-        hosts_term = names.length > 1 ? 'hosts' : 'host'
-        printable_names = names.map { |h| "'#{h}'" }
-        puts "Applying '#{identity.name}' to #{hosts_term} #{printable_names.join(', ')}"
-
-        inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
-        inventory.groups[identity.group_name] ||= []
-        inv_file = inventory.filepath
-
-        env = {
-          "ANSIBLE_CALLBACK_PLUGINS" => File.join(Config.root, 'opt', 'ansible_callbacks'),
-          "ANSIBLE_STDOUT_CALLBACK" => "log_plays_v2",
-          "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
-          "ANSIBLE_HOST_KEY_CHECKING" => "false",
-          "INVFILE" => inv_file,
-          "RUN_ENV" => cluster_type.run_env,
-          "HUNTER_HOSTS" => @hunter.to_s
-        }.tap do |e|
-          cluster_type.questions.each do |q|
-            e[q.env] = cluster_type.fetch_answer(q.id).to_s
-          end
-        end
-
+        # Construct new node objects
         nodes = names.map do |name|
           hostname =
             case @hunter
@@ -120,19 +83,81 @@ module Profile
               nil
             end
 
-          inv_row = hostname.dup
-          inv_row << " ansible_host=#{ip}" if @hunter
-
-          inventory.groups[identity.group_name] |= [inv_row]
-
-          node = Node.new(
+          Node.new(
             hostname: hostname,
             name: name,
-            identity: args[1],
+            identity: identity.name,
             hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
             ip: ip
           )
+        end
 
+        # Check for identity clashes
+        total = Node.all + (nodes - [node])
+        nodes.each do |node|
+          total.each do |existing|
+            if node.conflicts_with?(existing)
+              node.errors << "clashes with '#{existing.name}'"
+            end
+          end
+        end
+
+        all_errors = nodes.map(&:full_errors).reject(&:empty?)
+
+        if all_errors.any?
+          raise <<~OUT.chomp
+          There are identity conflicts to resolve:
+          #{all_errors.join("\n")}
+          OUT
+        end
+
+        # Check for identity dependencies
+        to_queue = []
+        total.each do |node|
+          to_queue << node unless (total.map(&:identity) - node.dependencies).empty?
+        end
+
+        unless to_queue.empty?
+          to_queue.each do |node|
+            QueueMonitor.enqueue(name: node.name, identity: node.identity)
+          end
+          puts <<~OUT
+          The following nodes have been added to the queue, as they have unmet dependencies:
+          #{to_queue.map(&:name).join("\n")}
+          OUT
+        end
+
+        #
+        # ERROR CHECKING OVER; GOOD TO START APPLYING
+        #
+
+        hosts_term = names.length > 1 ? 'hosts' : 'host'
+        printable_names = names.map { |h| "'#{h}'" }
+        puts "Applying '#{identity.name}' to #{hosts_term} #{printable_names.join(', ')}"
+
+        inventory.groups[identity.group_name] ||= []
+        inv_file = inventory.filepath
+
+        env = {
+          "ANSIBLE_CALLBACK_PLUGINS" => File.join(Config.root, 'opt', 'ansible_callbacks'),
+          "ANSIBLE_STDOUT_CALLBACK" => "log_plays_v2",
+          "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
+          "ANSIBLE_HOST_KEY_CHECKING" => "false",
+          "INVFILE" => inv_file,
+          "RUN_ENV" => cluster_type.run_env,
+          "HUNTER_HOSTS" => @hunter.to_s
+        }.tap do |e|
+          cluster_type.questions.each do |q|
+            e[q.env] = cluster_type.fetch_answer(q.id).to_s
+          end
+        end
+
+        # Set up new nodes
+        nodes.each do |node|
+          inv_row = node.hostname.dup
+          inv_row << " ansible_host=#{node.ip}" if @hunter
+
+          inventory.groups[identity.group_name] |= [inv_row]
           node.clear_logs
           log_symlink = "#{Config.log_dir}/#{name}-apply-#{Time.now.to_i}.log"
 
@@ -148,8 +173,6 @@ module Profile
             ansible_log_path,
             log_symlink
           )
-
-          node
         end
 
         inventory.dump
@@ -202,6 +225,10 @@ module Profile
       end
 
       private
+
+      def inventory
+        @inventory ||= Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
+      end
 
       Nodes = Struct.new(:nodes) do
         def update_all(**kwargs)
