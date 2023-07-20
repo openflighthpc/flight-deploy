@@ -5,6 +5,7 @@ require 'net/sftp'
 
 require_relative './hunter_cli'
 require_relative './json_web_token'
+require_relative './queue_manager'
 
 module Profile
   class Node
@@ -100,7 +101,6 @@ module Profile
     end
 
     def status
-      return 'available' if hunter_label
       stdout_str, state = Open3.capture2("ps -e")
       processes = stdout_str.split("\n").map! { |p| p.split(" ") }
       running = processes.any? { |p| p[0].to_i == deployment_pid }
@@ -113,9 +113,12 @@ module Profile
         end
       elsif !exit_status || exit_status > 0
         'failed'
-      else
-        'complete'
       end
+
+      return 'queued' if QueueManager.contains?(name)
+      return 'available' if hunter_label
+
+      'complete'
     end
 
     def fetch_identity
