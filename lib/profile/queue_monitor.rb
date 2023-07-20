@@ -1,27 +1,36 @@
 module Profile
   class QueueMonitor
-    def enqueue(name:, identity:)
-      File.open(File.join(Config.queue_dir, "#{name}.yaml"), "w" ) do |file|
-        data = {"identity" => identity}
-        YAML.dump(data, file)
+    class << self
+      def pidfile
+        Config.queue_pidfile
+      end
+
+      def enqueue(name:, identity:)
+        File.open(File.join(Config.queue_dir, "#{name}.yaml"), "w" ) do |file|
+          data = {"identity" => identity}
+          YAML.dump(data, file)
+        end
+
+        start_monitor unless File.file?(pidfile)
+      end
+
+      def start_monitor
+        # Fork process and daemonise it so parent process can continue
+        Process.fork do
+          Process.daemon
+          File.write(pidfile, Process.pid, 'w') 
+          new.monitor
+        end
+      end
+
+      def dequeue(name:)
+        File.delete(File.join(Config.queue_dir, "#{name}.yaml"))
+      end
+
+      def in_queue?(name:)
+        File.exists?(File.join(Config.queue_dir, "#{name}.yaml"))
       end
     end
-    
-    def dequeue(name:)
-      File.delete(File.join(Config.queue_dir, "#{name}.yaml"))
-    end
-    
-    def in_queue?(name:)
-      File.exists?(File.join(Config.queue_dir, "#{name}.yaml"))
-    end
-
-    attr_reader :pid, :queue
-
-    def initialize
-      @pid = Process.pid
-    end
-
-    private
 
     def monitor
       loop do
@@ -50,6 +59,8 @@ module Profile
         end
         sleep(5)
       end
+    ensure
+      File.delete(pidfile) if File.file?(pidfile)
     end
   end
 end
