@@ -3,7 +3,8 @@ require_relative '../config'
 require_relative '../inventory'
 require_relative '../node'
 require_relative '../outputs'
-require_relative '../process_spawner.rb'
+require_relative '../process_spawner'
+require_relative '../queue_manager'
 
 require 'logger'
 
@@ -119,7 +120,7 @@ module Profile
 
         unless to_queue.empty?
           to_queue.each do |node|
-            QueueMonitor.enqueue(name: node.name, identity: node.identity)
+            QueueManager.push(name: node.name, identity: node.identity)
           end
           puts <<~OUT
           The following nodes have been added to the queue, as they have unmet dependencies:
