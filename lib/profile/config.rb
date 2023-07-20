@@ -79,6 +79,10 @@ module Profile
         dir_constructor(root, 'var', 'queue')
       end
 
+      def queue_pidfile
+        File.join(dir_constructor(root, 'var'), 'queue.pid')
+      end
+
       def save_data
         FileUtils.mkdir_p(config_path)
         data.write(force: true)
