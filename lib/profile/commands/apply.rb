@@ -97,6 +97,8 @@ module Profile
         total = Node.all + nodes
         nodes.each do |node|
           (total - [node]).each do |existing|
+            next unless existing.identity
+
             if node.conflicts_with?(existing)
               node.errors << "clashes with '#{existing.name}'"
             end
@@ -114,7 +116,9 @@ module Profile
 
         # Check for identity dependencies
         to_queue = []
-        total.each do |node|
+        (total - [node]).each do |node|
+          next unless existing.identity
+
           to_queue << node unless (total.map(&:identity) - node.dependencies).empty?
         end
 
