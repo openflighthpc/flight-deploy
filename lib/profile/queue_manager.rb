@@ -21,8 +21,12 @@ module Profile
     # Not to be confused with Thread::Queue
     class Queue
       class << self
+        def node_file(name)
+          File.join(Config.queue_dir, name)
+        end
+
         def push(name, identity)
-          File.open(File.join(Config.queue_dir, name, 'w') do |file|
+          File.open(node_file(name), 'w') do |file|
             file.write(identity)
           end
         end
@@ -30,17 +34,17 @@ module Profile
         def pop(*names)
           names.each do |name|
             next unless contains?(name)
-            File.delete(File.join(Config.queue_dir, name)) }
+            File.delete(node_file(name))
           end
         end
 
         def contains?(name)
-          File.exists?(File.join(Config.queue_dir, name))
+          File.exists?(node_file(name))
         end
 
         def index
-          Dir[File.join(Config.queue_dir, '*')].map do |f|
-            { name: File.basename(f), name: File.read(f) }
+          Dir[node_file('*')].map do |f|
+            { name: File.basename(f), identity: File.read(f) }
           end
         end
       end
