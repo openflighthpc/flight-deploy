@@ -94,9 +94,9 @@ module Profile
         end
 
         # Check for identity clashes
-        total = Node.all + (nodes - [node])
+        total = Node.all + nodes
         nodes.each do |node|
-          total.each do |existing|
+          (total - [node]).each do |existing|
             if node.conflicts_with?(existing)
               node.errors << "clashes with '#{existing.name}'"
             end
