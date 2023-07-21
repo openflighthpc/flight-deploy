@@ -66,7 +66,7 @@ module Profile
       end
 
       def save_data
-        FileUtils.mkdir_p(File.join(root, 'etc'))
+        FileUtils.mkdir_p(config_path)
         data.write(force: true)
       end
 
