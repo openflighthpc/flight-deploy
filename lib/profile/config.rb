@@ -11,7 +11,7 @@ module Profile
 
       def data
         @data ||= TTY::Config.new.tap do |cfg|
-          cfg.append_path(File.join(root, 'etc'))
+          cfg.append_path(config_path)
           begin
             cfg.read
           rescue TTY::Config::ReadError
@@ -71,13 +71,16 @@ module Profile
       end
 
       def set_permission
-        file_path = File.join(root, 'etc', data.filename + data.extname)
-        File.chmod(0600, file_path)
+        File.chmod(0600, File.join(config_path, data.filename + data.extname))
         puts "permission set"
       end
 
       def root
         @root ||= File.expand_path(File.join(__dir__, '..', '..'))
+      end
+      
+      def config_path
+        @config_path = File.join(root, 'etc')
       end
 
       def ansible_callback_dir
