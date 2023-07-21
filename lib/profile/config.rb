@@ -70,6 +70,12 @@ module Profile
         data.write(force: true)
       end
 
+      def set_permission
+        file_path = File.join(root, 'etc', data.filename + data.extname)
+        File.chmod(0600, file_path)
+        puts "permission set"
+      end
+
       def root
         @root ||= File.expand_path(File.join(__dir__, '..', '..'))
       end
