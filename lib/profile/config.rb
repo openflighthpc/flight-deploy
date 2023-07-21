@@ -72,7 +72,6 @@ module Profile
 
       def set_permission
         File.chmod(0600, File.join(config_path, data.filename + data.extname))
-        puts "permission set"
       end
 
       def root
