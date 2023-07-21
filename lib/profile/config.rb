@@ -72,13 +72,12 @@ module Profile
 
       def set_permission
         File.chmod(0600, File.join(config_path, data.filename + data.extname))
-        puts "permission set"
       end
 
       def root
         @root ||= File.expand_path(File.join(__dir__, '..', '..'))
       end
-      
+
       def config_path
         @config_path = File.join(root, 'etc')
       end
