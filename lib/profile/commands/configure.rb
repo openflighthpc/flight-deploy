@@ -102,9 +102,11 @@ module Profile
         end
       end
 
+      # TODO
       def save_answers(answers)
         Config.data.set(:cluster_type, value: cluster_type.id)
         Config.save_data
+        Config.set_permission
         cluster_type.save_answers(answers)
       end
 
