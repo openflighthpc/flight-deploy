@@ -116,21 +116,26 @@ module Profile
 
         # Check for identity dependencies
         to_queue = []
-        (total - [node]).each do |node|
-          next unless existing.identity
-
-          to_queue << node unless (total.map(&:identity) - node.dependencies).empty?
+        nodes.each do |node|
+          (total - [node]).tap do |existing|
+            node.dependencies.each do |dep|
+              to_queue << node unless existing.map(&:identity).include?(dep)
+            end
+          end
         end
 
         unless to_queue.empty?
           to_queue.each do |node|
             QueueManager.push(name: node.name, identity: node.identity)
+            nodes.delete(node)
           end
           puts <<~OUT
           The following nodes have been added to the queue, as they have unmet dependencies:
           #{to_queue.map(&:name).join("\n")}
           OUT
         end
+
+        raise "No applicable nodes". unless nodes.any?
 
         #
         # ERROR CHECKING OVER; GOOD TO START APPLYING
@@ -164,11 +169,11 @@ module Profile
 
           inventory.groups[identity.group_name] |= [inv_row]
           node.clear_logs
-          log_symlink = "#{Config.log_dir}/#{name}-apply-#{Time.now.to_i}.log"
+          log_symlink = "#{Config.log_dir}/#{node.name}-apply-#{Time.now.to_i}.log"
 
           ansible_log_path = File.join(
             ansible_log_dir,
-            hostname
+            node.hostname
           )
 
           FileUtils.mkdir_p(ansible_log_dir)
