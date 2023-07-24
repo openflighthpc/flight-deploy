@@ -19,9 +19,9 @@ module Profile
         raise "No identities to display" unless cluster_type.identities.any?
 
         t = Table.new
-        t.headers('Name', 'Description')
+        t.headers('Name', 'Description', 'Dependencies', 'Conflicts')
         cluster_type.identities.each do |p|
-          t.row( p.name, p.description )
+          t.row( p.name, p.description, p.dependencies, p.conflicts )
         end
         t.emit
       end
