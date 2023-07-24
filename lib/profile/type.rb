@@ -57,6 +57,7 @@ module Profile
     def save_answers(answers_hash)
       new_answers = answers.merge(answers_hash)
       File.write(answers_file, YAML.dump(new_answers))
+      File.chmod(0600, answers_file)
     end
 
     def answers

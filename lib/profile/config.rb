@@ -11,7 +11,7 @@ module Profile
 
       def data
         @data ||= TTY::Config.new.tap do |cfg|
-          cfg.append_path(File.join(root, 'etc'))
+          cfg.append_path(config_path)
           begin
             cfg.read
           rescue TTY::Config::ReadError
@@ -66,12 +66,16 @@ module Profile
       end
 
       def save_data
-        FileUtils.mkdir_p(File.join(root, 'etc'))
+        FileUtils.mkdir_p(config_path)
         data.write(force: true)
       end
 
       def root
         @root ||= File.expand_path(File.join(__dir__, '..', '..'))
+      end
+
+      def config_path
+        @config_path = File.join(root, 'etc')
       end
 
       def ansible_callback_dir
