@@ -42,6 +42,8 @@ module Profile
         # Check that any existing nodes aren't already busy
         check_nodes_not_busy(names)
 
+        check_nodes_not_in_queue(names)
+
         # Fetch cluster type
         cluster_type = Type.find(Config.cluster_type)
         raise "Invalid cluster type. Please run `profile configure`" unless cluster_type
@@ -94,7 +96,7 @@ module Profile
         end
 
         # Check for identity clashes
-        total = Node.all + nodes
+        total = Node.all(reload: true) + nodes
         nodes.each do |node|
           (total - [node]).each do |existing|
             next unless existing.identity
@@ -117,7 +119,7 @@ module Profile
         # Check for identity dependencies
         to_queue = []
         nodes.each do |node|
-          (total - [node]).tap do |existing|
+          (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
             node.dependencies.each do |dep|
               to_queue << node unless existing.map(&:identity).include?(dep)
             end
@@ -313,6 +315,18 @@ module Profile
           out = <<~OUT.chomp
           The following nodes were not found in Profile or Hunter:
           #{not_found.join("\n")}
+          OUT
+          raise out
+        end
+      end
+
+      def check_nodes_not_in_queue(names)
+        in_queue = names.select { |n| QueueManager.contains?(n) }
+
+        if in_queue.any?
+          out = <<~OUT.chomp
+          The following nodes are already queued:
+          #{in_queue.join("\n")}
           OUT
           raise out
         end
