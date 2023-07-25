@@ -21,7 +21,7 @@ module Profile
         t = Table.new
         t.headers('Name', 'Description', 'Dependencies', 'Conflicts')
         cluster_type.identities.each do |p|
-          t.row( p.name, p.description, p.dependencies, p.conflicts )
+          t.row( p.name, p.description, p.dependencies.join(", "), p.conflicts.join(", ") )
         end
         t.emit
       end
