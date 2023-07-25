@@ -126,7 +126,7 @@ module Profile
 
         unless to_queue.empty?
           to_queue.each do |node|
-            QueueManager.push(name: node.name, identity: node.identity)
+            QueueManager.push(node.name, node.identity)
             nodes.delete(node)
           end
           puts <<~OUT
@@ -135,7 +135,7 @@ module Profile
           OUT
         end
 
-        raise "No applicable nodes". unless nodes.any?
+        raise "No applicable nodes" unless nodes.any?
 
         #
         # ERROR CHECKING OVER; GOOD TO START APPLYING
