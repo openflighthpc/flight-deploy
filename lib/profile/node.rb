@@ -113,10 +113,9 @@ module Profile
           return 'applying'
         end
       elsif !exit_status || exit_status > 0
+        return 'available' if hunter_label
         return 'failed'
       end
-
-      return 'available' if hunter_label
 
       'complete'
     end
