@@ -65,7 +65,7 @@ module Profile
         end
 
         def start
-          File.write(pidfile, pid, 'w')
+          File.write(pidfile, Process.pid)
 
           until Queue.index.empty?
             grouped = Queue.index.group_by { |n| n[:identity] }
@@ -79,7 +79,10 @@ module Profile
                 group
               ]
 
-              Commands::Apply.new(args, OpenStruct.new).run!
+              begin
+                Commands::Apply.new(args, OpenStruct.new).run!
+              rescue
+              end
             end
 
             sleep(5)

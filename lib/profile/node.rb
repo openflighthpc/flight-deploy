@@ -101,21 +101,21 @@ module Profile
     end
 
     def status
+      return 'queued' if QueueManager.contains?(name)
       stdout_str, state = Open3.capture2("ps -e")
       processes = stdout_str.split("\n").map! { |p| p.split(" ") }
       running = processes.any? { |p| p[0].to_i == deployment_pid }
       if running
         case log_filepath.split("-")[-2]
         when 'remove'
-          'removing'
+          return 'removing'
         when 'apply'
-          'applying'
+          return 'applying'
         end
       elsif !exit_status || exit_status > 0
-        'failed'
+        return 'failed'
       end
 
-      return 'queued' if QueueManager.contains?(name)
       return 'available' if hunter_label
 
       'complete'
@@ -193,7 +193,7 @@ module Profile
     end
 
     def conflicts_with?(node)
-      conflicts.include?(node.identity.name)
+      conflicts.include?(node.fetch_identity.name)
     end
 
     def errors
