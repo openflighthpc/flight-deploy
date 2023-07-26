@@ -56,6 +56,10 @@ module Profile
         Node '#{node.name}' is available. You can apply an identity to it with 'flight profile apply #{node.name} <identity>'.
         OUT
 
+        return <<~OUT.chomp if node.status == 'queued'
+        Node '#{node.name}' is queued for application awaiting its dependencies.
+        OUT
+
         log = File.read(node.log_file)
         commands = log.split(/(?=PROFILE_COMMAND)/)
         "".tap do |output|
