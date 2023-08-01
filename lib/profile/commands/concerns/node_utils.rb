@@ -1,32 +1,7 @@
-require_relative '../command'
-require_relative '../config'
-require_relative '../table'
-require_relative '../node'
 module Profile
   module Commands
-    class Dequeue < Command
-      def run
-
-        strings = args[0].split(',')
-        names = []
-        strings.each do |str|
-          names.append(expand_brackets(str))
-        end
-
-        names.flatten!
-
-        failed = []
-        names.each do |name|
-          node_file = File.join(Config.queue_dir, name)
-          if File.exists?(node_file)
-            File.delete(node_file)
-          else
-            failed << name
-          end
-        end
-
-        raise "The following nodes were not found in the queue: #{failed.join(', ')}" unless failed.empty?
-
+    module Concerns
+      module NodeUtils
         private
 
         def expand_brackets(str)
