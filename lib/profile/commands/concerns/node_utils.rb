@@ -4,6 +4,18 @@ module Profile
       module NodeUtils
         private
 
+        def check_nodes_not_in_queue(names)
+          in_queue = names.select { |n| QueueManager.contains?(n) }
+
+          if in_queue.any?
+            out = <<~OUT.chomp
+            The following nodes are already queued:
+            #{in_queue.join("\n")}
+            OUT
+            raise out
+          end
+        end
+
         def expand_brackets(str)
           contents = str[/\[.*\]/]
           return [str] if contents.nil?
