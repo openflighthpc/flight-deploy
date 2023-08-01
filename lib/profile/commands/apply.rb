@@ -1,4 +1,5 @@
 require_relative '../command'
+require_relative './concerns/node_utils'
 require_relative '../config'
 require_relative '../inventory'
 require_relative '../node'
@@ -13,7 +14,9 @@ require 'open3'
 module Profile
   module Commands
     class Apply < Command
-      include Profile::Outputs
+      include Outputs
+      include Concerns::NodeUtils
+
       def run
         # ARGS:
         # [ names, identity ]
@@ -329,28 +332,6 @@ module Profile
           #{in_queue.join("\n")}
           OUT
           raise out
-        end
-      end
-
-      def expand_brackets(str)
-        contents = str[/\[.*\]/]
-        return [str] if contents.nil?
-
-        left = str[/[^\[]*/]
-        right = str[/].*/][1..-1]
-
-        unless contents.match(/^\[[0-9]+-[0-9]+\]$/)
-          raise "Invalid range, ensure any range used is of the form [START-END]"
-        end
-
-        nums = contents[1..-2].split("-")
-
-        unless nums.first.to_i < nums.last.to_i
-          raise "Invalid range, ensure that the end index is greater than the start index"
-        end
-
-        (nums.first..nums.last).map do |index|
-          left + index + right
         end
       end
     end
