@@ -322,18 +322,6 @@ module Profile
           raise out
         end
       end
-
-      def check_nodes_not_in_queue(names)
-        in_queue = names.select { |n| QueueManager.contains?(n) }
-
-        if in_queue.any?
-          out = <<~OUT.chomp
-          The following nodes are already queued:
-          #{in_queue.join("\n")}
-          OUT
-          raise out
-        end
-      end
     end
   end
 end
