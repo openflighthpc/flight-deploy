@@ -12,6 +12,10 @@ module Profile
       end
     end
 
+    def self.pop(name)
+      Queue.pop(name)
+    end
+
     def self.contains?(name)
       Queue.contains?(name)
     end
