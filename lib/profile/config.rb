@@ -36,6 +36,16 @@ module Profile
         data.fetch(:log_dir) || dir_constructor(root, 'var', 'log')
       end
 
+      def shared_secret
+        return unless File.file?(shared_secret_path)
+        File.read(shared_secret_path)
+      end
+
+      def shared_secret_path
+        ENV['flight_HUNTER_shared_secret_path'] ||
+        data.fetch(:shared_secret_path)
+      end
+
       def hunter_command
         command = 
           ENV['flight_PROFILE_hunter_command'] ||

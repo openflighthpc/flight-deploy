@@ -19,6 +19,10 @@ module Profile
         # OPTS:
         # [ force ]
         @hunter = Config.use_hunter?
+
+        if @options.remove_on_shutdown && !Config.shared_secret_path
+          raise "Shared secret path not set!"
+        end
         
         strings = args[0].split(',')
         names = []
@@ -159,6 +163,10 @@ module Profile
           # We yield it in a block so that the rest of the `apply`
           # logic can continue asynchronously.
           node_objs.update_all(deployment_pid: nil, exit_status: last_exit)
+
+          if @options.remove_on_shutdown && last_exit == 0
+            node_objs.each { |node| node.install_remove_hook }
+          end
         end
 
         node_objs.update_all(deployment_pid: pid.to_i)
@@ -186,6 +194,14 @@ module Profile
       Nodes = Struct.new(:nodes) do
         def update_all(**kwargs)
           nodes.map { |node| node.update(**kwargs) }
+        end
+
+        def each(*args, **kwargs, &block)
+          nodes.each(*args, **kwargs, &block)
+        end
+
+        def map(*args, **kwargs, &block)
+          nodes.map(*args, **kwargs, &block)
         end
       end
 
