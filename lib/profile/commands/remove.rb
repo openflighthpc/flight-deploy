@@ -40,8 +40,7 @@ module Profile
         # Check all questions have been answered
         unless cluster_type.configured?
           out = <<~OUT.chomp
-          Cluster type missing required configuration
-          Please run `profile configure`
+          Cluster type missing required configuration. Please run `profile configure`.
           OUT
           raise out
         end
@@ -160,8 +159,7 @@ module Profile
         not_found = names.select { |n| !Node.find(n)&.identity }
         if not_found.any?
           out = <<~OUT.chomp
-          The following nodes either do not exist or
-          do not have an identity applied to them:
+          The following nodes either do not exist or do not have an identity applied to them:
           #{not_found.join("\n")}
           OUT
           raise out
@@ -172,8 +170,7 @@ module Profile
         not_removable = nodes.select { |node| !node.fetch_identity.removable? }
         if not_removable.any?
           out = <<~OUT.chomp
-          The following nodes have an identity that doesn't currently support
-          the `profile remove` command:
+          The following nodes have an identity that doesn't currently support the `profile remove` command:
           #{not_removable.map(&:name).join("\n")}
           OUT
           raise out
