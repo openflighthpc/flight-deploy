@@ -21,7 +21,7 @@ module Profile
     end
 
     def self.identity(name)
-      Queue.index[name.to_sym]
+      Queue.index[name]
     end
   end
 
