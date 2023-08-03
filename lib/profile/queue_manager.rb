@@ -1,8 +1,8 @@
 
 module Profile
   class QueueManager
-    def self.push(name, identity)
-      Queue.push(name, identity)
+    def self.push(name, identity, options: {})
+      Queue.push(name, identity, options: options)
 
       return if QueueMonitor.running?
 
@@ -22,7 +22,7 @@ module Profile
     end
 
     def self.identity(name)
-      Queue.index[name]
+      Queue.index[name][:identity]
     end
   end
 
@@ -33,9 +33,10 @@ module Profile
         File.join(Config.queue_dir, name)
       end
 
-      def push(name, identity)
+      def push(name, identity, options: {})
         File.open(node_file(name), 'w') do |file|
-          file.write(identity)
+          data = { identity: identity, options: options }.to_json
+          file.write(data)
         end
       end
 
@@ -52,7 +53,15 @@ module Profile
       end
 
       def index
-        Dir[node_file('*')].map { |f| [File.basename(f), File.read(f)] }.to_h
+        Dir[node_file('*')].map do |f|
+          data = JSON.parse(File.read(f))
+          {
+            File.basename(f) => {
+              identity: data['identity'],
+              options: data['options']
+            }
+          }
+        end.reduce({}, :merge)
       end
     end
   end
@@ -83,11 +92,13 @@ module Profile
 
             args = [
               names.join(','),
-              group
+              group[:identity]
             ]
 
+            opts = OpenStruct.new(group[:options])
+
             begin
-              Commands::Apply.new(args, OpenStruct.new).run!
+              Commands::Apply.new(args, opts).run!
             rescue => e
               puts e
             end

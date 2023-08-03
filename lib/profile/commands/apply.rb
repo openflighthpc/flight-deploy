@@ -131,7 +131,7 @@ module Profile
 
         unless to_queue.empty?
           to_queue.each do |node|
-            QueueManager.push(node.name, node.identity)
+            QueueManager.push(node.name, node.identity, options: @options.to_h)
             nodes.delete(node)
           end
           puts <<~OUT
