@@ -140,7 +140,9 @@ module Profile
           OUT
         end
 
-        raise "No applicable nodes" unless nodes.any?
+        puts "No applicable nodes." unless nodes.any?
+
+        return unless nodes.any?
 
         #
         # ERROR CHECKING OVER; GOOD TO START APPLYING
