@@ -1,3 +1,4 @@
+
 module Profile
   class QueueManager
     def self.push(name, identity)
@@ -76,7 +77,7 @@ module Profile
         until Queue.index.empty?
           grouped = Queue.index.group_by { |k,v| v }
           grouped.each do |group, nodes|
-            names = nodes.map(&:last)
+            names = nodes.map(&:first)
 
             Queue.pop(names)
 
