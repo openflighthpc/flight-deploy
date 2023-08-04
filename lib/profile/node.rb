@@ -163,15 +163,16 @@ module Profile
 
         script_eval = script_erb.result(binding)
 
-        script_path = File.join(
-          'opt',
+        script_dir = File.join(
+          '/opt',
           'flight',
           'libexec',
-          'profile',
-          'shutdown.sh'
+          'profile'
         )
 
-        sftp.session.exec! "mkdir -p #{script_path}"
+        script_path = File.join(script_dir, 'shutdown.sh')
+
+        sftp.session.exec! "mkdir -p #{script_dir}"
         sftp.file.open(script_path, "w") do |f|
           f.puts script_eval
         end
