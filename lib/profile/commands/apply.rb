@@ -130,8 +130,12 @@ module Profile
         end
 
         unless to_queue.empty?
+          options = {
+            'remove_on_shutdown' => @options.remove_on_shutdown
+          }
+
           to_queue.each do |node|
-            QueueManager.push(node.name, node.identity, options: @options.to_h)
+            QueueManager.push(node.name, node.identity, options: options)
             nodes.delete(node)
           end
           puts <<~OUT
