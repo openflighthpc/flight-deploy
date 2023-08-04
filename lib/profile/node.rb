@@ -163,11 +163,21 @@ module Profile
 
         script_eval = script_erb.result(binding)
 
-        sftp.file.open("/root/shutdown.sh", "w") do |f|
+        script_path = File.join(
+          'opt',
+          'flight',
+          'libexec',
+          'profile',
+          'shutdown.sh'
+        )
+
+        sftp.session.exec! "mkdir -p #{script_path}"
+        sftp.file.open(script_path, "w") do |f|
           f.puts script_eval
         end
 
-        sftp.session.exec! 'chmod +x /root/shutdown.sh'
+
+        sftp.session.exec! "chmod +x #{script_path}"
 
         sftp.file.open("/etc/systemd/system/profile-shutdown.service", "w") do |f|
           f.puts systemd_unit
