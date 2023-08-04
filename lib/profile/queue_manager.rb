@@ -88,7 +88,7 @@ module Profile
           grouped.each do |group, nodes|
             names = nodes.map(&:first)
 
-            Queue.pop(names)
+            Queue.pop(*names)
 
             args = [
               names.join(','),
