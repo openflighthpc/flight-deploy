@@ -1,4 +1,5 @@
 require_relative '../command'
+require_relative './concerns/node_utils'
 require_relative '../hunter_cli'
 require_relative '../inventory'
 require_relative '../node'
@@ -11,7 +12,8 @@ require 'open3'
 module Profile
   module Commands
     class Remove < Command
-      include Profile::Outputs
+      include Outputs
+      include Concerns::NodeUtils
 
       def run
         # ARGS:
@@ -38,8 +40,7 @@ module Profile
         # Check all questions have been answered
         unless cluster_type.configured?
           out = <<~OUT.chomp
-          Cluster type missing required configuration
-          Please run `profile configure`
+          Cluster type missing required configuration. Please run `profile configure`.
           OUT
           raise out
         end
@@ -158,8 +159,7 @@ module Profile
         not_found = names.select { |n| !Node.find(n)&.identity }
         if not_found.any?
           out = <<~OUT.chomp
-          The following nodes either do not exist or
-          do not have an identity applied to them:
+          The following nodes either do not exist or do not have an identity applied to them:
           #{not_found.join("\n")}
           OUT
           raise out
@@ -170,8 +170,7 @@ module Profile
         not_removable = nodes.select { |node| !node.fetch_identity.removable? }
         if not_removable.any?
           out = <<~OUT.chomp
-          The following nodes have an identity that doesn't currently support
-          the `profile remove` command:
+          The following nodes have an identity that doesn't currently support the `profile remove` command:
           #{not_removable.map(&:name).join("\n")}
           OUT
           raise out
@@ -194,28 +193,6 @@ module Profile
           else
             raise existing_string
           end
-        end
-      end
-
-      def expand_brackets(str)
-        contents = str[/\[.*\]/]
-        return [str] if contents.nil?
-
-        left = str[/[^\[]*/]
-        right = str[/].*/][1..-1]
-
-        unless contents.match(/^\[[0-9]+-[0-9]+\]$/)
-          raise "Invalid range, ensure any range used is of the form [START-END]"
-        end
-
-        nums = contents[1..-2].split("-")
-
-        unless nums.first.to_i < nums.last.to_i
-          raise "Invalid range, ensure that the end index is greater than the start index"
-        end
-
-        (nums.first..nums.last).map do |index|
-          left + index + right
         end
       end
     end

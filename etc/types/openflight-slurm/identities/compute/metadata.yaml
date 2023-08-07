@@ -1,3 +1,6 @@
 name: compute
 description: Set up as a compute node with Flight Runway and job-running tools
 group_name: nodes
+dependencies:
+  - login
+conflicts:

@@ -12,7 +12,17 @@ module Profile
         t = Table.new
         t.headers('Node', 'Identity', 'Status')
         Node.all.each do |node|
-          t.row( node.name, node.identity, node.status )
+          identity = case QueueManager.contains?(node.name)
+                     when true
+                       QueueManager.identity(node.name)
+                     else
+                       node.identity
+                     end
+          t.row(
+            node.name,
+            identity,
+            node.status
+          )
         end
         t.emit
       end

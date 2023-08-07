@@ -1,9 +1,11 @@
 require_relative '../command'
+require_relative './concerns/node_utils'
 require_relative '../config'
 require_relative '../inventory'
 require_relative '../node'
 require_relative '../outputs'
-require_relative '../process_spawner.rb'
+require_relative '../process_spawner'
+require_relative '../queue_manager'
 
 require 'logger'
 
@@ -12,7 +14,9 @@ require 'open3'
 module Profile
   module Commands
     class Apply < Command
-      include Profile::Outputs
+      include Outputs
+      include Concerns::NodeUtils
+
       def run
         # ARGS:
         # [ names, identity ]
@@ -41,6 +45,8 @@ module Profile
         # Check that any existing nodes aren't already busy
         check_nodes_not_busy(names)
 
+        check_nodes_not_in_queue(names)
+
         # Fetch cluster type
         cluster_type = Type.find(Config.cluster_type)
         raise "Invalid cluster type. Please run `profile configure`" unless cluster_type
@@ -65,6 +71,64 @@ module Profile
         raise "No identity exists with given name" if !identity
         cmds = identity.commands
 
+        # Construct new node objects
+        nodes = Node.generate(names, identity.name, use_hunter: @hunter)
+
+        # Check for identity clashes
+        total = Node.all(reload: true) + nodes
+
+        nodes.each do |node|
+          (total - [node]).each do |existing|
+            next unless existing.identity
+
+            if node.conflicts_with?(existing.identity)
+              node.errors << "clashes with '#{existing.name}'"
+            end
+          end
+
+          Queue.index.each do |q, v|
+            if node.conflicts_with?(v[:identity])
+              node.errors << "clashes with '#{q}'"
+            end
+          end
+        end
+
+        all_errors = nodes.map(&:full_errors).reject(&:empty?)
+
+        if all_errors.any?
+          raise <<~OUT.chomp
+          There are identity conflicts to resolve:
+          #{all_errors.join("\n")}
+          OUT
+        end
+
+        # Check for identity dependencies
+        to_queue = []
+        nodes.each do |node|
+          (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
+            unless node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }
+              to_queue << node
+            end
+          end
+        end
+
+        unless to_queue.empty?
+          options = {
+            'remove_on_shutdown' => @options.remove_on_shutdown
+          }
+
+          to_queue.each do |node|
+            QueueManager.push(node.name, node.identity, options: options)
+            nodes.delete(node)
+          end
+          puts <<~OUT
+          The following nodes have been added to the queue, as they have unmet dependencies:
+          #{to_queue.map(&:name).join("\n")}
+          OUT
+        end
+
+        return unless nodes.any?
+
         #
         # ERROR CHECKING OVER; GOOD TO START APPLYING
         #
@@ -73,7 +137,6 @@ module Profile
         printable_names = names.map { |h| "'#{h}'" }
         puts "Applying '#{identity.name}' to #{hosts_term} #{printable_names.join(', ')}"
 
-        inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
         inventory.groups[identity.group_name] ||= []
         inv_file = inventory.filepath
 
@@ -91,42 +154,18 @@ module Profile
           end
         end
 
-        nodes = names.map do |name|
-          hostname =
-            case @hunter
-            when true
-              Node.find(name, include_hunter: true).hostname
-            when false
-              name
-            end
-
-          ip =
-            case @hunter
-            when true
-              Node.find(name, include_hunter: true).ip
-            when false
-              nil
-            end
-
-          inv_row = hostname.dup
-          inv_row << " ansible_host=#{ip}" if @hunter
+        # Set up new nodes
+        nodes.each do |node|
+          inv_row = node.hostname.dup
+          inv_row << " ansible_host=#{node.ip}" if @hunter
 
           inventory.groups[identity.group_name] |= [inv_row]
-
-          node = Node.new(
-            hostname: hostname,
-            name: name,
-            identity: args[1],
-            hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
-            ip: ip
-          )
-
           node.clear_logs
-          log_symlink = "#{Config.log_dir}/#{name}-apply-#{Time.now.to_i}.log"
+          log_symlink = "#{Config.log_dir}/#{node.name}-apply-#{Time.now.to_i}.log"
 
           ansible_log_path = File.join(
             ansible_log_dir,
-            hostname
+            node.hostname
           )
 
           FileUtils.mkdir_p(ansible_log_dir)
@@ -136,8 +175,6 @@ module Profile
             ansible_log_path,
             log_symlink
           )
-
-          node
         end
 
         inventory.dump
@@ -190,6 +227,10 @@ module Profile
       end
 
       private
+
+      def inventory
+        @inventory ||= Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
+      end
 
       Nodes = Struct.new(:nodes) do
         def update_all(**kwargs)
@@ -266,28 +307,6 @@ module Profile
           #{not_found.join("\n")}
           OUT
           raise out
-        end
-      end
-
-      def expand_brackets(str)
-        contents = str[/\[.*\]/]
-        return [str] if contents.nil?
-
-        left = str[/[^\[]*/]
-        right = str[/].*/][1..-1]
-
-        unless contents.match(/^\[[0-9]+-[0-9]+\]$/)
-          raise "Invalid range, ensure any range used is of the form [START-END]"
-        end
-
-        nums = contents[1..-2].split("-")
-
-        unless nums.first.to_i < nums.last.to_i
-          raise "Invalid range, ensure that the end index is greater than the start index"
-        end
-
-        (nums.first..nums.last).map do |index|
-          left + index + right
         end
       end
     end

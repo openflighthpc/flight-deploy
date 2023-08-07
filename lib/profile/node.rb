@@ -5,6 +5,7 @@ require 'net/sftp'
 
 require_relative './hunter_cli'
 require_relative './json_web_token'
+require_relative './queue_manager'
 
 module Profile
   class Node
@@ -35,6 +36,34 @@ module Profile
           hostname: parts[1],
           hunter_label: parts[4],
           ip: parts[2]
+        )
+      end
+    end
+
+    def self.generate(names, identity, use_hunter: false)
+      names.map do |name|
+        hostname =
+          case use_hunter
+          when true
+            Node.find(name, include_hunter: true).hostname
+          when false
+            name
+          end
+
+        ip =
+          case use_hunter
+          when true
+            Node.find(name, include_hunter: true).ip
+          when false
+            nil
+          end
+
+        Node.new(
+          hostname: hostname,
+          name: name,
+          identity: identity,
+          hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
+          ip: ip
         )
       end
     end
@@ -100,22 +129,23 @@ module Profile
     end
 
     def status
-      return 'available' if hunter_label
+      return 'queued' if QueueManager.contains?(name)
       stdout_str, state = Open3.capture2("ps -e")
       processes = stdout_str.split("\n").map! { |p| p.split(" ") }
       running = processes.any? { |p| p[0].to_i == deployment_pid }
       if running
         case log_filepath.split("-")[-2]
         when 'remove'
-          'removing'
+          return 'removing'
         when 'apply'
-          'applying'
+          return 'applying'
         end
       elsif !exit_status || exit_status > 0
-        'failed'
-      else
-        'complete'
+        return 'available' if hunter_label
+        return 'failed'
       end
+
+      'complete'
     end
 
     def fetch_identity
@@ -179,6 +209,38 @@ module Profile
         sftp.session.exec! "systemctl daemon-reload"
         sftp.session.exec! "systemctl start profile-shutdown"
       end
+    end
+
+    def dependencies
+      fetch_identity.dependencies
+    end
+
+    def conflicts
+      fetch_identity.conflicts
+    end
+
+    def conflicts_with?(identity)
+      conflicts.include?(identity)
+    end
+
+    def conflicts_satisfied?(nodes)
+      nodes.none? do |existing|
+        next unless existing.identity
+
+        conflicts_with?(existing.identity)
+      end
+    end
+
+    def dependencies_satisfied?(nodes)
+      dependencies.all? { |dep| nodes.map(&:identity).include?(dep) }
+    end
+
+    def errors
+      @errors ||= []
+    end
+
+    def full_errors
+      errors.map { |e| "'#{name}' #{e}"}.join("\n")
     end
 
     attr_reader :name
