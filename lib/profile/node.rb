@@ -191,8 +191,8 @@ module Profile
       fetch_identity.conflicts
     end
 
-    def conflicts_with?(node)
-      conflicts.include?(node.fetch_identity.name)
+    def conflicts_with?(identity)
+      conflicts.include?(identity)
     end
 
     def errors

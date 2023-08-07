@@ -104,8 +104,14 @@ module Profile
           (total - [node]).each do |existing|
             next unless existing.identity
 
-            if node.conflicts_with?(existing)
+            if node.conflicts_with?(existing.identity)
               node.errors << "clashes with '#{existing.name}'"
+            end
+          end
+
+          Queue.index.each do |q, v|
+            if node.conflicts_with?(v[:identity])
+              node.errors << "clashes with '#{q}'"
             end
           end
         end
