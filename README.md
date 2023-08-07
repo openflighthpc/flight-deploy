@@ -54,6 +54,14 @@ List brief information for each node that has been set up with `list`.
 
 View the setup status for a single node with `view HOSTNAME`. A truncated/stylised version of the Ansible output will be displayed, as well as the long-form command used to run it. See the raw log output by including the `--raw` option.
 
+### Remove on shutdown option
+
+When applying to a set of nodes, you may use the `--remove-on-shutdown` option. When used, the nodes being applied to will be given a `systemd` unit that, when stopped (presumably, on system shutdown), attempts to communicate to the applier node that they have shut down and should be `remove`'d from Profile. The option requires:
+
+- The `shared_secret_path` config option to be set
+- `flight-profile-api` set up and running on the same system, using the same shared secret
+
+
 # Contributing
 
 Fork the project. Make your feature addition or bug fix. Send a pull
