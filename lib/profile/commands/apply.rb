@@ -129,7 +129,7 @@ module Profile
         to_queue = []
         nodes.each do |node|
           (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
-            if node.dependencies.any? { |dep| existing.map(&:identity).include?(dep) }
+            unless node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }
               to_queue << node
             end
           end
