@@ -123,8 +123,8 @@ module Profile
         to_queue = []
         nodes.each do |node|
           (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
-            node.dependencies.each do |dep|
-              to_queue << node unless existing.map(&:identity).include?(dep)
+            if node.dependencies.any? { |dep| existing.map(&:identity).include?(dep) }
+              to_queue << node
             end
           end
         end
@@ -143,8 +143,6 @@ module Profile
           #{to_queue.map(&:name).join("\n")}
           OUT
         end
-
-        puts "No applicable nodes." unless nodes.any?
 
         return unless nodes.any?
 
