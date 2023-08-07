@@ -200,7 +200,7 @@ module Profile
     end
 
     def full_errors
-      errors.map { |e| "#{name} #{e}"}.join("\n")
+      errors.map { |e| "'#{name}' #{e}"}.join("\n")
     end
 
     attr_reader :name
