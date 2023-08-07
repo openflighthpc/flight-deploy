@@ -40,6 +40,34 @@ module Profile
       end
     end
 
+    def self.generate(names, identity, use_hunter: false)
+      names.map do |name|
+        hostname =
+          case use_hunter
+          when true
+            Node.find(name, include_hunter: true).hostname
+          when false
+            name
+          end
+
+        ip =
+          case use_hunter
+          when true
+            Node.find(name, include_hunter: true).ip
+          when false
+            nil
+          end
+
+        Node.new(
+          hostname: hostname,
+          name: name,
+          identity: identity,
+          hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
+          ip: ip
+        )
+      end
+    end
+
     def to_h
       {
         'hostname' => hostname,
@@ -193,6 +221,18 @@ module Profile
 
     def conflicts_with?(identity)
       conflicts.include?(identity)
+    end
+
+    def conflicts_satisfied?(nodes)
+      nodes.none? do |existing|
+        next unless existing.identity
+
+        conflicts_with?(existing.identity)
+      end
+    end
+
+    def dependencies_satisfied?(nodes)
+      dependencies.all? { |dep| nodes.map(&:identity).include?(dep) }
     end
 
     def errors

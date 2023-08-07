@@ -72,34 +72,11 @@ module Profile
         cmds = identity.commands
 
         # Construct new node objects
-        nodes = names.map do |name|
-          hostname =
-            case @hunter
-            when true
-              Node.find(name, include_hunter: true).hostname
-            when false
-              name
-            end
-
-          ip =
-            case @hunter
-            when true
-              Node.find(name, include_hunter: true).ip
-            when false
-              nil
-            end
-
-          Node.new(
-            hostname: hostname,
-            name: name,
-            identity: identity.name,
-            hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
-            ip: ip
-          )
-        end
+        nodes = Node.generate(names, identity.name, use_hunter: @hunter)
 
         # Check for identity clashes
         total = Node.all(reload: true) + nodes
+
         nodes.each do |node|
           (total - [node]).each do |existing|
             next unless existing.identity

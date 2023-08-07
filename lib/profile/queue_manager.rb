@@ -1,4 +1,3 @@
-
 module Profile
   class QueueManager
     def self.push(name, identity, options: {})
@@ -11,6 +10,9 @@ module Profile
         Process.daemon
         QueueMonitor.start
       end
+
+      # Give the QueueMonitor a chance to write its pidfile
+      sleep(1) until QueueMonitor.running?
     end
 
     def self.pop(name)
@@ -80,13 +82,40 @@ module Profile
         File.file?(pidfile)
       end
 
+      def queued_nodes
+        Queue.index.map do |k,v|
+          Node.generate([k], v[:identity], use_hunter: Config.use_hunter?)
+        end.reduce([], &:+)
+      end
+
       def start
         File.write(pidfile, Process.pid)
 
         until Queue.index.empty?
+          sleep(5)
+
           grouped = Queue.index.group_by { |k,v| v }
           grouped.each do |group, nodes|
             names = nodes.map(&:first)
+
+            temp_nodes = Node.generate(
+              names,
+              group[:identity],
+              use_hunter: Config.use_hunter?
+            )
+
+            to_apply = temp_nodes.select do |n|
+              saved_nodes = Node.all(reload: true).select { |n| n.status == 'complete' }
+              total = (saved_nodes + queued_nodes).reject do |q|
+                q.name == n.name
+              end
+
+              n.conflicts_satisfied?(total) && n.dependencies_satisfied?(total)
+            end
+
+            next if to_apply.empty?
+
+            names = to_apply.map(&:name)
 
             Queue.pop(*names)
 
@@ -103,8 +132,6 @@ module Profile
               puts e
             end
           end
-
-          sleep(5)
         end
       ensure
         File.delete(pidfile) if File.file?(pidfile)
