@@ -71,15 +71,25 @@ module Profile
         raise "No identity exists with given name" if !identity
         cmds = identity.commands
 
+        # Fetch existing nodes
+        existing = Node.all(reload: true)
+
         # Construct new node objects
-        nodes = Node.generate(names, identity.name, use_hunter: @hunter)
+        new_nodes = Node.generate(names, identity.name, use_hunter: @hunter)
 
         # Check for identity clashes
-        total = Node.all(reload: true) + nodes
+        total = existing + new_nodes
 
-        nodes.each do |node|
-          (total - [node]).each do |existing|
+        new_nodes.each do |node|
+          total.each do |existing|
+            # Skip existing nodes without an identity (Hunter nodes)
             next unless existing.identity
+
+            # Skip comparing conflicts with yourself, and skip comparing
+            # conflicts with your potential corporeal counterpart. If a node
+            # exists with the same name, it will be caught by
+            # `disallow_existing_nodes`.
+            next if existing.name == node.name
 
             if node.conflicts_with?(existing.identity)
               node.errors << "clashes with '#{existing.name}'"
@@ -93,7 +103,7 @@ module Profile
           end
         end
 
-        all_errors = nodes.map(&:full_errors).reject(&:empty?)
+        all_errors = new_nodes.map(&:full_errors).reject(&:empty?)
 
         if all_errors.any?
           raise <<~OUT.chomp
@@ -104,7 +114,7 @@ module Profile
 
         # Check for identity dependencies
         to_queue = []
-        nodes.each do |node|
+        new_nodes.each do |node|
           (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
             unless node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }
               to_queue << node
@@ -119,7 +129,7 @@ module Profile
 
           to_queue.each do |node|
             QueueManager.push(node.name, node.identity, options: options)
-            nodes.delete(node)
+            new_nodes.delete(node)
           end
           puts <<~OUT
           The following nodes have been added to the queue, as they have unmet dependencies:
@@ -127,7 +137,7 @@ module Profile
           OUT
         end
 
-        return unless nodes.any?
+        return unless new_nodes.any?
 
         #
         # ERROR CHECKING OVER; GOOD TO START APPLYING
@@ -155,7 +165,7 @@ module Profile
         end
 
         # Set up new nodes
-        nodes.each do |node|
+        new_nodes.each do |node|
           inv_row = node.hostname.dup
           inv_row << " ansible_host=#{node.ip}" if @hunter
 
@@ -181,18 +191,18 @@ module Profile
 
         env = env.merge(
           {
-            "NODE" => nodes.map(&:hostname).join(','),
+            "NODE" => new_nodes.map(&:hostname).join(','),
             "ANSIBLE_LOG_FOLDER" => ansible_log_dir
           }
         )
 
-        node_objs = Nodes.new(nodes)
+        node_objs = Nodes.new(new_nodes)
 
         pid = ProcessSpawner.run(
           cmds["apply"],
           wait: @options.wait,
           env: env,
-          log_files: nodes.map(&:log_filepath)
+          log_files: new_nodes.map(&:log_filepath)
         ) do |last_exit|
           # ProcessSpawner yields the exit status of either:
           # - the first command to fail; or
