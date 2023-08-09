@@ -34,7 +34,7 @@ module Profile
           names.append(expand_brackets(str))
         end
 
-        names.flatten!
+        names.flatten!.uniq!
 
         # If using hunter, check to see if node actually exists
         check_nodes_exist(names) if @hunter
