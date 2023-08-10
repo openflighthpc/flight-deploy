@@ -24,8 +24,8 @@ module Profile
         # [ force ]
         @hunter = Config.use_hunter?
 
-        if @options.remove_on_shutdown && !Config.shared_secret_path
-          raise "Shared secret path not set!"
+        if @options.remove_on_shutdown && !Config.shared_secret
+          raise "Shared secret path not set or not valid!"
         end
         
         strings = args[0].split(',')
