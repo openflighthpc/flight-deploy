@@ -1,9 +1,11 @@
 require_relative '../command'
+require_relative './concerns/node_utils'
 require_relative '../config'
 require_relative '../inventory'
 require_relative '../node'
 require_relative '../outputs'
-require_relative '../process_spawner.rb'
+require_relative '../process_spawner'
+require_relative '../queue_manager'
 
 require 'logger'
 
@@ -12,13 +14,19 @@ require 'open3'
 module Profile
   module Commands
     class Apply < Command
-      include Profile::Outputs
+      include Outputs
+      include Concerns::NodeUtils
+
       def run
         # ARGS:
         # [ names, identity ]
         # OPTS:
         # [ force ]
         @hunter = Config.use_hunter?
+
+        if @options.remove_on_shutdown && !Config.shared_secret
+          raise "Shared secret path not set or not valid!"
+        end
         
         strings = args[0].split(',')
         names = []
@@ -26,7 +34,7 @@ module Profile
           names.append(expand_brackets(str))
         end
 
-        names.flatten!
+        names.flatten!.uniq!
 
         # If using hunter, check to see if node actually exists
         check_nodes_exist(names) if @hunter
@@ -36,6 +44,8 @@ module Profile
 
         # Check that any existing nodes aren't already busy
         check_nodes_not_busy(names)
+
+        check_nodes_not_in_queue(names)
 
         # Fetch cluster type
         cluster_type = Type.find(Config.cluster_type)
@@ -61,6 +71,74 @@ module Profile
         raise "No identity exists with given name" if !identity
         cmds = identity.commands
 
+        # Fetch existing nodes
+        existing = Node.all(reload: true)
+
+        # Construct new node objects
+        new_nodes = Node.generate(names, identity.name, use_hunter: @hunter)
+
+        # Check for identity clashes
+        total = existing + new_nodes
+
+        new_nodes.each do |node|
+          total.each do |existing|
+            # Skip existing nodes without an identity (Hunter nodes)
+            next unless existing.identity
+
+            # Skip comparing conflicts with yourself, and skip comparing
+            # conflicts with your potential corporeal counterpart. If a node
+            # exists with the same name, it will be caught by
+            # `disallow_existing_nodes`.
+            next if existing.name == node.name
+
+            if node.conflicts_with?(existing.identity)
+              node.errors << "clashes with '#{existing.name}'"
+            end
+          end
+
+          Queue.index.each do |q, v|
+            if node.conflicts_with?(v[:identity])
+              node.errors << "clashes with '#{q}'"
+            end
+          end
+        end
+
+        all_errors = new_nodes.map(&:full_errors).reject(&:empty?)
+
+        if all_errors.any?
+          raise <<~OUT.chomp
+          There are identity conflicts to resolve:
+          #{all_errors.join("\n")}
+          OUT
+        end
+
+        # Check for identity dependencies
+        to_queue = []
+        new_nodes.each do |node|
+          (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
+            unless node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }
+              to_queue << node
+            end
+          end
+        end
+
+        unless to_queue.empty?
+          options = {
+            'remove_on_shutdown' => @options.remove_on_shutdown
+          }
+
+          to_queue.each do |node|
+            QueueManager.push(node.name, node.identity, options: options)
+            new_nodes.delete(node)
+          end
+          puts <<~OUT
+          The following nodes have been added to the queue, as they have unmet dependencies:
+          #{to_queue.map(&:name).join("\n")}
+          OUT
+        end
+
+        return unless new_nodes.any?
+
         #
         # ERROR CHECKING OVER; GOOD TO START APPLYING
         #
@@ -69,11 +147,12 @@ module Profile
         printable_names = names.map { |h| "'#{h}'" }
         puts "Applying '#{identity.name}' to #{hosts_term} #{printable_names.join(', ')}"
 
-        inventory = Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
         inventory.groups[identity.group_name] ||= []
         inv_file = inventory.filepath
 
         env = {
+          "ANSIBLE_CALLBACK_PLUGINS" => File.join(Config.root, 'opt', 'ansible_callbacks'),
+          "ANSIBLE_STDOUT_CALLBACK" => "log_plays_v2",
           "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
           "INVFILE" => inv_file,
@@ -85,57 +164,59 @@ module Profile
           end
         end
 
-        names.each do |name|
-          hostname =
-            case @hunter
-            when true
-              Node.find(name, include_hunter: true).hostname
-            when false
-              name
-            end
+        # Set up new nodes
+        new_nodes.each do |node|
+          inv_row = node.hostname.dup
+          inv_row << " ansible_host=#{node.ip}" if @hunter
 
-          ip =
-            case @hunter
-            when true
-              Node.find(name, include_hunter: true).ip
-            when false
-              nil
-            end
+          inventory.groups[identity.group_name] |= [inv_row]
+          node.clear_logs
+          log_symlink = "#{Config.log_dir}/#{node.name}-apply-#{Time.now.to_i}.log"
 
-          node = Node.new(
-            hostname: hostname,
-            name: name,
-            identity: args[1],
-            hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
-            ip: ip
+          ansible_log_path = File.join(
+            ansible_log_dir,
+            node.hostname
           )
 
-          if @hunter
-            inv_row = "#{node.hostname} ansible_host=#{node.ip}"
-          else
-            inv_row = "#{node.hostname}"
-          end
-          inventory.groups[identity.group_name] |= [inv_row]
-          inventory.dump
+          FileUtils.mkdir_p(ansible_log_dir)
+          FileUtils.touch(ansible_log_path)
 
-          log_file = "#{Config.log_dir}/#{node.name}-apply-#{Time.now.to_i}.log"
-
-          pid = ProcessSpawner.run(
-            cmds["apply"],
-            log_file: log_file,
-            wait: @options.wait,
-            env: env.merge({ "NODE" => node.hostname })
-          ) do |last_exit|
-            # ProcessSpawner yields the exit status of either:
-            # - the first command to fail; or
-            # - the final command
-            # We yield it in a block so that the rest of the `apply`
-            # logic can continue asynchronously.
-            node.update(deployment_pid: nil, exit_status: last_exit)
-          end
-
-          node.update(deployment_pid: pid.to_i)
+          File.symlink(
+            ansible_log_path,
+            log_symlink
+          )
         end
+
+        inventory.dump
+
+        env = env.merge(
+          {
+            "NODE" => new_nodes.map(&:hostname).join(','),
+            "ANSIBLE_LOG_FOLDER" => ansible_log_dir
+          }
+        )
+
+        node_objs = Nodes.new(new_nodes)
+
+        pid = ProcessSpawner.run(
+          cmds["apply"],
+          wait: @options.wait,
+          env: env,
+          log_files: new_nodes.map(&:log_filepath)
+        ) do |last_exit|
+          # ProcessSpawner yields the exit status of either:
+          # - the first command to fail; or
+          # - the final command
+          # We yield it in a block so that the rest of the `apply`
+          # logic can continue asynchronously.
+          node_objs.update_all(deployment_pid: nil, exit_status: last_exit)
+
+          if @options.remove_on_shutdown && last_exit == 0
+            node_objs.each { |node| node.install_remove_hook }
+          end
+        end
+
+        node_objs.update_all(deployment_pid: pid.to_i)
 
         unless @options.wait
           puts "The application process has begun. Refer to `flight profile list` "\
@@ -156,6 +237,31 @@ module Profile
       end
 
       private
+
+      def inventory
+        @inventory ||= Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
+      end
+
+      Nodes = Struct.new(:nodes) do
+        def update_all(**kwargs)
+          nodes.map { |node| node.update(**kwargs) }
+        end
+
+        def each(*args, **kwargs, &block)
+          nodes.each(*args, **kwargs, &block)
+        end
+
+        def map(*args, **kwargs, &block)
+          nodes.map(*args, **kwargs, &block)
+        end
+      end
+
+      def ansible_log_dir
+        @ansible_log_dir ||= File.join(
+          Config.log_dir,
+          'apply'
+        )
+      end
 
       def existing_nodes(names)
         existing = [].tap do |e|
@@ -211,28 +317,6 @@ module Profile
           #{not_found.join("\n")}
           OUT
           raise out
-        end
-      end
-
-      def expand_brackets(str)
-        contents = str[/\[.*\]/]
-        return [str] if contents.nil?
-
-        left = str[/[^\[]*/]
-        right = str[/].*/][1..-1]
-
-        unless contents.match(/^\[[0-9]+-[0-9]+\]$/)
-          raise "Invalid range, ensure any range used is of the form [START-END]"
-        end
-
-        nums = contents[1..-2].split("-")
-
-        unless nums.first.to_i < nums.last.to_i
-          raise "Invalid range, ensure that the end index is greater than the start index"
-        end
-
-        (nums.first..nums.last).map do |index|
-          left + index + right
         end
       end
     end

@@ -62,6 +62,14 @@ lower bound is persisted across names in the range.
 EOF
       c.slop.bool '--wait', "Don't daemonise process"
       c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"
+      c.slop.bool "--remove-on-shutdown", "Trigger a removal action when given node(s) shut down"
+    end
+
+    command :dequeue do |c|
+      cli_syntax(c, 'NODE[,NODE...]')
+      c.summary = "Remove one or more nodes from the application queue"
+      c.action Commands, :dequeue
+      c.description = "Remove one or more nodes from the application queue"
     end
 
     command :remove do |c|

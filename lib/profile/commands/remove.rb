@@ -1,4 +1,5 @@
 require_relative '../command'
+require_relative './concerns/node_utils'
 require_relative '../hunter_cli'
 require_relative '../inventory'
 require_relative '../node'
@@ -11,7 +12,8 @@ require 'open3'
 module Profile
   module Commands
     class Remove < Command
-      include Profile::Outputs
+      include Outputs
+      include Concerns::NodeUtils
 
       def run
         # ARGS:
@@ -38,8 +40,7 @@ module Profile
         # Check all questions have been answered
         unless cluster_type.configured?
           out = <<~OUT.chomp
-          Cluster type missing required configuration
-          Please run `profile configure`
+          Cluster type missing required configuration. Please run `profile configure`.
           OUT
           raise out
         end
@@ -63,6 +64,8 @@ module Profile
         inv_file = inventory.filepath
 
         env = {
+          "ANSIBLE_CALLBACK_PLUGINS" => Config.ansible_callback_dir,
+          "ANSIBLE_STDOUT_CALLBACK" => "log_plays_v2",
           "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
           "ANSIBLE_HOST_KEY_CHECKING" => "false",
           "INVFILE" => inv_file,
@@ -74,25 +77,52 @@ module Profile
           end
         end
 
+        # Set up log files
         nodes.each do |node|
-          log_file = "#{Config.log_dir}/#{node.name}-remove-#{Time.now.to_i}.log"
+          ansible_log_path = File.join(
+            ansible_log_dir,
+            node.hostname
+          )
+
+          node.clear_logs
+          log_symlink = "#{Config.log_dir}/#{node.name}-remove-#{Time.now.to_i}.log"
+
+          FileUtils.mkdir_p(ansible_log_dir)
+          FileUtils.touch(ansible_log_path)
+
+          File.symlink(
+            ansible_log_path,
+            log_symlink
+          )
+        end
+
+        # Group by identity to use different command for each
+        nodes.group_by(&:identity).each do |identity, nodes|
+          node_objs = Nodes.new(nodes)
+          env = env.merge(
+            {
+              "NODE" => nodes.map(&:hostname).join(','),
+              "ANSIBLE_LOG_FOLDER" => ansible_log_dir
+            }
+          )
 
           pid = ProcessSpawner.run(
-            node.fetch_identity.commands["remove"],
-            log_file: log_file,
+            nodes.first.fetch_identity.commands["remove"],
             wait: @options.wait,
-            env: env.merge({ "NODE" => node.hostname })
+            env: env,
+            log_files: nodes.map(&:log_filepath)
           ) do |last_exit|
-            node.update(deployment_pid: nil, exit_status: last_exit)
+            node_objs.update_all(deployment_pid: nil, exit_status: last_exit)
 
-            node.destroy if last_exit == 0
+            node_objs.destroy_all if last_exit == 0
             if last_exit == 0 && @hunter && @options.remove_hunter_entry
-              HunterCLI.remove_node(node.name)
+              HunterCLI.remove_node(nodes.map(&:name).join(','))
             end
           end
 
-          node.update(deployment_pid: pid)
+          node_objs.update_all(deployment_pid: pid.to_i)
         end
+
 
         unless @options.wait
           puts "The removal process has begun. Refer to `flight profile list` "\
@@ -108,12 +138,28 @@ module Profile
 
       private
 
+      Nodes = Struct.new(:nodes) do
+        def update_all(**kwargs)
+          nodes.map { |node| node.update(**kwargs) }
+        end
+
+        def destroy_all
+          nodes.each { |node| node.delete }
+        end
+      end
+
+      def ansible_log_dir
+        @ansible_log_dir ||= File.join(
+          Config.log_dir,
+          'remove'
+        )
+      end
+
       def check_names_exist(names)
         not_found = names.select { |n| !Node.find(n)&.identity }
         if not_found.any?
           out = <<~OUT.chomp
-          The following nodes either do not exist or
-          do not have an identity applied to them:
+          The following nodes either do not exist or do not have an identity applied to them:
           #{not_found.join("\n")}
           OUT
           raise out
@@ -124,8 +170,7 @@ module Profile
         not_removable = nodes.select { |node| !node.fetch_identity.removable? }
         if not_removable.any?
           out = <<~OUT.chomp
-          The following nodes have an identity that doesn't currently support
-          the `profile remove` command:
+          The following nodes have an identity that doesn't currently support the `profile remove` command:
           #{not_removable.map(&:name).join("\n")}
           OUT
           raise out
@@ -148,28 +193,6 @@ module Profile
           else
             raise existing_string
           end
-        end
-      end
-
-      def expand_brackets(str)
-        contents = str[/\[.*\]/]
-        return [str] if contents.nil?
-
-        left = str[/[^\[]*/]
-        right = str[/].*/][1..-1]
-
-        unless contents.match(/^\[[0-9]+-[0-9]+\]$/)
-          raise "Invalid range, ensure any range used is of the form [START-END]"
-        end
-
-        nums = contents[1..-2].split("-")
-
-        unless nums.first.to_i < nums.last.to_i
-          raise "Invalid range, ensure that the end index is greater than the start index"
-        end
-
-        (nums.first..nums.last).map do |index|
-          left + index + right
         end
       end
     end

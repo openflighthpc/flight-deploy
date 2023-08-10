@@ -11,7 +11,7 @@ module Profile
 
       def data
         @data ||= TTY::Config.new.tap do |cfg|
-          cfg.append_path(File.join(root, 'etc'))
+          cfg.append_path(config_path)
           begin
             cfg.read
           rescue TTY::Config::ReadError
@@ -34,6 +34,16 @@ module Profile
 
       def log_dir
         data.fetch(:log_dir) || dir_constructor(root, 'var', 'log')
+      end
+
+      def shared_secret
+        return unless File.file?(shared_secret_path)
+        File.read(shared_secret_path)
+      end
+
+      def shared_secret_path
+        ENV['flight_HUNTER_shared_secret_path'] ||
+        data.fetch(:shared_secret_path)
       end
 
       def hunter_command
@@ -65,13 +75,29 @@ module Profile
         dir_constructor(root, 'var', 'answers/')
       end
 
+      def queue_dir
+        dir_constructor(root, 'var', 'queue')
+      end
+
+      def queue_pidfile
+        File.join(dir_constructor(root, 'var'), 'queue.pid')
+      end
+
       def save_data
-        FileUtils.mkdir_p(File.join(root, 'etc'))
+        FileUtils.mkdir_p(config_path)
         data.write(force: true)
       end
 
       def root
         @root ||= File.expand_path(File.join(__dir__, '..', '..'))
+      end
+
+      def config_path
+        @config_path = File.join(root, 'etc')
+      end
+
+      def ansible_callback_dir
+        File.join(Config.root, 'opt', 'ansible_callbacks')
       end
 
       private

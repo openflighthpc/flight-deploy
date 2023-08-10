@@ -49,11 +49,14 @@ module Profile
 
         prefills = {}
         type.questions.each do |question|
-          prefills[question.id] = generate_prefill(question)
+          Thread.fork do
+            prefills[question.id] = generate_prefill(question)
+          end
         end
         prompt.collect do
           type.questions.each do |question|
             key(question.id).ask(question.text) do |q|
+              sleep(0.25) while !prefills[question.id]
               q.default prefills[question.id]
               q.required question.validation.required
               if question.validation.to_h.key?(:format)
@@ -78,14 +81,14 @@ module Profile
           result = process.run(question.default_smart, nil)
           output = result.stdout.chomp
           if !result.success?
-            smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr}")
+            smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr.dump}")
           elsif (!question.validation.has_key?(:format) || output.match(Regexp.new(question.validation.format)))
             prefill ||= output
           else
             smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
           end
         end
-        prefill ||= question.default
+        prefill ||= question.default || ""
       end
 
       def display_details
