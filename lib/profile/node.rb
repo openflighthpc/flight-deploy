@@ -40,29 +40,23 @@ module Profile
       end
     end
 
-    def self.generate(names, identity, include_hunter: false)
+    def self.generate(names, identity, include_hunter: false, reload: false)
       names.map do |name|
-        hostname =
+        hostname, ip, hunter_label =
           case include_hunter
           when true
-            Node.find(name, include_hunter: include_hunter).hostname
-          when false
-            name
-          end
+            existing = Node.find(name, include_hunter: include_hunter, reload: reload)
 
-        ip =
-          case include_hunter
-          when true
-            Node.find(name, include_hunter: include_hunter).ip
-          when false
-            nil
+            [existing&.hostname, existing&.ip, existing&.hunter_label]
+          else
+            [name, nil, nil]
           end
 
         Node.new(
           hostname: hostname,
           name: name,
           identity: identity,
-          hunter_label: Node.find(name, include_hunter: true)&.hunter_label,
+          hunter_label: hunter_label,
           ip: ip
         )
       end
