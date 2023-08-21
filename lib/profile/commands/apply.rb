@@ -75,7 +75,7 @@ module Profile
         existing = Node.all(reload: true)
 
         # Construct new node objects
-        new_nodes = Node.generate(names, identity.name, use_hunter: @hunter)
+        new_nodes = Node.generate(names, identity.name, include_hunter: @hunter)
 
         # Check for identity clashes
         total = existing + new_nodes

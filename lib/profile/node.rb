@@ -40,20 +40,20 @@ module Profile
       end
     end
 
-    def self.generate(names, identity, use_hunter: false)
+    def self.generate(names, identity, include_hunter: false)
       names.map do |name|
         hostname =
-          case use_hunter
+          case include_hunter
           when true
-            Node.find(name, include_hunter: true).hostname
+            Node.find(name, include_hunter: include_hunter).hostname
           when false
             name
           end
 
         ip =
-          case use_hunter
+          case include_hunter
           when true
-            Node.find(name, include_hunter: true).ip
+            Node.find(name, include_hunter: include_hunter).ip
           when false
             nil
           end
