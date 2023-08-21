@@ -167,7 +167,7 @@ module Profile
       end
 
       def check_nodes_removable(nodes)
-        not_removable = nodes.select { |node| !node.fetch_identity.removable? }
+        not_removable = nodes.select { |node| !node.fetch_identity&.removable? }
         if not_removable.any?
           out = <<~OUT.chomp
           The following nodes have an identity that doesn't currently support the `profile remove` command:
