@@ -277,7 +277,7 @@ module Profile
           end
           a.concat(hunter_nodes)
         end
-      end.sort_by { |n| [n.hunter_label || n.hostname ] }
+      end.sort_by(&:name)
     end
   end
 end
