@@ -84,7 +84,7 @@ module Profile
 
       def queued_nodes
         Queue.index.map do |k,v|
-          Node.generate([k], v[:identity], use_hunter: Config.use_hunter?)
+          Node.generate([k], v[:identity])
         end.reduce([], &:+)
       end
 
@@ -100,8 +100,7 @@ module Profile
 
             temp_nodes = Node.generate(
               names,
-              group[:identity],
-              use_hunter: Config.use_hunter?
+              group[:identity]
             )
 
             to_apply = temp_nodes.select do |n|
