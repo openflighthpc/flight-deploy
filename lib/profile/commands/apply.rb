@@ -266,7 +266,7 @@ module Profile
       def existing_nodes(names)
         existing = [].tap do |e|
           names.each do |name|
-            node = Node.find(name, include_hunter: @hunter)
+            node = Node.find(name, reload: true)
             e << node if node&.identity
           end
         end
