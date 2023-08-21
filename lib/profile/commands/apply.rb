@@ -75,7 +75,7 @@ module Profile
         existing = Node.all(reload: true)
 
         # Construct new node objects
-        new_nodes = Node.generate(names, identity.name, use_hunter: @hunter)
+        new_nodes = Node.generate(names, identity.name, include_hunter: @hunter, reload: true)
 
         # Check for identity clashes
         total = existing + new_nodes
@@ -266,7 +266,7 @@ module Profile
       def existing_nodes(names)
         existing = [].tap do |e|
           names.each do |name|
-            node = Node.find(name, include_hunter: @hunter)
+            node = Node.find(name, reload: true)
             e << node if node&.identity
           end
         end
@@ -310,7 +310,7 @@ module Profile
       end
 
       def check_nodes_exist(names)
-        not_found = names.select { |n| !Node.find(n, include_hunter: true) }
+        not_found = names.select { |n| !Node.find(n, include_hunter: true, reload: true) }
         if not_found.any?
           out = <<~OUT.chomp
           The following nodes were not found in Profile or Hunter:
