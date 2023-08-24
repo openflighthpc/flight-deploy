@@ -10,11 +10,9 @@ require_relative './queue_manager'
 module Profile
   class Node
     def self.all(include_hunter: false, reload: false)
-      if reload
-        return fetch_all(include_hunter: include_hunter)
-      end
+      @all = nil if reload
 
-      @all_nodes ||= fetch_all(include_hunter: include_hunter)
+      @all ||= fetch_all(include_hunter: include_hunter)
     end
 
     def self.find(name=nil, include_hunter: false, reload: false)
