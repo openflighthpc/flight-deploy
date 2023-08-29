@@ -122,24 +122,37 @@ module Profile
        save
     end
 
+    def running_action?
+      return unless deployment_pid
+
+      Process.kill(0, deployment_pid)
+    rescue Errno::ESRCH
+      false
+    end
+
     def status
       return 'queued' if QueueManager.contains?(name)
-      stdout_str, state = Open3.capture2("ps -e")
-      processes = stdout_str.split("\n").map! { |p| p.split(" ") }
-      running = processes.any? { |p| p[0].to_i == deployment_pid }
-      if running
+
+      if running_action?
         case log_filepath.split("-")[-2]
         when 'remove'
-          return 'removing'
+          'removing'
         when 'apply'
-          return 'applying'
+          'applying'
         end
-      elsif !exit_status || exit_status > 0
-        return 'available' if hunter_label
-        return 'failed'
+      elsif persisted?
+        if exit_status > 0
+          'failed'
+        elsif exit_status == 0
+          'complete'
+        end
+      else
+        'available'
       end
+    end
 
-      'complete'
+    def persisted?
+      File.file?(filepath)
     end
 
     def fetch_identity
