@@ -94,6 +94,9 @@ module Profile
         until Queue.index.empty?
           sleep(5)
 
+          # Reload node list
+          Node.all(reload: true)
+
           grouped = Queue.index.group_by { |k,v| v }
           grouped.each do |group, nodes|
             names = nodes.map(&:first)
@@ -104,7 +107,7 @@ module Profile
             )
 
             to_apply = temp_nodes.select do |n|
-              saved_nodes = Node.all(reload: true).select { |n| n.status == 'complete' }
+              saved_nodes = Node.all.select { |n| n.status == 'complete' }
               total = (saved_nodes + queued_nodes).reject do |q|
                 q.name == n.name
               end
