@@ -141,7 +141,9 @@ module Profile
           'applying'
         end
       elsif persisted?
-        if exit_status > 0
+        if exit_status.nil?
+          'unknown'
+        elsif exit_status > 0
           'failed'
         elsif exit_status == 0
           'complete'
