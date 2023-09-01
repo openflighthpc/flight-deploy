@@ -36,6 +36,9 @@ module Profile
 
         names.flatten!.uniq!
 
+        # Reload all nodes
+        Node.all(reload: true, include_hunter: @hunter)
+
         # If using hunter, check to see if node actually exists
         check_nodes_exist(names) if @hunter
 
@@ -72,10 +75,10 @@ module Profile
         cmds = identity.commands
 
         # Fetch existing nodes
-        existing = Node.all
+        existing = Node.all(include_hunter: @hunter, reload: true)
 
         # Construct new node objects
-        new_nodes = Node.generate(names, identity.name, include_hunter: @hunter, reload: true)
+        new_nodes = Node.generate(names, identity.name, include_hunter: @hunter)
 
         # Check for identity clashes
         total = existing + new_nodes
