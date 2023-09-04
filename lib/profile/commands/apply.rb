@@ -23,8 +23,9 @@ module Profile
         # OPTS:
         # [ force ]
         @hunter = Config.use_hunter?
+        @remove_on_shutdown = @options.remove_on_shutdown || Config.remove_on_shutdown
 
-        if @options.remove_on_shutdown && !Config.shared_secret
+        if @remove_on_shutdown && !Config.shared_secret
           raise "Shared secret path not set or not valid!"
         end
         
@@ -127,7 +128,7 @@ module Profile
 
         unless to_queue.empty?
           options = {
-            'remove_on_shutdown' => @options.remove_on_shutdown
+            'remove_on_shutdown' => @remove_on_shutdown
           }
 
           to_queue.each do |node|
@@ -214,7 +215,7 @@ module Profile
           # logic can continue asynchronously.
           node_objs.update_all(deployment_pid: nil, exit_status: last_exit)
 
-          if @options.remove_on_shutdown && last_exit == 0
+          if @remove_on_shutdown && last_exit == 0
             node_objs.each { |node| node.install_remove_hook }
           end
         end
