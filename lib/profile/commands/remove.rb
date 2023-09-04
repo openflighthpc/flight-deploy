@@ -1,5 +1,6 @@
 require_relative '../command'
 require_relative './concerns/node_utils'
+require_relative '../config'
 require_relative '../hunter_cli'
 require_relative '../inventory'
 require_relative '../node'
@@ -21,6 +22,7 @@ module Profile
         # OPTS:
         # [ force ]
         @hunter = Config.use_hunter?
+        @remove_hunter_entry = @options.remove_hunter_entry || Config.remove_hunter_entry
 
         strings = args[0].split(',')
         names = []
@@ -115,7 +117,7 @@ module Profile
             node_objs.update_all(deployment_pid: nil, exit_status: last_exit)
 
             node_objs.destroy_all if last_exit == 0
-            if last_exit == 0 && @hunter && @options.remove_hunter_entry
+            if last_exit == 0 && @hunter && @remove_hunter_entry
               HunterCLI.remove_node(nodes.map(&:name).join(','))
             end
           end
