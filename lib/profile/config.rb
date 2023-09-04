@@ -118,6 +118,14 @@ module Profile
       def xdg_cache
         @xdg_cache ||= XDG::Cache.new
       end
+
+      def remove_hunter_entry
+        data.fetch(:remove_hunter_entry)
+      end
+
+      def remove_on_shutdown
+        data.fetch(:remove_on_shutdown)
+      end
     end
   end
 end
