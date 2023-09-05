@@ -53,19 +53,73 @@ module Profile
             prefills[question.id] = generate_prefill(question)
           end
         end
-        prompt.collect do
+        password_answer = ''
+        answer = prompt.collect do
           type.questions.each do |question|
-            key(question.id).ask(question.text) do |q|
-              sleep(0.25) while !prefills[question.id]
-              q.default prefills[question.id]
-              q.required question.validation.required
-              if question.validation.to_h.key?(:format)
-                q.validate Regexp.new(question.validation.format)
-                q.messages[:valid?] = question.validation.message
+            sleep(0.25) while !prefills[question.id]
+            # password question handled manually
+            if question.id == "default_password"
+              prefill = prefills[question.id]
+              question.default = prefill[0] + "*" * (prefill.length - 2) + prefill[-1] unless question.default == prefill
+
+              password_prompt = "default_password: \e[33m(" + question.default + ")\e[0m "
+              print password_prompt
+
+              validation_prompt = "  \e[91;1mMinimum 4 Characters\e[0m\e[22D"
+              valid = true
+
+              $stdin.raw do |raw|
+                loop do
+                  char = raw.getc
+                  char_value = char.ord
+                  raise Interrupt if char_value == 3
+                  if char_value == 13
+                    password_answer = !password_answer.empty? ? password_answer : prefill
+                    if password_answer.length < 4
+                      valid = false
+                      print "\r\e[K" + password_prompt + "*" * (password_answer.length - 1)
+                      print password_answer[-1] + validation_prompt
+                      next
+                    end
+                    print "\r\e[Kdefault_password: "
+                    print "\e[32m" + "*" * password_answer.length + "\e[0m"
+                    print "\n\r"
+                    break
+                  end
+                  if char_value == 8
+                    password_answer.chop! unless password_answer.empty?
+                    valid = true if password_answer.empty?
+                    print "\r\e[K" + password_prompt
+                    print "*" * (password_answer.length - 1) unless password_answer.empty?
+                    print password_answer[-1]
+                    print validation_prompt unless valid
+                  elsif char_value > 31
+                    password_answer << char
+                    valid = true if password_answer.length >= 4
+                    print "\r\e[K" + password_prompt
+                    print "*" * (password_answer.length - 1)
+                    print password_answer[-1]
+                    print validation_prompt unless valid
+                  end
+                end
+              end
+            # other questions managed by tty prompt
+            else
+              key(question.id).ask(question.text) do |q|
+                sleep(0.25) while !prefills[question.id]
+                q.default prefills[question.id]
+                q.required question.validation.required
+                if question.validation.to_h.key?(:format)
+                  q.validate Regexp.new(question.validation.format)
+                  q.messages[:valid?] = question.validation.message
+                end
               end
             end
           end
         end
+        answer["default_password"] = password_answer
+        puts answer.inspect
+        answer
       end
 
       def generate_prefill(question)
