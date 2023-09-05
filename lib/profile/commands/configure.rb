@@ -54,41 +54,51 @@ module Profile
             prefills[question.id] = generate_prefill(question)
           end
         end
-        password_answer = ''
+        password_answer, encrypted_password_answer, password_abbr = ''
         answer = prompt.collect do
           type.questions.each do |question|
             sleep(0.25) while !prefills[question.id]
             # password question handled manually
             if question.id == "default_password"
-              prefill = prefills[question.id]
-              question.default = prefill[0] + "*" * (prefill.length - 2) + prefill[-1] unless question.default == prefill
-
-              password_prompt = "default_password: \e[33m(" + question.default + ")\e[0m "
+              password_abbr = type.fetch_answer("default_password_abbr") || question.default
+              password_prompt = "default_password: \e[33m(" + password_abbr + ")\e[0m "
               print password_prompt
 
               validation_prompt = "  \e[91;1mMinimum 4 Characters\e[0m\e[22D"
               valid = true
-
+              #handle user input events
               $stdin.raw do |raw|
                 loop do
                   char = raw.getc
                   char_value = char.ord
                   case char_value
+                  # user press ctrl + c
                   when 3
                     raise Interrupt
+                  # user press enter 
                   when 13
-                    password_answer = !password_answer.empty? ? password_answer : prefill
-                    if password_answer.length < 4
+                    # invalid password input
+                    if !password_answer.empty? && password_answer.length < 4
                       valid = false
                       print "\r\e[K" + password_prompt + "*" * (password_answer.length - 1)
                       print password_answer[-1] + validation_prompt
                       next
                     end
-                    password_answer = Digest::SHA256.hexdigest(password_answer)
+                    # password not changed
+                    if password_answer.empty?
+                      # encrypt when the password is the default password. Otherwise, the prefill value should have already been encrypted
+                      encrypted_password_answer = prefills[question.id] == question.default ? Digest::SHA512.hexdigest(prefills[question.id]) : prefills[question.id]
+                    # valid password input
+                    else
+                      encrypted_password_answer = Digest::SHA512.hexdigest(password_answer)
+                      # keep the prefill as plain text if it is set to be the default password
+                      password_abbr = password_answer == question.default ? password_answer : password_answer[0] + "*" * (password_answer.length - 2) + password_answer[-1]
+                    end
                     print "\r\e[Kdefault_password: "
-                    print "\e[32m" + "*" * password_answer.length + "\e[0m"
+                    print "\e[32m" + "*" * password_abbr.length + "\e[0m"
                     print "\n\r"
                     break
+                  # user press backspace
                   when 8
                     password_answer.chop! unless password_answer.empty?
                     valid = true if password_answer.empty?
@@ -96,6 +106,7 @@ module Profile
                     print "*" * (password_answer.length - 1) unless password_answer.empty?
                     print password_answer[-1]
                     print validation_prompt unless valid
+                  # regular password character input
                   else
                     if char_value > 31
                       password_answer << char
@@ -122,7 +133,8 @@ module Profile
             end
           end
         end
-        answer["default_password"] = password_answer
+        answer["default_password"] = encrypted_password_answer
+        answer["default_password_abbr"] = password_abbr
         puts answer.inspect
         answer
       end
