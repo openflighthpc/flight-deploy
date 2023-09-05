@@ -72,8 +72,10 @@ module Profile
                 loop do
                   char = raw.getc
                   char_value = char.ord
-                  raise Interrupt if char_value == 3
-                  if char_value == 13
+                  case char_value
+                  when 3
+                    raise Interrupt
+                  when 13
                     password_answer = !password_answer.empty? ? password_answer : prefill
                     if password_answer.length < 4
                       valid = false
@@ -85,21 +87,22 @@ module Profile
                     print "\e[32m" + "*" * password_answer.length + "\e[0m"
                     print "\n\r"
                     break
-                  end
-                  if char_value == 8
+                  when 8
                     password_answer.chop! unless password_answer.empty?
                     valid = true if password_answer.empty?
                     print "\r\e[K" + password_prompt
                     print "*" * (password_answer.length - 1) unless password_answer.empty?
                     print password_answer[-1]
                     print validation_prompt unless valid
-                  elsif char_value > 31
-                    password_answer << char
-                    valid = true if password_answer.length >= 4
-                    print "\r\e[K" + password_prompt
-                    print "*" * (password_answer.length - 1)
-                    print password_answer[-1]
-                    print validation_prompt unless valid
+                  else
+                    if char_value > 31
+                      password_answer << char
+                      valid = true if password_answer.length >= 4
+                      print "\r\e[K" + password_prompt
+                      print "*" * (password_answer.length - 1)
+                      print password_answer[-1]
+                      print validation_prompt unless valid
+                    end
                   end
                 end
               end
