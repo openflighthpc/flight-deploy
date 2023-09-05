@@ -122,7 +122,6 @@ module Profile
             # other questions managed by tty prompt
             else
               key(question.id).ask(question.text) do |q|
-                sleep(0.25) while !prefills[question.id]
                 q.default prefills[question.id]
                 q.required question.validation.required
                 if question.validation.to_h.key?(:format)
