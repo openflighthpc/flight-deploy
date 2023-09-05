@@ -1,6 +1,7 @@
 require 'tty-prompt'
 require 'yaml'
 require 'json'
+require 'digest'
 require_relative '../command'
 require_relative '../type'
 
@@ -83,6 +84,7 @@ module Profile
                       print password_answer[-1] + validation_prompt
                       next
                     end
+                    password_answer = Digest::SHA256.hexdigest(password_answer)
                     print "\r\e[Kdefault_password: "
                     print "\e[32m" + "*" * password_answer.length + "\e[0m"
                     print "\n\r"
