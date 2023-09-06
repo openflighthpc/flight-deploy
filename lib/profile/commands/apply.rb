@@ -75,7 +75,7 @@ module Profile
         cmds = identity.commands
 
         # Fetch existing nodes
-        existing = Node.all(include_hunter: @hunter, reload: true)
+        existing = Node.all(include_hunter: @hunter)
 
         # Construct new node objects
         new_nodes = Node.generate(names, identity.name, include_hunter: @hunter)
