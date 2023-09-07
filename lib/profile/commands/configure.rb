@@ -134,7 +134,6 @@ module Profile
         end
         answer["default_password"] = encrypted_password_answer
         answer["default_password_abbr"] = password_abbr
-        puts answer.inspect
         answer
       end
 
