@@ -1,7 +1,7 @@
 require 'tty-prompt'
 require 'yaml'
 require 'json'
-require 'digest'
+require 'bcrypt'
 require_relative '../command'
 require_relative '../type'
 
@@ -87,10 +87,10 @@ module Profile
                     # password not changed
                     if password_answer.empty?
                       # encrypt when the password is the default password. Otherwise, the prefill value should have already been encrypted
-                      encrypted_password_answer = prefills[question.id] == question.default ? Digest::SHA512.hexdigest(prefills[question.id]) : prefills[question.id]
+                      encrypted_password_answer = prefills[question.id] == question.default ? BCrypt::Password.create(prefills[question.id]) : prefills[question.id]
                     # valid password input
                     else
-                      encrypted_password_answer = Digest::SHA512.hexdigest(password_answer)
+                      encrypted_password_answer = BCrypt::Password.create(password_answer)
                       # keep the prefill as plain text if it is set to be the default password
                       password_abbr = password_answer == question.default ? password_answer : password_answer[0] + "*" * (password_answer.length - 2) + password_answer[-1]
                     end
