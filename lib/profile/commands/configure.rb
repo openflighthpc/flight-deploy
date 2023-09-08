@@ -73,22 +73,42 @@ module Profile
 
         prefill = cluster_type.fetch_answer(question.id)
         if question.default_smart && prefill.nil?
-          process = Flight::Subprocess::Local.new(
-            env: {},
-            logger: smart_log,
-            timeout: 5,
-          )
-          result = process.run(question.default_smart, nil)
-          output = result.stdout.chomp
-          if !result.success?
-            smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr.dump}")
-          elsif (!question.validation.has_key?(:format) || output.match(Regexp.new(question.validation.format)))
-            prefill ||= output
-          else
-            smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
-          end
+          prefill ||= best_command_output(command_list: question.default_smart,
+                                          log: smart_log,
+                                          regex: question.validation.has_key?(:format) ? question.validation.format : nil)
         end
         prefill ||= question.default || ""
+      end
+
+      def best_command_output(command_list:, log:, regex: nil)
+        outputs = []
+        command_list.each_with_index do |command, index|
+          Thread.fork do
+            process = Flight::Subprocess::Local.new(
+              env: {},
+              logger: log,
+              timeout: 5
+            )
+            result = process.run(command, nil)
+            outputs[index] = result
+          end
+        end
+        command_index = 0
+        while command_index < command_list.length
+          while outputs[command_index].nil?
+            sleep(0.2)
+          end
+          output = outputs[command_index].stdout.chomp
+          if !outputs[command_index].success?
+            log.debug("Command '#{command_list[command_index]}' failed to run: #{outputs[command_index].stderr.dump}")
+          elsif (regex.nil? || output.match(Regexp.new(regex)))
+            return output
+          else
+            log.debug("Command result '#{output}' did not pass validation check")
+          end
+          command_index += 1
+        end
+        nil
       end
 
       def display_details
