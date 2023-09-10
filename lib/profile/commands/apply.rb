@@ -204,8 +204,8 @@ module Profile
           'RUN_ENV' => cluster_type.run_env,
           'HUNTER_HOSTS' => @hunter.to_s
         }.tap do |e|
-          cluster_type.questions.each do |q|
-            e[q.env] = cluster_type.fetch_answer(q.id).to_s
+          cluster_type.recursive_questions.each do |q|
+            e[q.env] = cluster_type.fetch_answer(q.id).to_s if cluster_type.fetch_answer(q.id)
           end
         end
 
