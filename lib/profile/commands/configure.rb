@@ -48,43 +48,19 @@ module Profile
         type = cluster_type
         smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
-        prefills = {}
         Thread.fork do
           generate_prefills(type.questions)
         end
 
-        answers = collect_answers(type.questions)
+        collect_answers(type.questions)
 
       end
 
       # recursively collect answers, the following is the example of the result
-      # {
-      #   question_1: {
-      #     answer: <answer for question_1>
-      #   }
-      #   question_2: {
-      #     answer: <answer for question_2>
-      #     question_2_1: {
-      #       answer: <answer for question_2_1>
-      #     }
-      #     question_2_2: {
-      #       answer: <answer for question_2_2>
-      #     }
-      #     question_2_3: {
-      #       answer: <answer for question_2_3>
-      #       question 2_3_1: {
-      #         answer: <answer for question_2_3_1>
-      #       }
-      #     }
-      #   }
-      #   ...
-      #   question_n: {
-      #     answer: <answer for question_n>
-      #   }
-      # }
       def collect_answers(questions, parent_answer = nil)
         answers = {}.tap do |ans|
           questions.each do |question|
+            sleep(0.25) while !@prefills[question.id]
             if !parent_answer || parent_answer == question.on
               # conditional question
               if question.type == "conditional"
@@ -110,9 +86,7 @@ module Profile
                 end
               end
               # collect the answers to the child questions
-              if question.questions
-                ans.merge(collect_answers(question.questions, ans[question.id]))
-              end
+              ans.merge(collect_answers(question.questions, ans[question.id])) if question.questions
             end
           end
         end
