@@ -92,6 +92,15 @@ module Profile
       @questions.map(&:to_shash)
     end
 
+    def recursive_questions(qs = self.questions)
+      [].tap do |collection|
+        qs.each do |q|
+          collection << q
+          q += recursive_questions(q.questions) if q.questions
+        end
+      end
+    end
+
     def configured?
       questions.all? { |q| fetch_answer(q.id) }
     end
