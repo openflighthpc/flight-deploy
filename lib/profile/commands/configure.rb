@@ -94,7 +94,7 @@ module Profile
 
 
       def generate_prefills(questions)
-        @prefills = {}.tap do |pfs|
+        @prefills ||= {}.tap do |pfs|
           questions.each do |question|
             smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
