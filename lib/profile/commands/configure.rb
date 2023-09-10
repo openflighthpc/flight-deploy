@@ -49,14 +49,12 @@ module Profile
         smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
         prefills = {}
-        type.questions.each do |question|
-          Thread.fork do
-            prefills[question.id] = generate_prefill(question)
-          end
+        Thread.fork do
+          generate_prefills(type.questions)
         end
 
         answers = collect_answers(type.questions)
-        
+
       end
 
       # recursively collect answers, the following is the example of the result
@@ -121,16 +119,32 @@ module Profile
       end
 
 
-      def generate_prefill(question)
-        smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
+      def generate_prefills(questions)
+        @prefills = {}.tap do |pfs|
+          questions.each do |question|
+            smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
-        prefill = question.id == "default_password" ? cluster_type.fetch_answer("default_password_abbr") : cluster_type.fetch_answer(question.id)
-        if question.default_smart && prefill.nil?
-          prefill ||= best_command_output(command_list: question.default_smart,
-                                          log: smart_log,
-                                          regex: question.validation&.has_key?(:format) ? question.validation.format : nil)
-        end
-        prefill ||= question.default || ""
+            prefill = question.id == "default_password" ? cluster_type.fetch_answer("default_password_abbr") : cluster_type.fetch_answer(question.id)
+            if question.default_smart && prefill.nil?
+              process = Flight::Subprocess::Local.new(
+                env: {},
+                logger: smart_log,
+                timeout: 5,
+              )
+              result = process.run(question.default_smart, nil)
+              output = result.stdout.chomp
+              if !result.success?
+                smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr.dump}")
+              elsif (!question.validation.has_key?(:format) || output.match(Regexp.new(question.validation.format)))
+                prefill ||= output
+              else
+                smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
+              end
+            end
+            pfs[question.id] = prefill || question.default || ""
+            pfs.merge(generate_prefills(question.questions)) if question.questions
+          end
+        
       end
 
       def best_command_output(command_list:, log:, regex: nil)
