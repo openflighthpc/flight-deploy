@@ -54,93 +54,77 @@ module Profile
             prefills[question.id] = generate_prefill(question)
           end
         end
-        password_answer, encrypted_password_answer, password_abbr = ''
-        answer = prompt.collect do
-          type.questions.each do |question|
-            sleep(0.25) while !prefills[question.id]
-            # password question handled manually
-            if question.id == "default_password"
-              password_abbr = type.fetch_answer("default_password_abbr") || question.default
-              password_prompt = "default_password: \e[33m(" + password_abbr + ")\e[0m "
-              print password_prompt
 
-              validation_prompt = "  \e[91;1mMinimum 4 Characters\e[0m\e[22D"
-              valid = true
-              #handle user input events
-              $stdin.raw do |raw|
-                loop do
-                  char = raw.getc
-                  char_value = char.ord
-                  case char_value
-                  # user press ctrl + c
-                  when 3
-                    raise Interrupt
-                  # user press enter 
-                  when 13
-                    # invalid password input
-                    if !password_answer.empty? && password_answer.length < 4
-                      valid = false
-                      print "\r\e[K" + password_prompt + "*" * (password_answer.length - 1)
-                      print password_answer[-1] + validation_prompt
-                      next
-                    end
-                    # password not changed
-                    if password_answer.empty?
-                      # encrypt when the password is the default password. Otherwise, the prefill value should have already been encrypted
-                      encrypted_password_answer = prefills[question.id] == question.default ? BCrypt::Password.create(prefills[question.id]) : prefills[question.id]
-                    # valid password input
-                    else
-                      encrypted_password_answer = BCrypt::Password.create(password_answer)
-                      # keep the prefill as plain text if it is set to be the default password
-                      password_abbr = password_answer == question.default ? password_answer : password_answer[0] + "*" * (password_answer.length - 2) + password_answer[-1]
-                    end
-                    print "\r\e[Kdefault_password: "
-                    print "\e[32m" + "*" * password_abbr.length + "\e[0m"
-                    print "\n\r"
-                    break
-                  # user press backspace
-                  when 8
-                    password_answer.chop! unless password_answer.empty?
-                    valid = true if password_answer.empty?
-                    print "\r\e[K" + password_prompt
-                    print "*" * (password_answer.length - 1) unless password_answer.empty?
-                    print password_answer[-1]
-                    print validation_prompt unless valid
-                  # regular password character input
-                  else
-                    if char_value > 31
-                      password_answer << char
-                      valid = true if password_answer.length >= 4
-                      print "\r\e[K" + password_prompt
-                      print "*" * (password_answer.length - 1)
-                      print password_answer[-1]
-                      print validation_prompt unless valid
-                    end
+        answers = collect_answers(type.questions)
+        
+      end
+
+      # recursively collect answers, the following is the example of the result
+      # {
+      #   question_1: {
+      #     answer: <answer for question_1>
+      #   }
+      #   question_2: {
+      #     answer: <answer for question_2>
+      #     question_2_1: {
+      #       answer: <answer for question_2_1>
+      #     }
+      #     question_2_2: {
+      #       answer: <answer for question_2_2>
+      #     }
+      #     question_2_3: {
+      #       answer: <answer for question_2_3>
+      #       question 2_3_1: {
+      #         answer: <answer for question_2_3_1>
+      #       }
+      #     }
+      #   }
+      #   ...
+      #   question_n: {
+      #     answer: <answer for question_n>
+      #   }
+      # }
+      def collect_answers(questions, parent_answer = nil)
+        answers = {}.tap do |ans|
+          questions.each do |question|
+            if !parent_answer || parent_answer == question.on
+              # conditional question
+              if question.type == "conditional"
+                ans[question.id] = key(question.id).yes?(question.text) do |q|
+                  q.default prefills[question.id]
+                  q.required question.validation.required
+                end
+              elsif question.id == "default_password" || question.type == "password"
+                ans[question.id] = key(question.id).mask(question.text) do |q|
+                  q.default prefills[question.id]
+                  q.required question.validation.required
+                  q.validate(/\A.{4,}\Z/, "Invalid Password: Minimum 4 Characters")
+                end
+              # general questions
+              else
+                ans[question.id] = key(question.id).ask(question.text) do |q|
+                  q.default prefills[question.id]
+                  q.required question.validation.required
+                  if question.validation.to_h.key?(:format)
+                    q.validate Regexp.new(question.validation.format)
+                    q.messages[:valid?] = question.validation.message
                   end
                 end
               end
-            # other questions managed by tty prompt
-            else
-              key(question.id).ask(question.text) do |q|
-                q.default prefills[question.id]
-                q.required question.validation.required
-                if question.validation.to_h.key?(:format)
-                  q.validate Regexp.new(question.validation.format)
-                  q.messages[:valid?] = question.validation.message
-                end
+              # collect the answers to the child questions
+              if question.questions
+                ans.merge(collect_answers(question.questions, ans[question.id]))
               end
             end
           end
         end
-        answer["default_password"] = encrypted_password_answer
-        answer["default_password_abbr"] = password_abbr
-        answer
       end
+
 
       def generate_prefill(question)
         smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
-        prefill = cluster_type.fetch_answer(question.id)
+        prefill = question.id == "default_password" ? cluster_type.fetch_answer("default_password_abbr") : cluster_type.fetch_answer(question.id)
         if question.default_smart && prefill.nil?
           prefill ||= best_command_output(command_list: question.default_smart,
                                           log: smart_log,
