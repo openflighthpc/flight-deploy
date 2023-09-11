@@ -251,10 +251,10 @@ module Profile
 
       def validate_answers(answers)
         bad_answers = []
-        cluster_type.questions.each do |q|
+        cluster_type.recursive_questions.each do |q|
           next unless q.validation.has_key?(:format)
           criterion = Regexp.new(q.validation.format)
-          bad_answers << q.id unless answers[q.id].match(criterion)
+          bad_answers << q.id if answers[q.id] && !answers[q.id].match(criterion)
         end
         return unless bad_answers.any?
 
