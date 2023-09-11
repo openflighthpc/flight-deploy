@@ -61,7 +61,7 @@ module Profile
         {}.tap do |ans|
           questions.each do |question|
             sleep(0.25) until @prefills && @prefills[question.id]
-            if !parent_answer || parent_answer == question.where
+            if parent_answer.nil? || parent_answer == question.where
               # conditional question
               if question.type == "conditional"
                 ans[question.id] = prompt.yes?(question.text) do |q|
