@@ -1,7 +1,6 @@
 require 'tty-prompt'
 require 'yaml'
 require 'json'
-require 'bcrypt'
 require_relative '../command'
 require_relative '../type'
 
@@ -70,10 +69,64 @@ module Profile
                 end
               # password questions
               elsif question.id == "default_password" || question.type == "password"
-                ans[question.id] = prompt.mask(question.text) do |q|
-                  q.default @prefills[question.id]
-                  q.required question.validation.required
-                  q.validate(/\A.{4,}\Z/, "Invalid Password: Minimum 4 Characters")
+                password_abbr = type.fetch_answer("default_password_abbr") || question.default
+                password_prompt = "default_password: \e[33m(" + password_abbr + ")\e[0m "
+                print password_prompt
+
+                validation_prompt = "  \e[91;1mMinimum 4 Characters\e[0m\e[22D"
+                valid = true
+                #handle user input events
+                $stdin.raw do |raw|
+                  loop do
+                    char = raw.getc
+                    char_value = char.ord
+                    case char_value
+                    # user press ctrl + c
+                    when 3
+                      raise Interrupt
+                    # user press enter 
+                    when 13
+                      # invalid password input
+                      if !password_answer.empty? && password_answer.length < 4
+                        valid = false
+                        print "\r\e[K" + password_prompt + "*" * (password_answer.length - 1)
+                        print password_answer[-1] + validation_prompt
+                        next
+                      end
+                      # password not changed
+                      if password_answer.empty?
+                        # encrypt when the password is the default password. Otherwise, the prefill value should have already been encrypted
+                        ans[question.id] = prefills[question.id] == question.default ? BCrypt::Password.create(prefills[question.id]) : prefills[question.id]
+                      # valid password input
+                      else
+                        ans[question.id] = BCrypt::Password.create(password_answer)
+                        # keep the prefill as plain text if it is set to be the default password
+                        ans[question.id + "_abbr"] = password_answer == question.default ? password_answer : password_answer[0] + "*" * (password_answer.length - 2) + password_answer[-1]
+                      end
+                      print "\r\e[Kdefault_password: "
+                      print "\e[32m" + "*" * password_abbr.length + "\e[0m"
+                      print "\n\r"
+                      break
+                    # user press backspace
+                    when 8
+                      password_answer.chop! unless password_answer.empty?
+                      valid = true if password_answer.empty?
+                      print "\r\e[K" + password_prompt
+                      print "*" * (password_answer.length - 1) unless password_answer.empty?
+                      print password_answer[-1]
+                      print validation_prompt unless valid
+                    # regular password character input
+                    else
+                      if char_value > 31
+                        password_answer << char
+                        valid = true if password_answer.length >= 4
+                        print "\r\e[K" + password_prompt
+                        print "*" * (password_answer.length - 1)
+                        print password_answer[-1]
+                        print validation_prompt unless valid
+                      end
+                    end
+                  end
                 end
               # general questions
               else
