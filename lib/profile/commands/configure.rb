@@ -47,8 +47,10 @@ module Profile
       def required_cli_answers(given_answers, questions = cluster_type.questions, parent_answer = nil)
         [].tap do |required|
           questions.each do |q|
-            required << q.id if parent_answer.nil? || parent_answer == q.where
-            required.concat(required_cli_answers(given_answers, q.questions, given_answers[q.id])) if q.questions
+            if parent_answer.nil? || parent_answer == q.where
+              required << q.id 
+              required.concat(required_cli_answers(given_answers, q.questions, given_answers[q.id])) if q.questions
+            end
           end
         end
       end
