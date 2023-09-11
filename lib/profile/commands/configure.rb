@@ -58,7 +58,7 @@ module Profile
 
       # recursively collect answers, the following is the example of the result
       def collect_answers(questions, parent_answer = nil)
-        answers = {}.tap do |ans|
+        {}.tap do |ans|
           questions.each do |question|
             sleep(0.25) until @prefills && @prefills[question.id]
             if !parent_answer || parent_answer == question.on
