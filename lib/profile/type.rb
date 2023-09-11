@@ -96,7 +96,7 @@ module Profile
       [].tap do |collection|
         qs.each do |q|
           collection << q
-          q += recursive_questions(q.questions) if q.questions
+          collection.concat(recursive_questions(q.questions)) if q.questions
         end
       end
     end
