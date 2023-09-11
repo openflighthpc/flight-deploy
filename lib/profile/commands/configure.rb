@@ -118,7 +118,6 @@ module Profile
           end
           prefills[question.id] = prefill || question.default || ""
         end
-        end
       end
 
       def best_command_output(command_list:, log:, regex: nil)
