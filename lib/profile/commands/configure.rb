@@ -29,17 +29,25 @@ module Profile
       def use_cli_answers
         cli_answers.tap do |a|
           if @options.accept_defaults
-            cluster_type.questions.each do |question|
-              prefill = generate_prefill(question)
-              a[question.id] ||= prefill unless prefill.nil?
+            generate_prefills(question)
+            cluster_type.recursive_questions.each do |question|
+              a[question.id] ||= @prefills[question.id] unless @prefills[question.id].nil?
             end
           end
-          given = a&.keys || []
-          required = cluster_type.questions.each.map(&:id)
+          required = required_cli_answers(a)
           if !(required - given).empty?
             raise "The following questions were not answered by the JSON data: #{(required - given).join(", ")}"
           elsif !(given - required).empty?
             raise "The following given answers are not recognised by the cluster type: #{(given - required).join(", ")}"
+          end
+        end
+      end
+
+      def required_cli_answers(given_answers, questions = cluster_type.questions, parent_answer = nil)
+        [].tap do |required|
+          questions.each do |q|
+            required << q.id if parent_answer.nil? || parent_answer == q.where
+            required.concat(required_cli_answers(given_answers, q.questions, given_answers[q.id])) if q.questions
           end
         end
       end
