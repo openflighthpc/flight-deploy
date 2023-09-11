@@ -95,30 +95,29 @@ module Profile
 
 
       def generate_prefills(questions)
-        @prefills ||= {}.tap do |pfs|
-          questions.each do |question|
-            smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
+        @prefills ||= {}
+        questions.each do |question|
+          smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
-            prefill = question.id == "default_password" ? cluster_type.fetch_answer("default_password_abbr") : cluster_type.fetch_answer(question.id)
-            if question.default_smart && prefill.nil?
-              process = Flight::Subprocess::Local.new(
-                env: {},
-                logger: smart_log,
-                timeout: 5,
-              )
-              result = process.run(question.default_smart, nil)
-              output = result.stdout.chomp
-              if !result.success?
-                smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr.dump}")
-              elsif (!question.validation.has_key?(:format) || output.match(Regexp.new(question.validation.format)))
-                prefill ||= output
-              else
-                smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
-              end
+          prefill = question.id == "default_password" ? cluster_type.fetch_answer("default_password_abbr") : cluster_type.fetch_answer(question.id)
+          if question.default_smart && prefill.nil?
+            process = Flight::Subprocess::Local.new(
+              env: {},
+              logger: smart_log,
+              timeout: 5,
+            )
+            result = process.run(question.default_smart, nil)
+            output = result.stdout.chomp
+            if !result.success?
+              smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr.dump}")
+            elsif (!question.validation.has_key?(:format) || output.match(Regexp.new(question.validation.format)))
+              prefill ||= output
+            else
+              smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
             end
-            pfs[question.id] = prefill || question.default || ""
-            pfs.merge(generate_prefills(question.questions)) if question.questions
           end
+          prefills[question.id] = prefill || question.default || ""
+        end
         end
       end
 
