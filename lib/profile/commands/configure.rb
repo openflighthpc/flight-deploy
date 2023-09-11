@@ -60,7 +60,7 @@ module Profile
       def collect_answers(questions, parent_answer = nil)
         answers = {}.tap do |ans|
           questions.each do |question|
-            sleep(0.25) while !@prefills[question.id]
+            sleep(0.25) until @prefills && @prefills[question.id]
             if !parent_answer || parent_answer == question.on
               # conditional question
               if question.type == "conditional"
