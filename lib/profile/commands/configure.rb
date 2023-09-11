@@ -169,7 +169,8 @@ module Profile
               smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
             end
           end
-          prefills[question.id] = prefill || question.default || ""
+          @prefills[question.id] = prefill || question.default || ""
+          generate_prefills(question.questions) if question.questions
         end
       end
 
