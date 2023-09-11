@@ -69,6 +69,7 @@ module Profile
                 end
               # password questions
               elsif question.id == "default_password" || question.type == "password"
+                password_answer = ""
                 password_abbr = cluster_type.fetch_answer("default_password_abbr") || question.default
                 password_prompt = "default_password: \e[33m(" + password_abbr + ")\e[0m "
                 print password_prompt
