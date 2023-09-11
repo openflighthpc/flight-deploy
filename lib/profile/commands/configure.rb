@@ -64,19 +64,20 @@ module Profile
             if !parent_answer || parent_answer == question.on
               # conditional question
               if question.type == "conditional"
-                ans[question.id] = key(question.id).yes?(question.text) do |q|
+                ans[question.id] = prompt.yes?(question.text) do |q|
                   q.default @prefills[question.id]
                   q.required question.validation.required
                 end
+              # password questions
               elsif question.id == "default_password" || question.type == "password"
-                ans[question.id] = key(question.id).mask(question.text) do |q|
+                ans[question.id] = prompt.mask(question.text) do |q|
                   q.default @prefills[question.id]
                   q.required question.validation.required
                   q.validate(/\A.{4,}\Z/, "Invalid Password: Minimum 4 Characters")
                 end
               # general questions
               else
-                ans[question.id] = key(question.id).ask(question.text) do |q|
+                ans[question.id] = prompt.ask(question.text) do |q|
                   q.default @prefills[question.id]
                   q.required question.validation.required
                   if question.validation.to_h.key?(:format)
