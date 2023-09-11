@@ -34,6 +34,7 @@ module Profile
               a[question.id] ||= @prefills[question.id] unless @prefills[question.id].nil?
             end
           end
+          given = a&.keys || []
           required = required_cli_answers(a)
           if !(required - given).empty?
             raise "The following questions were not answered by the JSON data: #{(required - given).join(", ")}"
