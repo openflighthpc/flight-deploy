@@ -1,6 +1,7 @@
 require 'tty-prompt'
 require 'yaml'
 require 'json'
+require 'bcrypt'
 require_relative '../command'
 require_relative '../type'
 
