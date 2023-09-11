@@ -118,6 +118,7 @@ module Profile
             pfs[question.id] = prefill || question.default || ""
             pfs.merge(generate_prefills(question.questions)) if question.questions
           end
+        end
       end
 
       def best_command_output(command_list:, log:, regex: nil)
