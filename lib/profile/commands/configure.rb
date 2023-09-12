@@ -109,10 +109,10 @@ module Profile
                       # password not changed
                       if password_answer.empty?
                         # encrypt when the password is the default password. Otherwise, the prefill value should have already been encrypted
-                        ans[question.id] = @prefills[question.id] == question.default ? BCrypt::Password.create(@prefills[question.id]) : @prefills[question.id]
+                        ans[question.id] = @prefills[question.id] == question.default ? BCrypt::Password.create(@prefills[question.id]).to_s : @prefills[question.id]
                       # valid password input
                       else
-                        ans[question.id] = BCrypt::Password.create(password_answer)
+                        ans[question.id] = BCrypt::Password.create(password_answer).to_s
                         # keep the prefill as plain text if it is set to be the default password
                         ans[question.id + "_abbr"] = password_answer == question.default ? password_answer : password_answer[0] + "*" * (password_answer.length - 2) + password_answer[-1]
                       end
