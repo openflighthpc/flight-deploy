@@ -165,7 +165,7 @@ module Profile
         questions.each do |question|
           smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
-          prefill = question.id == "default_password" ? cluster_type.fetch_answer("default_password_abbr") : cluster_type.fetch_answer(question.id)
+          prefill = cluster_type.fetch_answer(question.id)
           if question.default_smart && prefill.nil?
             process = Flight::Subprocess::Local.new(
               env: {},
