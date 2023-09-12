@@ -75,7 +75,7 @@ module Profile
         if question.default_smart && prefill.nil?
           prefill ||= best_command_output(command_list: question.default_smart,
                                           log: smart_log,
-                                          regex: question.validation.has_key?(:format) ? question.validation.format : nil)
+                                          regex: question.validation&.has_key?(:format) ? question.validation.format : nil)
         end
         prefill ||= question.default || ""
       end
