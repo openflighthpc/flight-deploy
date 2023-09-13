@@ -86,7 +86,7 @@ module Profile
                 password_prompt = "default_password: \e[33m(" + password_abbr + ")\e[0m "
                 print password_prompt
 
-                validation_prompt = "   \e[91;1mMinimum 4 Characters\e[0m\e[22D"
+                validation_prompt = "\e[31m>>\e[0m Minimum 4 Characters"
                 valid = true
                 #handle user input events
                 loop do
