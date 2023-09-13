@@ -40,6 +40,89 @@ To begin, run `bin/profile configure`. Here, you will set the cluster type to be
 
 These parameters must be set before you can run Flight Profile.
 
+### Defining Questions
+
+The required parameters for each cluster type are different so that different questions will be asked based on the selected type when running `bin/profile configure`. For this reason, each type needs an independent YAML file to define the questions for that type. For instance, when configuring a Jupyter standalone cluster, a set of subsequent questions could be read from a file named 'path/to/openflight-jupyter-standalone/metadata.yaml'. In this section, the structure of the question YAML file will be discussed.
+
+#### The Minimum Structure of Question Metadata YAML Files
+
+The basic structure of the YAML file is shown below:
+```
+---
+id: openflight-jupyter-standalone   # the unique id of the cluster type
+name: 'Openflight Jupyter Standalone'   # the name of the cluster type
+description: 'A Single Node Research Environment running Jupyter Notebook'  # the description of the cluster type
+questions:  # define the list of questions for this cluster type
+  - id: question_1          # the unique id of the question
+    env: QUESTION_1         # the name of the environment variable to which the answer will be assigned. it should also be unique.
+    text: 'question_1:'     # the text of the prompt that will be printed on the console as the label of the input field
+    default: answer_1       # the default answer to the question
+    validation:             # specify the validation for the answer
+      type: string          # specify the type of the answer, this option is currently not actually validated but there must be at least one validation item for each question
+  - id: question_2          # second question 
+    env: QUESTION_2
+    text: 'question_2:'
+    default: answer_2
+    validation:
+      type: string
+```
+With the above example, two questions will be asked when configuring a Jupyter standalone cluster.
+
+#### Validation: Format and Validation: Message
+
+The `format` and the `message` come together as sub-parameters of `validation`. The former is used to validate whether the answer matches a specified regex pattern and the latter is used to show the corresponding error message when the answer is invalid. 
+```
+validation:
+  format: '^[a-zA-Z0-9_\\-]+$'
+  message: 'Invalid input: %{value}. Must contain only alphanumeric characters, - and _.'
+```
+For the above example, an error message `Invalid input: ab(d. Must contain only alphanumeric characters, - and _.` when the input answer is "ab(d".
+
+#### Child Questions
+
+Some questions may need to be presented based on the answer to the previous question. The following example gives the approach to define such child questions.
+```
+questions:
+  - id: parent_question
+    env: PARENT_QUESTION
+    text: 'parent_question:'
+    default: child
+    validation:
+      type: string
+    questions:                          # define the child questions
+      - id: child_question_daughter
+        where: daughter                     # define the condition for asking this child question
+        env: CHILD_QUESTION_DAUGHTER
+        text: 'child_question_daughter:'
+        default: daughter
+        validation:
+          type: string
+      - id: child_question_son
+        where: son
+        env: CHILD_QUESTION_SON
+        text: 'child_question_son:'
+        default: son
+        validation:
+          type: string
+```
+For this metadata, the `parent_question` will be asked first. Then, if the answer is "daughter", only the `child_question_daughter` will be asked according to the given `where` option, and the `child_question_son` will be skipped. Note that if the answer is neither "daughter" nor "son", "moose", say, then both child questions will not be asked.
+
+#### Conditional Questions
+
+Some questions may want to get a binary answer, i.e. y/yes or n/no. To define such questions, a `type` parameter can be used as demonstrated below:
+```
+questions:
+  - id: conditional_question
+    env: CONDITIONAL_QUESTION
+    text: 'conditional_question:'
+    default: TRUE
+    validation:
+      type: bool    # remember that what is defined under the validation does not really matter but currently at least one validation item must be included
+```
+For this kind of questions, only yes, y, no, or n a valid answers.
+
+Indeed, conditional questions can also have child questions. Simply use `true` or `false` as the value of the `where` option for the child questions of a conditional question. 
+
 ## Operation
 
 A brief usage guide is given here. See the `help` command for more in depth details and information specific to each command.
