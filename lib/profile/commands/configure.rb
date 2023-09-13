@@ -83,13 +83,22 @@ module Profile
               elsif question.id == "default_password" || question.type == "password"
                 password_answer = ""
                 password_abbr = cluster_type.fetch_answer("default_password_abbr") || question.default
-                password_prompt = "default_password: \e[33m(" + password_abbr + ")\e[0m "
-                print password_prompt
+                # raw variables are used to calculate the length of the literally printed string
+                raw_password_prompt = "default_password: (" + password_abbr + ") "
+                raw_input_field = raw_password_prompt
+                input_field_rows = prompt.count_screen_lines(raw_input_field)
 
-                validation_prompt = "\e[31m>>\e[0m Minimum 4 Characters"
+                password_prompt = "default_password: \e[33m(" + password_abbr + ")\e[0m "
+                input_field = password_prompt
+                prompt.print(input_field)
+
+                raw_validation_prompt = ">> Minimum 4 Characters"
+                validation_prompt = "\r\e[K\e[31m>>\e[0m Minimum 4 Characters\r"
                 valid = true
+
+                password_accepted = false
                 #handle user input events
-                loop do
+                until password_accepted
                   char = prompt.read_keypress
                   char_value = char.ord
                   case char_value
@@ -98,8 +107,12 @@ module Profile
                     # invalid password input
                     if !password_answer.empty? && password_answer.length < 4
                       valid = false
-                      print "\r\e[K" + password_prompt + "*" * (password_answer.length - 1)
-                      print password_answer[-1] + validation_prompt
+                      prompt.print(prompt.clear_lines(input_field_rows))
+                      total_rows = input_field_rows + prompt.count_screen_lines(raw_validation_prompt)
+                      # print error message and restore the cursor
+                      prompt.print("\n" * input_field_rows + validation_prompt + "\e[A" * (total_rows - 1))
+                      # print input field
+                      prompt.print(input_field)
                       next
                     end
                     # password not changed
@@ -113,28 +126,36 @@ module Profile
                       password_abbr = password_answer == question.default ? password_answer : password_answer[0] + "*" * (password_answer.length - 2) + password_answer[-1]
                       ans[question.id + "_abbr"] = password_abbr
                     end
-                    print "\r\e[Kdefault_password: "
-                    print "\e[32m" + "*" * password_abbr.length + "\e[0m"
-                    print "\n\r"
-                    break
-                  # user press backspace
-                  when 8
-                    password_answer.chop! unless password_answer.empty?
-                    valid = true if password_answer.empty?
-                    print "\r\e[K" + password_prompt
-                    print "*" * (password_answer.length - 1) unless password_answer.empty?
-                    print password_answer[-1]
-                    print validation_prompt unless valid
-                  # regular password character input
+                    password_accepted = true
+                    prompt.print(prompt.clear_lines(input_field_rows))
+                    prompt.print("default_password: \e[32m" + "*" * password_abbr.length + "\e[0m\n\r\e[K")
+                    # iteration exit here
                   else
-                    if char_value > 31
+                    # user press backspace
+                    if char_value == 8
+                      password_answer.chop! unless password_answer.empty?
+                      valid = true if password_answer.empty?
+                    # regular password character input  
+                    else char_value > 31
                       password_answer << char
                       valid = true if password_answer.length >= 4
-                      print "\r\e[K" + password_prompt
-                      print "*" * (password_answer.length - 1)
-                      print password_answer[-1]
-                      print validation_prompt unless valid
                     end
+
+                      raw_input_field = raw_password_prompt
+                      input_field = password_prompt
+                      unless password_answer.empty?
+                        raw_input_field += "*" * (password_answer.length - 1)
+                        raw_input_field += password_answer[-1]
+                        input_field += "*" * (password_answer.length - 1)
+                        input_field += password_answer[-1]
+                      end
+
+                      prompt.print("\e[s\e[B\r\e[K\e[u")
+                      prompt.print(prompt.clear_lines(input_field_rows))
+                      input_field_rows = prompt.count_screen_lines(raw_input_field)
+                      total_rows = input_field_rows + prompt.count_screen_lines(raw_validation_prompt)
+                      prompt.print("\n" * input_field_rows + validation_prompt + "\e[A" * (total_rows - 1)) unless valid
+                      prompt.print(input_field)
                   end
                 end
               # general questions
