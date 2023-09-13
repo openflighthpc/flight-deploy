@@ -93,9 +93,6 @@ module Profile
                   char = prompt.read_keypress
                   char_value = char.ord
                   case char_value
-                  # user press ctrl + c
-                  when 3
-                    raise Interrupt
                   # user press enter 
                   when 13
                     # invalid password input
