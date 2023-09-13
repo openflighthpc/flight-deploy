@@ -140,22 +140,23 @@ module Profile
                       password_answer << char
                       valid = true if password_answer.length >= 4
                     end
-
-                      raw_input_field = raw_password_prompt
-                      input_field = password_prompt
-                      unless password_answer.empty?
-                        raw_input_field += "*" * (password_answer.length - 1)
-                        raw_input_field += password_answer[-1]
-                        input_field += "*" * (password_answer.length - 1)
-                        input_field += password_answer[-1]
-                      end
-
-                      prompt.print("\e[s\e[B\r\e[K\e[u")
-                      prompt.print(prompt.clear_lines(input_field_rows))
-                      input_field_rows = prompt.count_screen_lines(raw_input_field)
-                      total_rows = input_field_rows + prompt.count_screen_lines(raw_validation_prompt)
-                      prompt.print("\n" * input_field_rows + validation_prompt + "\e[A" * (total_rows - 1)) unless valid
-                      prompt.print(input_field)
+                    # construct the input field
+                    raw_input_field = raw_password_prompt
+                    input_field = password_prompt
+                    unless password_answer.empty?
+                      raw_input_field += "*" * (password_answer.length - 1)
+                      raw_input_field += password_answer[-1]
+                      input_field += "*" * (password_answer.length - 1)
+                      input_field += password_answer[-1]
+                    end
+                    # remove the error message if exists
+                    prompt.print("\e[s\e[B\r\e[K\e[u")
+                    # print processes
+                    prompt.print(prompt.clear_lines(input_field_rows))
+                    input_field_rows = prompt.count_screen_lines(raw_input_field)
+                    total_rows = input_field_rows + prompt.count_screen_lines(raw_validation_prompt)
+                    prompt.print("\n" * input_field_rows + validation_prompt + "\e[A" * (total_rows - 1)) unless valid
+                    prompt.print(input_field)
                   end
                 end
               # general questions
