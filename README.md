@@ -44,7 +44,7 @@ These parameters must be set before you can run Flight Profile.
 
 A brief usage guide is given here. See the `help` command for more in depth details and information specific to each command.
 
-Display the available cluster types with `avail`. A brief description of the purpose of each type is given along with its name. 
+Display the available cluster types with `avail`. A brief description of the purpose of each type is given along with its name. An example type is given to demonstrate their usage, a repository containing additional types may be found [here](https://github.com/openflighthpc/flight-profile-types)
 
 Display the available node identities with `identities`. These are what will be specified when setting up nodes. You can specify a type for which to list the identities with `identities TYPE`; if you don't specify, the type that was set in `configure` is used.
 

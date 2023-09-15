@@ -1,0 +1,6 @@
+name: login
+description: Set up an example login node
+group_name: head
+dependencies:
+conflicts:
+ - login

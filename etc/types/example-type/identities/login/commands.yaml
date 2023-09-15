@@ -1,0 +1,4 @@
+apply:
+- name: main
+  command: "echo Applying login node"
+
