@@ -34,12 +34,6 @@ git checkout <tag>
 
 This repository contains the cluster types that are used by Flight Profile.
 
-## Configuration
-
-To begin, run `bin/profile configure`. Here, you will set the cluster type to be used (present in `flight-profile-types`), as well as any required parameters specified in the metadata for that type.
-
-These parameters must be set before you can run Flight Profile.
-
 ## Commands & Usage
 
 Flight Profile provides a series of commands that covers the entire lifecycle of node provisioning. This chapter explains the usage of each command.
@@ -110,7 +104,7 @@ In this statement, the <node> tags represent the hostname of the nodes, or their
 
 After submitting this command, the apply process will run in the background and the command line won't be blocked, allowing the user to continue applying other nodes. These subsequently submitted nodes will be added to the queue.
 
-Note that just like `configure`, this command also accepts a number of custom options. when applying to a set of nodes, you may use the `--remove-on-shutdown` option. When used, the nodes being applied to will be given a `systemd` unit that, when stopped (presumably, on system shutdown), attempts to communicate to the applier node that they have shut down and should be `remove`'d from Profile. The option requires:
+Just like `configure`, this command also accepts a number of custom options. when applying to a set of nodes, you may use the `--remove-on-shutdown` option. When used, the nodes being applied to will be given a `systemd` unit that, when stopped (presumably, on system shutdown), attempts to communicate to the applier node that they have shut down and should be `remove`'d from Profile. The option requires:
 
 - The `shared_secret_path` config option to be set
 - `flight-profile-api` set up and running on the same system, using the same shared secret
@@ -130,6 +124,15 @@ While the latter, `view`, is helpful for viewing the detailed progress of a spec
 ```
 bin/profile view <node>
 ```
+
+## Configuration
+
+First of all, to avoid ambiguity, it is worth noting that the term 'configuration' in the chapter title does not refer to the `configure` command in the Flight Profile tool. The "configuration" here means another separate feature of Flight Profile.
+
+Among all the options supported by the aformentioned commands, some of them can have their environment default values set through a configuration file. Once a supported property is configured in the configuration file, if the option is not manually enabled in the CLI command, the default value from the configuration file will be read and applied.
+
+The configuration file is expected to have the path and filename `etc/config.yml` in YAML format. See the 'etc' folder in this repository. Although `config.yml` does not exist there, a [config.yml.ex](https://github.com/openflighthpc/flight-profile/blob/master/etc/config.yml.ex) file can be found. That ex file lists the properties that support configuration along with their respective explanations. To convert it into a valid `config.yml` file, simply copy the file, remove the `.ex` extension. In the file, fill in the values for the properties that need default configuration and remove the "#" comment symbols at the beginning of those properties.
+
 
 # Contributing
 
