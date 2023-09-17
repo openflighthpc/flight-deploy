@@ -97,7 +97,7 @@ For instance, by running the above command, a list of the identities available f
 After the configuration process is done, the cluster is ready for being applied. This can be accomplished using the `apply` command. The syntax of this command is given below:
 
 ```
-bin/profile apply <node1>,<node2>,...,<noden> <identity>
+bin/profile apply <node1>,<node2>,...,<nodeN> <identity>
 ```
 
 In this statement, the <node> tags represent the hostname of the nodes, or their labels or gender parsed by [Flight Hunter](https://github.com/openflighthpc/flight-hunter).
@@ -125,9 +125,41 @@ While the latter, `view`, is helpful for viewing the detailed progress of a spec
 bin/profile view <node>
 ```
 
+### Remove
+
+Later on, the applied nodes can be removed by the `remove` command. As shown below, the usage of this command is quite straight forward:
+
+```
+bin/profile remove <node1>,<node2>,...,<nodeN>
+```
+
+Again, remember that appending `help` after the command allows the user to view the supported options. One option worth discussing here is `--remove-hunter-entry`. When running the `remove` command independently through the terminal, this option is used to remove the corresponding node from the Flight Hunter's list as well. However, if the removing process is invoked on system shutdown, which is set during profile apply process, users do not have the opportunity to enable the `--remove-hunter-entry` option via the command line. Therefore, to address this issue and fulfill the requirement of removing nodes from the cluster as well as their information from Flight Hunter all together on shutting down, this option should be specified in the configuration file. Please see the [Configuration section](https://github.com/openflighthpc/flight-profile#configuration) for more details.
+
+### Dequeue
+
+In addition to removing applied nodes, those submitted to the queue waiting to be applied can also be dequeued to terminate their application process. The syntax is given below:
+
+```
+bin/profile dequeue <node1>,<node2>,...,<nodeN>
+```
+
+### Clean
+
+If some nodes unfortunately failed to be applied, they can be cleaned up by the `clean` command:
+
+```
+bin/profile clean
+```
+
+It is not required to specify which nodes to be cleaned. Flight Profile will by default clean all the failed nodes. However, choosing the specific nodes to be cleaned is entirely feasible and up to the user, just as shown in the following example:
+
+```
+bin/profile clean <node1>,<node2>,...,<nodeN>
+```
+
 ## Configuration
 
-First of all, to avoid ambiguity, it is worth noting that the term 'configuration' in the chapter title does not refer to the `configure` command in the Flight Profile tool. The "configuration" here means another separate feature of Flight Profile.
+First of all, to avoid ambiguity, it is worth noting that the term 'configuration' in the section title does not refer to the `configure` command in the Flight Profile tool. The "configuration" here means another separate feature of Flight Profile.
 
 Among all the options supported by the aformentioned commands, some of them can have their environment default values set through a configuration file. Once a supported property is configured in the configuration file, if the option is not manually enabled in the CLI command, the default value from the configuration file will be read and applied.
 
