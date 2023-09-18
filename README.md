@@ -46,10 +46,10 @@ In addition to consulting this README documentation, Flight Profile also integra
 bin/profile help
 ```
 
-The above statement provides a description of all the available commands. For the guide of a specific command, such as `configure`, it can be accessed by running the following command:
+The above statement provides a description of all the available commands. For the guide of a specific command, such as `configure`, it can be accessed by appending the `--help`` optiion to the command:
 
 ```
-bin/profile configure help  # raplace 'configure' with the actual command as needed
+bin/profile configure --help  # raplace 'configure' with the actual command as needed
 ```
 
 ### Avail
