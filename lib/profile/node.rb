@@ -258,7 +258,7 @@ module Profile
 
     def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil, ip: nil, groups: nil)
       @hostname = hostname
-      @identity = identity
+      @identity = identity || groups.find { |group| Identity.find(group, Config.cluster_type) }
       @deployment_pid = deployment_pid
       @exit_status = exit_status
       @hunter_label = hunter_label
