@@ -108,6 +108,10 @@ module Profile
         data.fetch(:remove_on_shutdown)
       end
 
+      def use_hunter_groups
+        data.fetch(:use_hunter_groups)
+      end
+
       private
 
       def dir_constructor(*a)
