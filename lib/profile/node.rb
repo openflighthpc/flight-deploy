@@ -256,9 +256,9 @@ module Profile
     attr_reader :name
     attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label, :ip, :groups
 
-    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil, ip: nil, groups: nil)
+    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil, ip: nil, groups: [])
       @hostname = hostname
-      @identity = identity || groups.find { |group| Identity.find(group, Config.cluster_type) }
+      @identity = identity
       @deployment_pid = deployment_pid
       @exit_status = exit_status
       @hunter_label = hunter_label
