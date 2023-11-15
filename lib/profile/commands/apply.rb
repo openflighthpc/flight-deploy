@@ -69,7 +69,11 @@ module Profile
           OUT
           raise out
         end
-        
+
+        if Config.use_hunter_groups && !args[1]
+          #groups.find { |group| Identity.find(group, Config.cluster_type) }
+        end
+
         # Fetch identity
         identity = cluster_type.find_identity(args[1])
         raise "No identity exists with given name" if !identity
