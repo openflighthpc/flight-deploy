@@ -8,8 +8,6 @@
 #use_hunter:
 # Path to Flight Hunter executable
 #hunter_command:
-# Permit Profile to assign identities to nodes based on a Hunter group matching an identity name.
-#use_hunter_groups:
 
 # Secret to use when encrypting strings
 #shared_secret_path:
