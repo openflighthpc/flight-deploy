@@ -24,6 +24,7 @@ module Profile
         # [ wait, force, remove_on_shutdown ]
         @hunter = Config.use_hunter?
         @remove_on_shutdown = @options.remove_on_shutdown || Config.remove_on_shutdown
+        raise "The --auto option requires use_hunter to be set" if @options.auto && !@hunter
 
         if @remove_on_shutdown && !Config.shared_secret
           raise "Shared secret path not set or not valid!"
@@ -70,20 +71,17 @@ module Profile
           raise out
         end
 
-        if Config.use_hunter_groups && !args[1]
-          #groups.find { |group| Identity.find(group, Config.cluster_type) }
-        end
-
         # Fetch identity
-        identity = cluster_type.find_identity(args[1])
-        raise "No identity exists with given name" if !identity
-        cmds = identity.commands
+        raise "No identity given, use --auto or specify an identity" if !(args[1] || @options.auto)
+        given_identity = cluster_type.find_identity(args[1])
+        
+        raise "No identity exists with given name" if !(given_identity || @options.auto)
 
         # Fetch existing nodes
         existing = Node.all(include_hunter: @hunter)
 
         # Construct new node objects
-        new_nodes = Node.generate(names, identity.name, include_hunter: @hunter)
+        new_nodes = Node.generate(names, given_identity&.name, include_hunter: @hunter, auto_identity: @options.auto)
 
         # Check for identity clashes
         total = existing + new_nodes
@@ -120,15 +118,18 @@ module Profile
           OUT
         end
 
-        # Check for identity dependencies
         to_queue = []
         new_nodes.each do |node|
+          # Check for identity dependencies
           (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
-            unless node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }
+            unless (node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }) && node.identity == given_identity.name
               to_queue << node
             end
           end
         end
+
+        # Check for nodes whose identities were determined to not match
+        # the identity for the current apply process
 
         unless to_queue.empty?
           options = {
@@ -141,7 +142,7 @@ module Profile
             new_nodes.delete(node)
           end
           puts <<~OUT
-          The following nodes have been added to the queue, as they have unmet dependencies:
+          The following nodes have been added to the queue:
           #{to_queue.map(&:name).join("\n")}
           OUT
         end
@@ -152,11 +153,11 @@ module Profile
         # ERROR CHECKING OVER; GOOD TO START APPLYING
         #
 
-        hosts_term = names.length > 1 ? 'hosts' : 'host'
-        printable_names = names.map { |h| "'#{h}'" }
-        puts "Applying '#{identity.name}' to #{hosts_term} #{printable_names.join(', ')}"
+        hosts_term = new_nodes.length > 1 ? 'hosts' : 'host'
+        printable_names = new_nodes.map { |n| "'#{n.name}'" }
+        puts "Applying '#{given_identity.name}' to #{hosts_term} #{printable_names.join(', ')}"
 
-        inventory.groups[identity.group_name] ||= []
+        inventory.groups[given_identity.group_name] ||= []
         inv_file = inventory.filepath
 
         env = {
@@ -178,7 +179,7 @@ module Profile
           inv_row = node.hostname.dup
           inv_row << " ansible_host=#{node.ip}" if @hunter
 
-          inventory.groups[identity.group_name] |= [inv_row]
+          inventory.groups[given_identity.group_name] |= [inv_row]
           node.clear_logs
           log_symlink = "#{Config.log_dir}/#{node.name}-apply-#{Time.now.to_i}.log"
 
@@ -207,6 +208,7 @@ module Profile
 
         node_objs = Nodes.new(new_nodes)
 
+        cmds = given_identity.commands
         pid = ProcessSpawner.run(
           cmds["apply"],
           wait: @options.wait,
