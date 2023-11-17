@@ -61,6 +61,13 @@ When applying to a set of nodes, you may use the `--remove-on-shutdown` option. 
 - The `shared_secret_path` config option to be set
 - `flight-profile-api` set up and running on the same system, using the same shared secret
 
+### Automatically obtaining node identities
+
+When using `apply`, you may use the `--auto` option to attempt to determine the identity of a node from its Hunter groups. The groups will be searched for a group name that matches an identity name, and if one is found, that node will be queued for an application of that identity.
+
+When using the `--auto` option, giving an identity is not required. However, you may still provide one, and that identity will be used for all nodes that could not automatically determine their own identity. For example, if you had a set of 50 nodes, you could modify the groups of one node to include "login", then run `profile apply node[0-49] compute --auto` and the `compute` identity will be applied to the 49 other nodes which did not have modified groups, while `login` will be applied to the relevant node.
+
+If you decide to apply an identity to a set of nodes while also using `--auto`, if any of the nodes in that set determine their own identity to match the one you chose to apply, they will all be applied simultaneously.
 
 # Contributing
 
