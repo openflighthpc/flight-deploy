@@ -122,7 +122,7 @@ module Profile
         new_nodes.each do |node|
           # Check for identity dependencies
           (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
-            unless (node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }) && node.identity == given_identity.name
+            unless (node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }) && node.identity == given_identity&.name
               to_queue << node
             end
           end
