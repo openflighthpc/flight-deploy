@@ -128,7 +128,8 @@ module Profile
 
         unless to_queue.empty?
           options = {
-            'remove_on_shutdown' => @remove_on_shutdown
+            'remove_on_shutdown' => @remove_on_shutdown,
+            'force' => @options.force
           }
 
           to_queue.each do |node|
