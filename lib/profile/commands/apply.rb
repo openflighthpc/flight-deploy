@@ -21,7 +21,7 @@ module Profile
         # ARGS:
         # [ names, identity ]
         # OPTS:
-        # [ force ]
+        # [ wait, force, remove_on_shutdown ]
         @hunter = Config.use_hunter?
         @remove_on_shutdown = @options.remove_on_shutdown || Config.remove_on_shutdown
 
