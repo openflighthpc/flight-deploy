@@ -29,7 +29,7 @@ module Profile
         if @remove_on_shutdown && !Config.shared_secret
           raise "Shared secret path not set or not valid!"
         end
-        
+
         strings = args[0].split(',')
         names = []
         strings.each do |str|
@@ -39,7 +39,15 @@ module Profile
         names.flatten!.uniq!
 
         # Reload all nodes
-        Node.all(reload: true, include_hunter: @hunter)
+        nodes = Node.all(reload: true, include_hunter: @hunter)
+
+        if @options.groups
+          new_names = []
+          nodes.each do |node|
+            new_names << node.name if (node.groups & names)
+          end
+          names = new_names
+        end
 
         # If using hunter, check to see if node actually exists
         check_nodes_exist(names) if @hunter
