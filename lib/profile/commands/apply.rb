@@ -24,7 +24,7 @@ module Profile
         # [ wait, force, remove_on_shutdown ]
         @hunter = Config.use_hunter?
         @remove_on_shutdown = @options.remove_on_shutdown || Config.remove_on_shutdown
-        raise "The --auto option requires use_hunter to be set" if @options.auto && !@hunter
+        raise "The --detect-identity option requires use_hunter to be set" if @options.detect_identity && !@hunter
 
         if @remove_on_shutdown && !Config.shared_secret
           raise "Shared secret path not set or not valid!"
@@ -72,16 +72,16 @@ module Profile
         end
 
         # Fetch identity
-        raise "No identity given, use --auto or specify an identity" if !(args[1] || @options.auto)
+        raise "No identity given, use --detect-identity or specify an identity" if !(args[1] || @options.detect_identity)
         given_identity = cluster_type.find_identity(args[1])
         
-        raise "No identity exists with given name" if !(given_identity || @options.auto)
+        raise "No identity exists with given name" if !(given_identity || @options.detect_identity)
 
         # Fetch existing nodes
         existing = Node.all(include_hunter: @hunter)
 
         # Construct new node objects
-        new_nodes = Node.generate(names, given_identity&.name, include_hunter: @hunter, auto_identity: @options.auto)
+        new_nodes = Node.generate(names, given_identity&.name, include_hunter: @hunter, detect_identity: @options.detect_identity)
 
         # Check for identity clashes
         total = existing + new_nodes
