@@ -39,13 +39,13 @@ module Profile
       end
     end
 
-    def self.generate(names, identity, include_hunter: false, reload: false, auto_identity: false)
+    def self.generate(names, identity, include_hunter: false, reload: false, detect_identity: false)
       names.map do |name|
         hostname, ip, hunter_label, new_identity =
           case include_hunter
           when true
             existing = Node.find(name, include_hunter: include_hunter, reload: reload)
-            case auto_identity
+            case detect_identity
             when true
               [existing&.hostname,
                existing&.ip,
