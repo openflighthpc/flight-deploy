@@ -65,6 +65,7 @@ EOF
       c.slop.bool "--remove-on-shutdown", "Trigger a removal action when given node(s) shut down"
       c.slop.bool "--detect-identity", "Automatically determine identities based on a node's Hunter group(s)"
       c.slop.bool '-g', "--groups", "Select nodes based on hunter group(s) instead of node names"
+      c.slop.bool "--dry-run", "Print which identities would be applied, without running the apply process."
     end
 
     command :dequeue do |c|
