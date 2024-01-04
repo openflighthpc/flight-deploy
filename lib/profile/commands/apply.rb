@@ -21,7 +21,7 @@ module Profile
         # ARGS:
         # [ names, identity ]
         # OPTS:
-        # [ wait, force, remove_on_shutdown, detect_identity, groups ]
+        # [ wait, force, remove_on_shutdown, detect_identity, groups, dry_run ]
         @hunter = Config.use_hunter?
         @remove_on_shutdown = @options.remove_on_shutdown || Config.remove_on_shutdown
         raise "The --detect-identity option requires use_hunter to be set" if @options.detect_identity && !@hunter
@@ -124,6 +124,13 @@ module Profile
           There are identity conflicts to resolve:
           #{all_errors.join("\n")}
           OUT
+        end
+
+        if @options.dry_run
+          new_nodes.each do |node|
+            puts "Node '#{node.name}' will be applied with identity '#{node.identity}'"
+          end
+          return
         end
 
         to_queue = []
