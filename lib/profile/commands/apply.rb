@@ -46,6 +46,7 @@ module Profile
           nodes.each do |node|
             new_names << node.name if (node.groups & names).any?
           end
+          raise "No nodes found in the given group(s)" if new_names.empty?
           names = new_names
         end
 
