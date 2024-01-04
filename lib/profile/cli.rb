@@ -64,6 +64,7 @@ EOF
       c.slop.bool "--force", "Overwrite the identity for a node that has already been set up"
       c.slop.bool "--remove-on-shutdown", "Trigger a removal action when given node(s) shut down"
       c.slop.bool "--detect-identity", "Automatically determine identities based on a node's Hunter group(s)"
+      c.slop.bool '-g', "--groups", "Select nodes based on hunter group(s) instead of node names"
     end
 
     command :dequeue do |c|
