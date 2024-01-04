@@ -91,6 +91,17 @@ module Profile
         # Construct new node objects
         new_nodes = Node.generate(names, given_identity&.name, include_hunter: @hunter, detect_identity: @options.detect_identity)
 
+        if @options.detect_identity
+          missing_identity = new_nodes.select { |node| node.identity.nil? }.map(&:name)
+          if missing_identity.any?
+            raise <<~OUT
+            Could not determine an identity for the following nodes: #{missing_identity.join(", ")}
+            Either provide a default identity, or add an identity to their set of Hunter groups.
+            OUT
+          end
+        end
+        
+
         # Check for identity clashes
         total = existing + new_nodes
 
