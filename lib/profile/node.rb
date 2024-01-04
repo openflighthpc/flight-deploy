@@ -50,7 +50,7 @@ module Profile
               [existing&.hostname,
                existing&.ip,
                existing&.hunter_label,
-               existing&.groups.find { |group| Identity.find(group, Config.cluster_type) }
+               (existing&.groups.find { |group| Identity.find(group, Config.cluster_type) } || identity)
               ]
             else
               [existing&.hostname, existing&.ip, existing&.hunter_label, identity]
