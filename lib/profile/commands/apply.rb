@@ -21,7 +21,7 @@ module Profile
         # ARGS:
         # [ names, identity ]
         # OPTS:
-        # [ wait, force, remove_on_shutdown ]
+        # [ wait, force, remove_on_shutdown, detect_identity, groups ]
         @hunter = Config.use_hunter?
         @remove_on_shutdown = @options.remove_on_shutdown || Config.remove_on_shutdown
         raise "The --detect-identity option requires use_hunter to be set" if @options.detect_identity && !@hunter
@@ -44,7 +44,7 @@ module Profile
         if @options.groups
           new_names = []
           nodes.each do |node|
-            new_names << node.name if (node.groups & names)
+            new_names << node.name if (node.groups & names).any?
           end
           names = new_names
         end
