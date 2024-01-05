@@ -1,4 +1,5 @@
 require 'curses'
+require 'time'
 
 require_relative '../command'
 
@@ -123,7 +124,6 @@ HEREDOC
       end
 
       def display_task_status(command)
-        new_role = nil
         roles = Hash.new(0)
         str = ""
         command.split("\n").each_with_index do |line, idx|
@@ -138,6 +138,7 @@ HEREDOC
 
             next if parts['task_role'] == 'None'
 
+            time = Time.parse(parts['time'])
             role = parts['task_role']
             new_role = !roles.key?(role)
             roles[role] += 1 unless parts['category'] == 'SKIPPED'
