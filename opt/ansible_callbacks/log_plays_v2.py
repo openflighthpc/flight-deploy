@@ -110,6 +110,15 @@ class CallbackModule(CallbackBase):
         with open(path, "ab") as fd:
             fd.write(msg)
 
+
+    def v2_runner_on_start(self, host, task):
+        path = os.path.join(self.log_folder, host.get_name())
+        now = time.strftime(self.TIME_FORMAT, time.localtime())
+        print(dir(host))
+        with open(path, "a") as fd:
+            msg = now + ' - ' + self.playbook + ' - ' + task._role.get_name() + ' - '+ task.name + ' - ' + task.action + ' - STARTED\n'
+            fd.write(msg)
+
     def v2_runner_on_failed(self, result, ignore_errors=False):
         self.log(result, 'FAILED')
 
