@@ -99,7 +99,7 @@ module Profile
       log_name = "#{Config.log_dir}/#{id}-#{Time.now.to_i}.log"
 
       Open3.popen2e(
-        prepare_command,
+        "bash -e #{prepare_command}",
         chdir: run_env
       )  do |stdin, stdout_stderr, wait_thr|
         Thread.new do
