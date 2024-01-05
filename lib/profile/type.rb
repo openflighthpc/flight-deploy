@@ -17,7 +17,7 @@ module Profile
             state_file = File.join(dir, "state.yaml")
             state = case File.file?(state_file)
                     when true
-                      state = YAML.load_file(state_file)
+                      state = YAML.load_file(state_file)["prepared"]
                     when false
                       false
                     end
