@@ -64,7 +64,8 @@ module Profile
           name: name,
           identity: new_identity,
           hunter_label: hunter_label,
-          ip: ip
+          ip: ip,
+          groups: groups
         )
       end
     end
