@@ -1,7 +1,6 @@
 require 'tty-prompt'
 require 'yaml'
 require 'json'
-require 'bcrypt'
 require_relative '../command'
 require_relative '../type'
 
@@ -64,10 +63,8 @@ module Profile
         end
 
         collect_answers(type.questions)
-
       end
 
-      # recursively collect answers, the following is the example of the result
       def collect_answers(questions, parent_answer = nil)
         {}.tap do |ans|
           questions.each do |question|
@@ -78,86 +75,6 @@ module Profile
                 ans[question.id] = prompt.yes?(question.text) do |q|
                   q.default @prefills[question.id]
                   q.required question.validation.required
-                end
-              # password questions
-              elsif question.id == "default_password" || question.type == "password"
-                password_answer = ""
-                password_abbr = cluster_type.fetch_answer("default_password_abbr") || question.default
-                # raw variables are used to calculate the length of the literally printed string
-                raw_password_prompt = "default_password: (" + password_abbr + ") "
-                raw_input_field = raw_password_prompt
-                input_field_rows = prompt.count_screen_lines(raw_input_field)
-
-                password_prompt = "default_password: \e[33m(" + password_abbr + ")\e[0m "
-                input_field = password_prompt
-                prompt.print(input_field)
-
-                raw_validation_prompt = ">> Minimum 4 Characters"
-                validation_prompt = "\r\e[K\e[31m>>\e[0m Minimum 4 Characters\r"
-                valid = true
-
-                password_accepted = false
-                #handle user input events
-                until password_accepted
-                  char = prompt.read_keypress
-                  char_value = char.ord
-                  case char_value
-                  # user press enter 
-                  when 13
-                    # invalid password input
-                    if !password_answer.empty? && password_answer.length < 4
-                      valid = false
-                      prompt.print(prompt.clear_lines(input_field_rows))
-                      total_rows = input_field_rows + prompt.count_screen_lines(raw_validation_prompt)
-                      # print error message and restore the cursor
-                      prompt.print("\n" * input_field_rows + validation_prompt + "\e[A" * (total_rows - 1))
-                      # print input field
-                      prompt.print(input_field)
-                      next
-                    end
-                    # password not changed
-                    if password_answer.empty?
-                      # encrypt when the password is the default password. Otherwise, the prefill value should have already been encrypted
-                      ans[question.id] = @prefills[question.id] == question.default ? BCrypt::Password.create(@prefills[question.id]).to_s : @prefills[question.id]
-                    # valid password input
-                    else
-                      ans[question.id] = BCrypt::Password.create(password_answer).to_s
-                      # keep the prefill as plain text if it is set to be the default password
-                      password_abbr = password_answer == question.default ? password_answer : password_answer[0] + "*" * (password_answer.length - 2) + password_answer[-1]
-                      ans[question.id + "_abbr"] = password_abbr
-                    end
-                    password_accepted = true
-                    prompt.print(prompt.clear_lines(input_field_rows))
-                    prompt.print("default_password: \e[32m" + "*" * password_abbr.length + "\e[0m\n\r\e[K")
-                    # iteration exit here
-                  else
-                    # user press backspace
-                    if char_value == 8
-                      password_answer.chop! unless password_answer.empty?
-                      valid = true if password_answer.empty?
-                    # regular password character input  
-                    else char_value > 31
-                      password_answer << char
-                      valid = true if password_answer.length >= 4
-                    end
-                    # construct the input field
-                    raw_input_field = raw_password_prompt
-                    input_field = password_prompt
-                    unless password_answer.empty?
-                      raw_input_field += "*" * (password_answer.length - 1)
-                      raw_input_field += password_answer[-1]
-                      input_field += "*" * (password_answer.length - 1)
-                      input_field += password_answer[-1]
-                    end
-                    # remove the error message if exists
-                    prompt.print("\e[s\e[B\r\e[K\e[u")
-                    # print processes
-                    prompt.print(prompt.clear_lines(input_field_rows))
-                    input_field_rows = prompt.count_screen_lines(raw_input_field)
-                    total_rows = input_field_rows + prompt.count_screen_lines(raw_validation_prompt)
-                    prompt.print("\n" * input_field_rows + validation_prompt + "\e[A" * (total_rows - 1)) unless valid
-                    prompt.print(input_field)
-                  end
                 end
               # general questions
               else
