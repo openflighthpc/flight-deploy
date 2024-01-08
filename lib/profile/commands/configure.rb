@@ -88,7 +88,7 @@ module Profile
                 end
               end
               # collect the answers to the child questions
-              ans.merge(collect_answers(question.questions, ans[question.id])) if question.questions
+              ans.merge!(collect_answers(question.questions, ans[question.id])) if question.questions
             end
           end
         end
