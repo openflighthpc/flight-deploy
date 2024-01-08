@@ -114,14 +114,15 @@ Some questions may want to get a binary answer, i.e. y/yes or n/no. To define su
 questions:
   - id: conditional_question
     env: CONDITIONAL_QUESTION
-    text: 'conditional_question:'
+    text: "conditional_question:"
+    type: conditional
     default: TRUE
     validation:
       type: bool    # remember that what is defined under the validation does not really matter but currently at least one validation item must be included
 ```
 For this kind of questions, only yes, y, no, or n a valid answers.
 
-Indeed, conditional questions can also have child questions. Simply use `true` or `false` as the value of the `where` option for the child questions of a conditional question. 
+Conditional questions can also have child questions. Simply use `true` or `false` as the value of the `where` option for the child questions of a conditional question.
 
 ## Operation
 
@@ -178,4 +179,3 @@ EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR
 CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR
 A PARTICULAR PURPOSE. See the [Eclipse Public License 2.0](https://opensource.org/licenses/EPL-2.0) for more
 details.
-
