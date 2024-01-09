@@ -10,5 +10,6 @@ log/*.log
 var/ansible_invs/*.inv
 var/inventory/*.yaml
 var/answers/*.yaml
-var/log/configure
+var/log
 openflight-ansible-playbook*
+var/queue*
