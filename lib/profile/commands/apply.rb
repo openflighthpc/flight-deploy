@@ -145,17 +145,18 @@ module Profile
           return
         end
 
+        given_identity = nil if @options.detect_identity # We've already got what we need from the given identity in this case
+
         to_queue = []
         new_nodes.each do |node|
           # Check for identity dependencies
           (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
-            if (node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) })
-              if @options.detect_identity
+            if (node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }) && given_identity&.name != node.identity
+              if !given_identity
                 given_identity = node.fetch_identity
-              elsif given_identity.name == node.identity
-                to_queue << node
-                new_nodes.delete(node)
               end
+            else
+              to_queue << node
             end
           end
         end
@@ -171,6 +172,7 @@ module Profile
 
           to_queue.each do |node|
             QueueManager.push(node.name, node.identity, options: options)
+            new_nodes.delete(node)
           end
           puts <<~OUT
           The following nodes have been added to the queue:
