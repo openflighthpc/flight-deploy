@@ -174,10 +174,9 @@ module Profile
             QueueManager.push(node.name, node.identity, options: options)
             new_nodes.delete(node)
           end
-          puts <<~OUT
-          The following nodes have been added to the queue:
-          #{to_queue.map(&:name).join("\n")}
-          OUT
+          to_queue.group_by { |queued| queued.identity }.each do |identity, nodes|
+            puts "Queueing '#{nodes.map(&:name).join("', '")}' for application of identity '#{identity}'"
+          end
         end
 
         return unless new_nodes.any?
