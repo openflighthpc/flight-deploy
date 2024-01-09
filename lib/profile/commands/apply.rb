@@ -149,8 +149,13 @@ module Profile
         new_nodes.each do |node|
           # Check for identity dependencies
           (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
-            unless (node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }) && node.identity == given_identity&.name
-              to_queue << node
+            if (node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) })
+              if @options.detect_identity
+                given_identity = node.fetch_identity
+              elsif given_identity.name == node.identity
+                to_queue << node
+                new_nodes.delete(node)
+              end
             end
           end
         end
@@ -166,7 +171,6 @@ module Profile
 
           to_queue.each do |node|
             QueueManager.push(node.name, node.identity, options: options)
-            new_nodes.delete(node)
           end
           puts <<~OUT
           The following nodes have been added to the queue:
