@@ -139,8 +139,8 @@ module Profile
         end
 
         if @options.dry_run
-          new_nodes.each do |node|
-            puts "Node '#{node.name}' will be applied with identity '#{node.identity}'"
+          new_nodes.group_by { |node| node.identity }.each do |identity, nodes|
+            puts "'#{nodes.map(&:name).join("', '")}' would be applied with identity '#{identity}'"
           end
           return
         end
