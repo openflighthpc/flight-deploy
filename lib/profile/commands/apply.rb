@@ -70,7 +70,7 @@ module Profile
         end
 
         # Check all questions have been answered
-        missing_questions = cluster_type.questions.reject { |q| cluster_type.fetch_answer(q.id) }
+        missing_questions = cluster_type.questions.select { |q| cluster_type.fetch_answer(q.id).nil? }
         if missing_questions.any?
           q_names = missing_questions.map { |q| smart_downcase(q.text.delete(':')) }
           out = <<~OUT.chomp
