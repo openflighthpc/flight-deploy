@@ -1,16 +1,12 @@
 require 'curses'
 require 'time'
+require 'pp'
 
 require_relative '../command'
 
 module Profile
   module Commands
     class View < Command
-      SUCCESS_STATUSES = %w[ok changed rescued]
-      FAIL_STATUSES = %w[failed fatal unreachable]
-      SKIP_STATUSES = %w[skipped ignored]
-      ALL_STATUSES = SUCCESS_STATUSES + FAIL_STATUSES + SKIP_STATUSES
-
       def run
         @name = args[0]
 
@@ -112,6 +108,52 @@ HEREDOC
         end
       end
 
+      class Task
+        SUCCESS_STATUSES = %w[ok changed rescued]
+        FAIL_STATUSES = %w[failed fatal unreachable]
+        SKIP_STATUSES = %w[skipped ignored ok]
+        DONE_STATUSES = SUCCESS_STATUSES + FAIL_STATUSES + SKIP_STATUSES 
+
+        def initialize(name, steps)
+          @name = name
+          @steps = steps
+        end
+
+        attr_reader :name, :steps
+
+        def success?
+          status_in?(SUCCESS_STATUSES)
+        end
+
+        def failure?
+          status_in?(FAIL_STATUSES)
+        end
+
+        def skipped?
+          status_in?(SKIP_STATUSES)
+        end
+
+        def status_in?(arr)
+          steps.any? { |s| arr.include?(s['category'].downcase) }
+        end
+
+        def in_progress?
+          !success? && !failure? && !skipped?
+        end
+
+        def runtime
+          in_progress? ? (Time.now - start_time).round(2) : (end_time - start_time).to_i
+        end
+
+        def start_time
+          Time.parse(@steps.first['time'])
+        end
+
+        def end_time
+          Time.parse(@steps.last['time'])
+        end
+      end
+
       def split_log_line(line)
         parts =
           line.split("\n")
@@ -120,34 +162,30 @@ HEREDOC
             .first
 
         keys = %w{time playbook task_role task_name task_action category data}
-        keys.zip(parts).to_h
+        keys.zip(parts).to_h.merge({ 'raw' => "#{line}\n" })
       end
 
       def display_task_status(command)
         roles = Hash.new(0)
         str = ""
-        command.split("\n").each_with_index do |line, idx|
-          line << "\n"
+        title = command.lines.first
+
+        tasks = command.lines[1..].map(&:chomp).reject(&:empty?).map do |l|
+          split_log_line(l)
+        end.reject { |l| l['category'] == 'omitted' }.group_by { |l| l['task_name'] }
+
+        tasks = tasks.map { |name, tasks| Task.new(name, tasks) }
+
+        tasks.each do |task|
           if @options.raw
-            str += line unless idx == 0
+            task.steps.each { |s| str += s['raw'] }
           else
-            next if line.chomp.empty?
-            next if line.include?("PROFILE_COMMAND")
-
-            parts = split_log_line(line)
-
-            next if parts['task_role'] == 'None'
-
-            time = Time.parse(parts['time'])
-            role = parts['task_role']
-            new_role = !roles.key?(role)
-            roles[role] += 1 unless parts['category'] == 'SKIPPED'
-            str += "#{role}\n" if new_role && roles[role] > 0
-
-            if SUCCESS_STATUSES.include?(parts['category']&.downcase)
-              str += "   \u2705 #{parts['task_name']}\n"
-            elsif FAIL_STATUSES.include?(parts['category']&.downcase)
-              str += "   \u274c #{parts['task_name']}\n"
+            if task.success?
+              str += "   \u2705 #{task.name} (done in #{task.runtime}s)\n"
+            elsif task.failure?
+              str += "   \u274c #{task.name} (done in #{task.runtime}s)\n"
+            elsif task.in_progress?
+              str += "   \u231b #{task.name} (#{task.runtime} seconds elapsed)\n"
             end
           end
         end
