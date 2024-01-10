@@ -151,9 +151,11 @@ module Profile
         new_nodes.each do |node|
           # Check for identity dependencies
           (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
-            if (node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }) && given_identity&.name != node.identity
+            if (node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) })
               if !given_identity
                 given_identity = node.fetch_identity
+              elsif given_identity&.name != node.identity
+                to_queue << node
               end
             else
               to_queue << node
