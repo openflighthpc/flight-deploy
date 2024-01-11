@@ -1,6 +1,5 @@
 require 'curses'
 require 'time'
-require 'pp'
 
 require_relative '../command'
 
@@ -50,11 +49,11 @@ module Profile
 
       def output
         return <<~OUT.chomp if node.status == 'available'
-        Node '#{node.name}' is available. You can apply an identity to it with 'flight profile apply #{node.name} <identity>'.
+          Node '#{node.name}' is available. You can apply an identity to it with 'flight profile apply #{node.name} <identity>'.
         OUT
 
         return <<~OUT.chomp if node.status == 'queued'
-        Node '#{node.name}' is queued for application awaiting its dependencies.
+          Node '#{node.name}' is queued for application awaiting its dependencies.
         OUT
 
         log = File.read(node.log_file)
@@ -62,7 +61,7 @@ module Profile
         "".tap do |output|
           commands.each do|cmd|
             status = cmd == commands.last ? nil : 'COMPLETE'
-            output << command_structure(cmd, status: status) + "\n"
+            output << "#{command_structure(cmd, status: status)}\n"
           end
         end
       end
@@ -79,27 +78,27 @@ module Profile
       def command_structure(command, status: nil)
         header = command.split("\n").first.sub /^PROFILE_COMMAND .*: /, ''
         cmd_name = command[/(?<=PROFILE_COMMAND ).*?(?=:)/]
-        <<HEREDOC
-Command:
-    #{cmd_name}
+        <<~HEREDOC
+          Command:
+              #{cmd_name}
 
-Running:
-    #{header}
+          Running:
+              #{header}
 
-Progress:
-#{display_task_status(command).chomp}
+          Progress:
+          #{display_task_status(command).chomp}
 
-Status:
-    #{status || node.status.upcase}
+          Status:
+              #{status || node.status.upcase}
 
-HEREDOC
+        HEREDOC
       end
 
       def node
         # attempt to find without hunter integration first to save time
         attempts = [
-          lambda { Node.find(@name, reload: true) },
-          lambda { Node.find(@name, reload: true, include_hunter: use_hunter?) }
+          -> { Node.find(@name, reload: true) },
+          -> { Node.find(@name, reload: true, include_hunter: use_hunter?) }
         ]
 
         # Use Enumerable#lazy to return first truthy block result
@@ -109,10 +108,10 @@ HEREDOC
       end
 
       class Task
-        SUCCESS_STATUSES = %w[ok changed rescued]
-        FAIL_STATUSES = %w[failed fatal unreachable]
-        SKIP_STATUSES = %w[skipped ignored ok]
-        DONE_STATUSES = SUCCESS_STATUSES + FAIL_STATUSES + SKIP_STATUSES 
+        SUCCESS_STATUSES = %w[ok changed rescued].freeze
+        FAIL_STATUSES = %w[failed fatal unreachable].freeze
+        SKIP_STATUSES = %w[skipped ignored ok].freeze
+        DONE_STATUSES = SUCCESS_STATUSES + FAIL_STATUSES + SKIP_STATUSES
 
         def initialize(name, steps)
           @name = name
@@ -161,32 +160,31 @@ HEREDOC
             .reject(&:empty?)
             .first
 
-        keys = %w{time playbook task_role task_name task_action category data}
+        keys = %w[time playbook task_role task_name task_action category data]
         keys.zip(parts).to_h.merge({ 'raw' => "#{line}\n" })
       end
 
       def display_task_status(command)
-        roles = Hash.new(0)
-        str = ""
-        title = command.lines.first
+        str = ''
 
-        tasks = command.lines[1..].map(&:chomp).reject(&:empty?).map do |l|
-          split_log_line(l)
-        end.reject { |l| l['category'] == 'omitted' }.group_by { |l| l['task_name'] }
+        tasks = command.lines[1..]
+                       .map(&:chomp)
+                       .reject(&:empty?)
+                       .map { |l| split_log_line(l) }
+                       .reject { |l| l['category'] == 'omitted' }
+                       .group_by { |l| l['task_name'] }
 
-        tasks = tasks.map { |name, tasks| Task.new(name, tasks) }
+        tasks = tasks.map { |name, steps| Task.new(name, steps) }
 
         tasks.each do |task|
           if @options.raw
             task.steps.each { |s| str += s['raw'] }
-          else
-            if task.success?
-              str += "   \u2705 #{task.name} (done in #{task.runtime}s)\n"
-            elsif task.failure?
-              str += "   \u274c #{task.name} (done in #{task.runtime}s)\n"
-            elsif task.in_progress?
-              str += "   \u231b #{task.name} (#{task.runtime} seconds elapsed)\n"
-            end
+          elsif task.success?
+            str += "   \u2705 #{task.name} (done in #{task.runtime}s)\n"
+          elsif task.failure?
+            str += "   \u274c #{task.name} (done in #{task.runtime}s)\n"
+          elsif task.in_progress?
+            str += "   \u231b #{task.name} (#{task.runtime} seconds elapsed)\n"
           end
         end
         str
