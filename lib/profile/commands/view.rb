@@ -180,14 +180,18 @@ module Profile
           if @options.raw
             task.steps.each { |s| str += s['raw'] }
           elsif task.success?
-            str += "   \u2705 #{task.name} (done in #{task.runtime}s)\n"
+            str += "   \u2705 #{task.name} (done in #{format_time(task.runtime)}s)\n"
           elsif task.failure?
-            str += "   \u274c #{task.name} (done in #{task.runtime}s)\n"
+            str += "   \u274c #{task.name} (done in #{format_time(task.runtime)}s)\n"
           elsif task.in_progress?
             str += "   \u231b #{task.name} (#{task.runtime} seconds elapsed)\n"
           end
         end
         str
+      end
+
+      def format_time(time)
+        time < 1 ? '<1' : time
       end
     end
   end
