@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative '../command'
 require_relative './concerns/node_utils'
 require_relative '../config'
@@ -24,11 +26,9 @@ module Profile
         # [ wait, force, remove_on_shutdown, detect_identity, groups, dry_run ]
         @hunter = Config.use_hunter?
         @remove_on_shutdown = @options.remove_on_shutdown || Config.remove_on_shutdown
-        raise "The --detect-identity option requires use_hunter to be set" if @options.detect_identity && !@hunter
+        raise 'The --detect-identity option requires use_hunter to be set' if @options.detect_identity && !@hunter
 
-        if @remove_on_shutdown && !Config.shared_secret
-          raise "Shared secret path not set or not valid!"
-        end
+        raise 'Shared secret path not set or not valid!' if @remove_on_shutdown && !Config.shared_secret
 
         strings = args[0].split(',')
         names = []
@@ -46,7 +46,8 @@ module Profile
           nodes.each do |node|
             new_names << node.name if (node.groups & names).any?
           end
-          raise "No nodes found in the given group(s)" if new_names.empty?
+          raise 'No nodes found in the given group(s)' if new_names.empty?
+
           names = new_names
         end
 
@@ -63,45 +64,48 @@ module Profile
 
         # Fetch cluster type
         cluster_type = Type.find(Config.cluster_type)
-        raise "Invalid cluster type. Please run `profile configure`" unless cluster_type
+        raise 'Invalid cluster type. Please run `profile configure`' unless cluster_type
         unless cluster_type.prepared?
           raise "Cluster type has not been prepared yet. Please run `profile prepare #{cluster_type.id}`."
         end
 
         # Check all questions have been answered
-        missing_questions = cluster_type.questions.select { |q| !cluster_type.fetch_answer(q.id) }
+        missing_questions = cluster_type.questions.reject { |q| cluster_type.fetch_answer(q.id) }
         if missing_questions.any?
           q_names = missing_questions.map { |q| smart_downcase(q.text.delete(':')) }
           out = <<~OUT.chomp
-          The following config keys have not been set:
-          #{q_names.join("\n")}
-          Please run `profile configure`
+            The following config keys have not been set:
+            #{q_names.join("\n")}
+            Please run `profile configure`
           OUT
           raise out
         end
 
         # Fetch identity
-        raise "No identity given, use --detect-identity or specify an identity" if !(args[1] || @options.detect_identity)
+        unless args[1] || @options.detect_identity
+          raise 'No identity given, use --detect-identity or specify an identity'
+        end
+
         given_identity = cluster_type.find_identity(args[1])
-        
-        raise "No identity exists with given name" if !(given_identity || @options.detect_identity)
+
+        raise 'No identity exists with given name' unless given_identity || @options.detect_identity
 
         # Fetch existing nodes
         existing = Node.all(include_hunter: @hunter)
 
         # Construct new node objects
-        new_nodes = Node.generate(names, given_identity&.name, include_hunter: @hunter, detect_identity: @options.detect_identity)
+        new_nodes = Node.generate(names, given_identity&.name, include_hunter: @hunter,
+                                                               detect_identity: @options.detect_identity)
 
         if @options.detect_identity
           missing_identity = new_nodes.select { |node| node.identity.nil? }.map(&:name)
           if missing_identity.any?
             raise <<~OUT
-            Could not determine an identity for the following nodes: #{missing_identity.join(", ")}
-            Either provide a default identity, or add an identity to their set of Hunter groups.
+              Could not determine an identity for the following nodes: #{missing_identity.join(', ')}
+              Either provide a default identity, or add an identity to their set of Hunter groups.
             OUT
           end
         end
-        
 
         # Check for identity clashes
         total = existing + new_nodes
@@ -117,15 +121,11 @@ module Profile
             # `disallow_existing_nodes`.
             next if existing.name == node.name
 
-            if node.conflicts_with?(existing.identity)
-              node.errors << "clashes with '#{existing.name}'"
-            end
+            node.errors << "clashes with '#{existing.name}'" if node.conflicts_with?(existing.identity)
           end
 
           Queue.index.each do |q, v|
-            if node.conflicts_with?(v[:identity])
-              node.errors << "clashes with '#{q}'"
-            end
+            node.errors << "clashes with '#{q}'" if node.conflicts_with?(v[:identity])
           end
         end
 
@@ -133,25 +133,26 @@ module Profile
 
         if all_errors.any?
           raise <<~OUT.chomp
-          There are identity conflicts to resolve:
-          #{all_errors.join("\n")}
+            There are identity conflicts to resolve:
+            #{all_errors.join("\n")}
           OUT
         end
 
         if @options.dry_run
-          new_nodes.group_by { |node| node.identity }.each do |identity, nodes|
+          new_nodes.group_by(&:identity).each do |identity, nodes|
             puts "'#{nodes.map(&:name).join("', '")}' would be applied with identity '#{identity}'"
           end
           return
         end
 
-        given_identity = nil if @options.detect_identity # We've already got what we need from the given identity in this case
+        # We've already got what we need from the given identity in this case
+        given_identity = nil if @options.detect_identity
 
         to_queue = []
         new_nodes.each do |node|
           # Check for identity dependencies
           (total - [node]).select { |n| n.status == 'complete' }.tap do |existing|
-            if (node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) })
+            if node.dependencies.all? { |dep| existing.map(&:identity).include?(dep) }
               if !given_identity
                 given_identity = node.fetch_identity
               elsif given_identity&.name != node.identity
@@ -176,7 +177,7 @@ module Profile
             QueueManager.push(node.name, node.identity, options: options)
             new_nodes.delete(node)
           end
-          to_queue.group_by { |queued| queued.identity }.each do |identity, nodes|
+          to_queue.group_by(&:identity).each do |identity, nodes|
             puts "Queueing '#{nodes.map(&:name).join("', '")}' for application of identity '#{identity}'"
           end
         end
@@ -195,13 +196,13 @@ module Profile
         inv_file = inventory.filepath
 
         env = {
-          "ANSIBLE_CALLBACK_PLUGINS" => File.join(Config.root, 'opt', 'ansible_callbacks'),
-          "ANSIBLE_STDOUT_CALLBACK" => "log_plays_v2",
-          "ANSIBLE_DISPLAY_SKIPPED_HOSTS" => "false",
-          "ANSIBLE_HOST_KEY_CHECKING" => "false",
-          "INVFILE" => inv_file,
-          "RUN_ENV" => cluster_type.run_env,
-          "HUNTER_HOSTS" => @hunter.to_s
+          'ANSIBLE_CALLBACK_PLUGINS' => File.join(Config.root, 'opt', 'ansible_callbacks'),
+          'ANSIBLE_STDOUT_CALLBACK' => 'log_plays_v2',
+          'ANSIBLE_DISPLAY_SKIPPED_HOSTS' => 'false',
+          'ANSIBLE_HOST_KEY_CHECKING' => 'false',
+          'INVFILE' => inv_file,
+          'RUN_ENV' => cluster_type.run_env,
+          'HUNTER_HOSTS' => @hunter.to_s
         }.tap do |e|
           cluster_type.questions.each do |q|
             e[q.env] = cluster_type.fetch_answer(q.id).to_s
@@ -235,8 +236,8 @@ module Profile
 
         env = env.merge(
           {
-            "NODE" => new_nodes.map(&:hostname).join(','),
-            "ANSIBLE_LOG_FOLDER" => ansible_log_dir
+            'NODE' => new_nodes.map(&:hostname).join(','),
+            'ANSIBLE_LOG_FOLDER' => ansible_log_dir
           }
         )
 
@@ -244,7 +245,7 @@ module Profile
 
         cmds = given_identity.commands
         pid = ProcessSpawner.run(
-          cmds["apply"],
+          cmds['apply'],
           wait: @options.wait,
           env: env,
           log_files: new_nodes.map(&:log_filepath)
@@ -256,16 +257,14 @@ module Profile
           # logic can continue asynchronously.
           node_objs.update_all(deployment_pid: nil, exit_status: last_exit)
 
-          if @remove_on_shutdown && last_exit == 0
-            node_objs.each { |node| node.install_remove_hook }
-          end
+          node_objs.each(&:install_remove_hook) if @remove_on_shutdown && last_exit.zero?
         end
 
         node_objs.update_all(deployment_pid: pid.to_i)
 
         unless @options.wait
-          puts "The application process has begun. Refer to `flight profile list` "\
-               "or `flight profile view` for more details"
+          puts 'The application process has begun. Refer to `flight profile list` '\
+               'or `flight profile view` for more details'
         end
 
         # If `--wait` isn't included, the subprocesses are daemonised, and Ruby
@@ -284,7 +283,7 @@ module Profile
       private
 
       def inventory
-        @inventory ||= Inventory.load(Type.find(Config.cluster_type).fetch_answer("cluster_name"))
+        @inventory ||= Inventory.load(Type.find(Config.cluster_type).fetch_answer('cluster_name'))
       end
 
       Nodes = Struct.new(:nodes) do
@@ -320,49 +319,45 @@ module Profile
       def disallow_existing_nodes(names)
         existing = existing_nodes(names)
 
-        unless existing.empty?
-          existing_string = <<~OUT.chomp
+        return if existing.empty?
+
+        existing_string = <<~OUT.chomp
           The following nodes already have an applied identity:
           #{existing.map(&:name).join("\n")}
-          OUT
+        OUT
 
-          if @options.force
-            say_warning existing_string + "\nContinuing..."
-          else
-            raise existing_string
-          end
-        end
+        raise existing_string unless @options.force
+
+        say_warning "#{existing_string}\nContinuing..."
       end
 
       def check_nodes_not_busy(names)
         existing = existing_nodes(names)
-        busy = existing.select { |node| ['removing', 'applying'].include?(node.status) }
+        busy = existing.select { |node| %w[removing applying].include?(node.status) }
 
-        unless busy.empty?
-          busy_string = <<~OUT.chomp
+        return if busy.empty?
+
+        busy_string = <<~OUT.chomp
           The following nodes are currently undergoing another process:
           #{busy.map(&:name).join("\n")}
-          OUT
+        OUT
 
-          if @options.force
-            say_warning busy_string + "\nContinuing..."
-            pids = busy.map(&:deployment_pid).compact
-            pids.each { |pid| Process.kill("HUP", pid) }
-          else
-            raise busy_string
-          end
-        end
+        raise busy_string unless @options.force
+
+        say_warning "#{busy_string}\nContinuing..."
+        pids = busy.map(&:deployment_pid).compact
+        pids.each { |pid| Process.kill('HUP', pid) }
       end
 
       def check_nodes_exist(names)
-        not_found = names.select { |n| !Node.find(n, include_hunter: true) }
-        if not_found.any?
-          out = <<~OUT.chomp
+        not_found = names.reject { |n| Node.find(n, include_hunter: true) }
+        return unless not_found.any?
+
+        out = <<~OUT.chomp
           The following nodes were not found in Profile or Hunter:
           #{not_found.join("\n")}
-          OUT
-          raise out
-        end
+        OUT
+        raise out
       end
     end
   end
