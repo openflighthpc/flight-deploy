@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'fileutils'
 require 'shash'
 require 'open3'
@@ -10,14 +12,15 @@ module Profile
       @all_types ||= [].tap do |a|
         Config.type_paths.each do |p|
           Dir["#{p}/*/"].each do |dir|
-            metadata_file = File.join(dir, "metadata.yaml")
+            metadata_file = File.join(dir, 'metadata.yaml')
             next unless File.file?(metadata_file)
+
             type = YAML.load_file(metadata_file)
 
-            state_file = File.join(dir, "state.yaml")
+            state_file = File.join(dir, 'state.yaml')
             state = case File.file?(state_file)
                     when true
-                      state = YAML.load_file(state_file)["prepared"]
+                      state = YAML.load_file(state_file)['prepared']
                     when false
                       false
                     end
@@ -38,8 +41,7 @@ module Profile
             raise "Duplicate types exist across type paths; please remove all duplicate instances of: #{t.id}"
           end
         end
-
-      end.sort_by { |n| n.name }
+      end.sort_by(&:name)
     end
 
     def self.[](name)
@@ -57,7 +59,7 @@ module Profile
     def save_answers(answers_hash)
       new_answers = answers.merge(answers_hash)
       File.write(answers_file, YAML.dump(new_answers))
-      File.chmod(0600, answers_file)
+      File.chmod(0o600, answers_file)
     end
 
     def answers
@@ -87,7 +89,7 @@ module Profile
     end
 
     def questions
-      @questions.map { |q| q.to_shash }
+      @questions.map(&:to_shash)
     end
 
     def configured?
@@ -95,16 +97,17 @@ module Profile
     end
 
     def prepare
-      raise "No script found for preparing the #{name} cluster type" unless File.exists?(prepare_command)
+      raise "No script found for preparing the #{name} cluster type" unless File.exist?(prepare_command)
+
       log_name = "#{Config.log_dir}/#{id}-#{Time.now.to_i}.log"
 
       Open3.popen2e(
         prepare_command,
         chdir: run_env
-      )  do |stdin, stdout_stderr, wait_thr|
+      ) do |_stdin, stdout_stderr, wait_thr|
         Thread.new do
           stdout_stderr.each do |l|
-            File.open(log_name, "a+") { |f| f.write l}
+            File.open(log_name, 'a+') { |f| f.write l }
           end
         end
         wait_thr.value
