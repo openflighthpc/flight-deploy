@@ -116,9 +116,10 @@ module Profile
         def initialize(name, steps)
           @name = name
           @steps = steps
+          @role = @steps.first['task_role']
         end
 
-        attr_reader :name, :steps
+        attr_reader :name, :role, :steps
 
         def success?
           status_in?(SUCCESS_STATUSES)
@@ -166,6 +167,7 @@ module Profile
 
       def display_task_status(command)
         str = ''
+        roles = Hash.new(0)
 
         tasks = command.lines[1..]
                        .map(&:chomp)
@@ -179,12 +181,19 @@ module Profile
         tasks.each do |task|
           if @options.raw
             task.steps.each { |s| str += s['raw'] }
-          elsif task.success?
-            str += "   \u2705 #{task.name} (done in #{format_time(task.runtime)}s)\n"
-          elsif task.failure?
-            str += "   \u274c #{task.name} (done in #{format_time(task.runtime)}s)\n"
-          elsif task.in_progress?
-            str += "   \u231b #{task.name} (#{task.runtime} seconds elapsed)\n"
+          else
+            role = task.role
+            new_role = !roles.key?(role)
+            roles[role] += 1 unless task.skipped?
+            str += "#{role}\n" if new_role && (roles[role]).positive?
+
+            if task.success?
+              str += "   \u2705 #{task.name} (done in #{format_time(task.runtime)}s)\n"
+            elsif task.failure?
+              str += "   \u274c #{task.name} (done in #{format_time(task.runtime)}s)\n"
+            elsif task.in_progress?
+              str += "   \u231b #{task.name} (#{task.runtime} seconds elapsed)\n"
+            end
           end
         end
         str
