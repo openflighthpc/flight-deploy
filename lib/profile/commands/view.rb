@@ -188,19 +188,26 @@ module Profile
             str += "#{role}\n" if new_role && (roles[role]).positive?
 
             if task.success?
-              str += "   \u2705 #{task.name} (done in #{format_time(task.runtime)}s)\n"
+              str += "   \u2705 #{task.name} (done in #{format_time(task.runtime)})\n"
             elsif task.failure?
-              str += "   \u274c #{task.name} (done in #{format_time(task.runtime)}s)\n"
+              str += "   \u274c #{task.name} (done in #{format_time(task.runtime)})\n"
             elsif task.in_progress?
-              str += "   \u231b #{task.name} (#{task.runtime} seconds elapsed)\n"
+              str += "   \u231b #{task.name} (#{format_time(task.runtime)} elapsed)\n"
             end
           end
         end
         str
       end
 
-      def format_time(time)
-        time < 1 ? '<1' : time
+      def format_time(secs)
+        return '<1s' if secs < 1
+
+        [[60, :s], [60, :m], [24, :h], [Float::INFINITY, :d]].map do |count, name|
+          next unless secs.positive?
+
+          secs, number = secs.divmod(count)
+          "#{number.to_i} #{name}" unless number.to_i.zero?
+        end.compact.reverse.join(', ')
       end
     end
   end
