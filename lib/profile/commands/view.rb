@@ -110,7 +110,7 @@ module Profile
       class Task
         SUCCESS_STATUSES = %w[ok changed rescued].freeze
         FAIL_STATUSES = %w[failed fatal unreachable].freeze
-        SKIP_STATUSES = %w[skipped ignored ok].freeze
+        SKIP_STATUSES = %w[skipped ignored].freeze
         DONE_STATUSES = SUCCESS_STATUSES + FAIL_STATUSES + SKIP_STATUSES
 
         def initialize(name, steps)
@@ -183,6 +183,8 @@ module Profile
             task.steps.each { |s| str += s['raw'] }
           else
             role = task.role
+            next if role == 'None'
+
             new_role = !roles.key?(role)
             roles[role] += 1 unless task.skipped?
             str += "#{role}\n" if new_role && (roles[role]).positive?
@@ -206,7 +208,7 @@ module Profile
           next unless secs.positive?
 
           secs, number = secs.divmod(count)
-          "#{number.to_i} #{name}" unless number.to_i.zero?
+          "#{number.to_i}#{name}" unless number.to_i.zero?
         end.compact.reverse.join(', ')
       end
     end
