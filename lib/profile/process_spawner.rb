@@ -27,12 +27,15 @@ module Profile
                 )
               end
 
+              process_path = File.join(Config.log_dir, "process-#{Time.now.to_i}.log")
+              process_log = File.open(process_path, 'w')
               sub_pid = Process.spawn(
                 env,
-                command['command']
+                command['command'],
+                [:out, :err] => process_path
               )
-
               Process.wait(sub_pid)
+              process_log.close
               exit_status = $?.exitstatus
 
               if exit_status != 0 || idx == commands.size - 1
