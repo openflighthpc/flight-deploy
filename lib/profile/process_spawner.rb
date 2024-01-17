@@ -33,8 +33,8 @@ module Profile
               process_log = File.open(process_path, 'a')
               exit_status = nil
               Open3.popen3(env, command['command']) do |_stdin, stdout, stderr, wait_thr|
-                process_log.write(stdout)
-                process_log.write(stderr)
+                process_log.write(stdout.read)
+                process_log.write(stderr.read)
                 exit_status = wait_thr.value.exitstatus
               end
               process_log.close
