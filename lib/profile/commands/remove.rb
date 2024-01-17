@@ -115,7 +115,7 @@ module Profile
             env: env,
             log_files: nodes.map(&:log_filepath)
           ) do |last_exit|
-            node_objs.update_all(deployment_pid: nil, exit_status: last_exit)
+            node_objs.update_all(deployment_pid: nil, exit_status: last_exit, last_action: nil)
 
             node_objs.destroy_all if last_exit == 0
             if last_exit == 0 && @hunter && @remove_hunter_entry
@@ -123,7 +123,7 @@ module Profile
             end
           end
 
-          node_objs.update_all(deployment_pid: pid.to_i)
+          node_objs.update_all(deployment_pid: pid.to_i, last_action: 'remove')
         end
 
 
