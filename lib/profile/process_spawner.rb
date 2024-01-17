@@ -28,7 +28,7 @@ module Profile
               end
 
               process_path = File.join(Config.log_dir, "process-#{Time.now.to_i}.log")
-              process_log = File.open(process_path, 'w')
+              process_log = File.open(process_path, 'a')
               sub_pid = Process.spawn(
                 env,
                 command['command'],
