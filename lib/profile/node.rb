@@ -78,7 +78,8 @@ module Profile
         'deployment_pid' => deployment_pid,
         'exit_status' => exit_status,
         'ip' => ip,
-        'groups' => groups
+        'groups' => groups,
+        'last_action' => last_action
       }
     end
 
@@ -263,9 +264,9 @@ module Profile
     end
 
     attr_reader :name
-    attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label, :ip, :groups
+    attr_accessor :hostname, :identity, :deployment_pid, :exit_status, :hunter_label, :ip, :groups, :last_action
 
-    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil, ip: nil, groups: [])
+    def initialize(hostname:, identity: nil, deployment_pid: nil, exit_status: nil, hunter_label: nil, name: nil, ip: nil, groups: [], last_action: nil)
       @hostname = hostname
       @identity = identity
       @deployment_pid = deployment_pid
@@ -274,6 +275,7 @@ module Profile
       @name = name || hunter_label || hostname
       @ip = ip
       @groups = groups
+      @last_action = last_action
     end
 
     private
