@@ -252,12 +252,12 @@ module Profile
           # - the final command
           # We yield it in a block so that the rest of the `apply`
           # logic can continue asynchronously.
-          node_objs.update_all(deployment_pid: nil, exit_status: last_exit)
+          node_objs.update_all(deployment_pid: nil, exit_status: last_exit, last_action: nil)
 
           node_objs.each(&:install_remove_hook) if @remove_on_shutdown && last_exit.zero?
         end
 
-        node_objs.update_all(deployment_pid: pid.to_i)
+        node_objs.update_all(deployment_pid: pid.to_i, last_action: 'apply')
 
         unless @options.wait
           puts 'The application process has begun. Refer to `flight profile list` '\
