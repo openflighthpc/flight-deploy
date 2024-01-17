@@ -1,3 +1,5 @@
+require 'open3'
+
 module Profile
   class ProcessSpawner
     class << self
@@ -29,14 +31,13 @@ module Profile
 
               process_path = File.join(Config.log_dir, "process-#{Time.now.to_i}.log")
               process_log = File.open(process_path, 'a')
-              sub_pid = Process.spawn(
-                env,
-                command['command'],
-                [:out, :err] => process_path
-              )
-              Process.wait(sub_pid)
+              exit_status = nil
+              Open3.popen3(env, command['command']) do |_stdin, stdout, stderr, wait_thr|
+                process_log.write(stdout)
+                process_log.write(stderr)
+                exit_status = wait_thr.value.exitstatus
+              end
               process_log.close
-              exit_status = $?.exitstatus
 
               if exit_status != 0 || idx == commands.size - 1
                 break exit_status
