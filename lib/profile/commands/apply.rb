@@ -364,7 +364,7 @@ module Profile
         }.tap do |collection|
           questions.each do |question|
             next unless parent_answer.nil? || parent_answer == question.where
-            if answers[question.id]
+            if !answers[question.id].nil?
               collection['answers'][question.env] = answers[question.id]
             else
               collection['missing_questions'] << smart_downcase(question.text.delete(':'))
