@@ -58,6 +58,19 @@ module Profile
         # Check nodes can aren't in the middle of doing something else
         check_nodes_not_busy(nodes)
 
+        answer_collection = collect_answers(cluster_type.questions, cluster_type.answers)
+        answers = answer_collection['answers']
+        # Check all questions have been answered
+        missing_questions = answer_collection['missing_questions']
+        if missing_questions.any?
+          out = <<~OUT.chomp
+            The following config keys have not been set:
+            #{missing_questions.join("\n")}
+            Please run `profile configure`
+          OUT
+          raise out
+        end
+
         hosts_term = names.length > 1 ? 'hosts' : 'host'
         printable_names = names.map { |h| "'#{h}'" }
         puts "Removing #{hosts_term} #{printable_names.join(', ')}"
@@ -73,11 +86,7 @@ module Profile
           "INVFILE" => inv_file,
           "RUN_ENV" => cluster_type.run_env,
           "HUNTER_HOSTS" => @hunter.to_s
-        }.tap do |e|
-          cluster_type.questions.each do |q|
-            e[q.env] = cluster_type.fetch_answer(q.id).to_s
-          end
-        end
+        }.merge(answers)
 
         # Set up log files
         nodes.each do |node|
@@ -194,6 +203,28 @@ module Profile
             pids.each { |pid| Process.kill("HUP", pid) }
           else
             raise existing_string
+          end
+        end
+      end
+
+      def collect_answers(questions, answers, parent_answer = nil)
+        {
+          'answers' => {},
+          'missing_questions' => []
+        }.tap do |collection|
+          questions.each do |question|
+            next unless parent_answer.nil? || parent_answer == question.where
+            if !answers[question.id].nil?
+              collection['answers'][question.env] = answers[question.id]
+            else
+              collection['missing_questions'] << smart_downcase(question.text.delete(':'))
+            end
+            # collect the answers to the child questions
+            if question.questions
+              child_collection = collect_answers(question.questions, answers, answers[question.id])
+              collection['answers'].merge!(child_collection['answers'])
+              collection['missing_questions'].concat(child_collection['missing_questions'])
+            end
           end
         end
       end
