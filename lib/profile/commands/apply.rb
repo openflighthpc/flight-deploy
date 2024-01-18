@@ -69,13 +69,14 @@ module Profile
           raise "Cluster type has not been prepared yet. Please run `profile prepare #{cluster_type.id}`."
         end
 
+        answer_collection = collect_answers(cluster_type.questions, cluster_type.answers)
+        answers = answer_collection['answers']
         # Check all questions have been answered
-        missing_questions = cluster_type.questions.select { |q| cluster_type.fetch_answer(q.id).nil? }
+        missing_questions = answer_collection['missing_questions']
         if missing_questions.any?
-          q_names = missing_questions.map { |q| smart_downcase(q.text.delete(':')) }
           out = <<~OUT.chomp
             The following config keys have not been set:
-            #{q_names.join("\n")}
+            #{missing_questions.join("\n")}
             Please run `profile configure`
           OUT
           raise out
@@ -203,11 +204,7 @@ module Profile
           'INVFILE' => inv_file,
           'RUN_ENV' => cluster_type.run_env,
           'HUNTER_HOSTS' => @hunter.to_s
-        }.tap do |e|
-          cluster_type.recursive_questions.each do |q|
-            e[q.env] = cluster_type.fetch_answer(q.id).to_s if cluster_type.fetch_answer(q.id)
-          end
-        end
+        }.merge(answers)
 
         # Set up new nodes
         new_nodes.each do |node|
@@ -358,6 +355,28 @@ module Profile
           #{not_found.join("\n")}
         OUT
         raise out
+      end
+
+      def collect_answers(questions, answers, parent_answer = nil)
+        {
+          'answers' => {},
+          'missing_questions' => []
+        }.tap do |collection|
+          questions.each do |question|
+            next unless parent_answer.nil? || parent_answer == question.where
+            if answers[question.id]
+              collection['answers'][question.env] = answers[question.id]
+            else
+              collection['missing_questions'] << smart_downcase(question.text.delete(':'))
+            end
+            # collect the answers to the child questions
+            if question.questions
+              child_collection = collect_answers(question.questions, answers, answers[question.id])
+              collection['answers'].merge!(child_collection['answers'])
+              collection['missing_questions'].concat(child_collection['missing_questions'])
+            end
+          end
+        end
       end
     end
   end
