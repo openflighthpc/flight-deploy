@@ -107,7 +107,7 @@ questions:
 ```
 For this metadata, the `parent_question` will be asked first. Then, if the answer is "daughter", only the `child_question_daughter` will be asked according to the given `where` option, and the `child_question_son` will be skipped. Note that if the answer is neither "daughter" nor "son", "moose", say, then both child questions will not be asked.
 
-#### Conditional Questions
+#### Boolean Questions
 
 Some questions may want to get a binary answer, i.e. y/yes or n/no. To define such questions, a `type` parameter can be used as demonstrated below:
 ```
@@ -115,14 +115,14 @@ questions:
   - id: conditional_question
     env: CONDITIONAL_QUESTION
     text: "conditional_question:"
-    type: conditional
+    type: boolean
     default: TRUE
     validation:
       type: bool    # remember that what is defined under the validation does not really matter but currently at least one validation item must be included
 ```
 For this kind of questions, only yes, y, no, or n a valid answers.
 
-Conditional questions can also have child questions. Simply use `true` or `false` as the value of the `where` option for the child questions of a conditional question.
+Boolean questions can also have child questions. Simply use `true` or `false` as the value of the `where` option for the child questions of a boolean question.
 
 ## Operation
 
