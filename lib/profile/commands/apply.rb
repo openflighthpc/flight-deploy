@@ -204,7 +204,7 @@ module Profile
           'INVFILE' => inv_file,
           'RUN_ENV' => cluster_type.run_env,
           'HUNTER_HOSTS' => @hunter.to_s
-        }.merge(answers)
+        }.merge(answers).transform_values(&:to_s)
 
         # Set up new nodes
         new_nodes.each do |node|
