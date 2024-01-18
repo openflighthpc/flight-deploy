@@ -39,14 +39,6 @@ module Profile
           raise "Cluster type has not been prepared yet. Please run `profile prepare #{cluster_type.id}`."
         end
 
-        # Check all questions have been answered
-        unless cluster_type.configured?
-          out = <<~OUT.chomp
-          Cluster type missing required configuration. Please run `profile configure`.
-          OUT
-          raise out
-        end
-
         # Check nodes exist
         check_names_exist(names)
 
