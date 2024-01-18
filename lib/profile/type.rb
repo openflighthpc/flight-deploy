@@ -101,10 +101,6 @@ module Profile
       end
     end
 
-    def configured?
-      questions.all? { |q| fetch_answer(q.id) }
-    end
-
     def prepare
       raise "No script found for preparing the #{name} cluster type" unless File.exist?(prepare_command)
 
