@@ -1,3 +1,4 @@
+require 'tty-prompt'
 require_relative '../command'
 
 module Profile
@@ -24,6 +25,12 @@ module Profile
         else
           raise "Error occurred while preparing. Please check the log for more details."
         end
+      end
+
+      private
+
+      def prompt
+        @prompt ||= TTY::Prompt.new(help_color: :yellow)
       end
     end
   end
