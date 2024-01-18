@@ -71,7 +71,7 @@ module Profile
             sleep(0.25) until @prefills && !@prefills[question.id].nil?
             if parent_answer.nil? || parent_answer == question.where
               # conditional question
-              if question.type == "conditional"
+              if question.type == "boolean"
                 ans[question.id] = prompt.yes?(question.text) do |q|
                   q.default @prefills[question.id]
                   q.required question.validation.required
