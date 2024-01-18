@@ -102,20 +102,9 @@ module Profile
 
           prefill = cluster_type.fetch_answer(question.id)
           if question.default_smart && prefill.nil?
-            process = Flight::Subprocess::Local.new(
-              env: {},
-              logger: smart_log,
-              timeout: 5,
-            )
-            result = process.run(question.default_smart, nil)
-            output = result.stdout.chomp
-            if !result.success?
-              smart_log.debug("Command '#{question.default_smart}' failed to run: #{result.stderr.dump}")
-            elsif (!question.validation.has_key?(:format) || output.match(Regexp.new(question.validation.format)))
-              prefill ||= output
-            else
-              smart_log.debug("Command result '#{output}' did not pass validation check for '#{question.text}'")
-            end
+            prefill ||= best_command_output(command_list: question.default_smart,
+                                            log: smart_log,
+                                            regex: question.validation&.has_key?(:format) ? question.validation.format : nil)
           end
           @prefills[question.id] =
             if !prefill.nil?
