@@ -106,7 +106,7 @@ module Profile
               "NODE" => nodes.map(&:hostname).join(','),
               "ANSIBLE_LOG_FOLDER" => ansible_log_dir
             }
-          )
+          ).transform_values(&:to_s)
 
           pid = ProcessSpawner.run(
             nodes.first.fetch_identity.commands["remove"],
