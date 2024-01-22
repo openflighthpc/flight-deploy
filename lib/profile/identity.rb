@@ -30,6 +30,13 @@ module Profile
       all(cluster_type).find { |ident| ident.name == name }
     end
 
+    def self.set_conditional_dependencies(cluster_type, identity, dependencies)
+      metadata_path = File.join(cluster_type.base_path, "identities", identity, 'metadata.yaml')
+      metadata = YAML.load_file(metadata_path)
+      metadata['conditional_dependencies'] = dependencies
+      File.write(metadata_path, metadata.to_yaml)
+    end
+
     def removable?
       !!commands['remove']
     end
