@@ -88,6 +88,9 @@ module Profile
       identities.find { |identity| identity.name == name }
     end
 
+    def set_conditional_dependencies(identity, dependencies)
+    end
+
     def questions
       @questions.map(&:to_shash)
     end
