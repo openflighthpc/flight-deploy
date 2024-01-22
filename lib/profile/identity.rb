@@ -10,12 +10,12 @@ module Profile
           begin
             metadata = YAML.load_file(File.join(identity, "metadata.yaml"))
             cmds = YAML.load_file(File.join(identity, "commands.yaml"))
-
+            
             a << new(
               name: metadata['name'],
               description: metadata['description'],
               group_name: metadata['group_name'],
-              dependencies: metadata['dependencies'].to_a + metadata['conditional_dependencies'].to_a,
+              dependencies: metadata['dependencies'].to_a + conditional_dependencies[metadata['name']],
               conflicts: metadata['conflicts'],
               commands: cmds
             )
@@ -30,11 +30,19 @@ module Profile
       all(cluster_type).find { |ident| ident.name == name }
     end
 
-    def self.set_conditional_dependencies(cluster_type, identity, dependencies)
-      metadata_path = File.join(cluster_type.base_path, "identities", identity, 'metadata.yaml')
-      metadata = YAML.load_file(metadata_path)
-      metadata['conditional_dependencies'] = dependencies
-      File.write(metadata_path, metadata.to_yaml)
+    def self.conditional_dependencies(cluster_type)
+      Hash.new([]).tap do |ds|
+        all_questions = cluster_type.recursive_questions
+        cluster_type.valid_answers.each do |id, ans|
+          question = all_questions.find { |q| q.id == id }
+          conditional_dependencies = question.dependencies
+          next unless conditional_dependencies
+          matched_dependencies = conditional_dependencies.select { |cd| cd.where == ans }
+          matched_dependencies.each do |md|
+            ds[md.identity].concat(md.depend_on)
+          end
+        end
+      end
     end
 
     def removable?
