@@ -19,6 +19,7 @@ module Profile
                       use_cli_answers
                     end
           validate_answers(answers)
+          update_dependencies(answers)
           save_answers(answers)
         end
       end
@@ -157,6 +158,25 @@ module Profile
         puts "Cluster type: #{type.name}"
         type.questions.each do |question|
           puts "#{question.text} #{ type.fetch_answer(question.id) || 'none' }"
+        end
+      end
+
+      def update_dependencies(answers)
+        all_questions = cluster_type.recursive_questions
+        dependencies = {}.tap do |ds|
+          answers.each do |id, ans|
+            question = all_questions[id]
+            conditional_dependencies = question['dependencies']
+            next unless conditional_dependencies
+            matched_dependencies = conditional_dependencies.select { |cd| cd['where'] == ans }
+            matched_dependencies.each do |md|
+              ds[md['identity']] ||= []
+              ds[md['identity']].concat(md['depend_on'])
+            end
+          end
+        end
+        dependencies.each do |ide, dpo|
+          cluster_type.set_conditional_dependencies(ide, dpo)
         end
       end
 
