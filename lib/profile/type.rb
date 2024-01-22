@@ -72,6 +72,17 @@ module Profile
       File.join(Config.answers_dir, "#{id}.yaml")
     end
 
+    def valid_answers(qs = questions, parent_answer = nil)
+      {}.tap do |as|
+        qs.each do |q|
+          next unless parent_answer.nil? || parent_answer == q.where
+          as[q.id] = answers[q.id] unless answers[q.id].nil?
+          next unless q.questions
+          child_as = valid_answers(q.questions, answers[q.id])
+          as.merge!(child_as);
+      end
+    end
+
     def prepared?
       !!prepared
     end
