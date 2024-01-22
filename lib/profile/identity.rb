@@ -15,7 +15,7 @@ module Profile
               name: metadata['name'],
               description: metadata['description'],
               group_name: metadata['group_name'],
-              dependencies: metadata['dependencies'],
+              dependencies: metadata['dependencies'] + metadata['conditional_dependencies'],
               conflicts: metadata['conflicts'],
               commands: cmds
             )
