@@ -4,6 +4,7 @@ module Profile
       cluster_type = Type.find(cluster_type) || Type.find(Config.cluster_type)
       raise "Cluster type not found" unless cluster_type
 
+      type_conditional_dependencies = conditional_dependencies(cluster_type)
       @all_identities ||= [].tap do |a|
         glob = File.join(cluster_type.base_path, "identities", "*")
         Dir.glob(glob).each do |identity|
@@ -15,7 +16,7 @@ module Profile
               name: metadata['name'],
               description: metadata['description'],
               group_name: metadata['group_name'],
-              dependencies: metadata['dependencies'].to_a + conditional_dependencies(cluster_type)[metadata['name']],
+              dependencies: metadata['dependencies'].to_a + type_conditional_dependencies[metadata['name']],
               conflicts: metadata['conflicts'],
               commands: cmds
             )
@@ -39,7 +40,7 @@ module Profile
           next unless conditional_dependencies
           matched_dependencies = conditional_dependencies.select { |cd| cd.where == ans }
           matched_dependencies.each do |md|
-            ds[md.identity].concat(md.depend_on)
+            ds[md.identity] += md.depend_on
           end
         end
       end
