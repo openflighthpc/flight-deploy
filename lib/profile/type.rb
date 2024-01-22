@@ -89,6 +89,7 @@ module Profile
     end
 
     def set_conditional_dependencies(identity, dependencies)
+      Identity.set_conditional_dependencies(self, identity, dependencies)
     end
 
     def questions
