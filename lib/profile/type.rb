@@ -80,6 +80,7 @@ module Profile
           next unless q.questions
           child_as = valid_answers(q.questions, answers[q.id])
           as.merge!(child_as);
+        end
       end
     end
 
@@ -98,7 +99,7 @@ module Profile
     def find_identity(name)
       identities.find { |identity| identity.name == name }
     end
-    
+
     def questions
       @questions.map(&:to_shash)
     end
