@@ -165,7 +165,7 @@ module Profile
         all_questions = cluster_type.recursive_questions
         dependencies = {}.tap do |ds|
           answers.each do |id, ans|
-            question = all_questions[id]
+            question = all_questions.find { |q| q['id'] = id }
             conditional_dependencies = question['dependencies']
             next unless conditional_dependencies
             matched_dependencies = conditional_dependencies.select { |cd| cd['where'] == ans }
