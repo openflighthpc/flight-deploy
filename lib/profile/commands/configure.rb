@@ -168,12 +168,12 @@ module Profile
             ds[ide.name] = []
           end
           answers.each do |id, ans|
-            question = all_questions.find { |q| q['id'] = id }
-            conditional_dependencies = question['dependencies']
+            question = all_questions.find { |q| q.id == id }
+            conditional_dependencies = question.dependencies
             next unless conditional_dependencies
-            matched_dependencies = conditional_dependencies.select { |cd| cd['where'] == ans }
+            matched_dependencies = conditional_dependencies.select { |cd| cd.where == ans }
             matched_dependencies.each do |md|
-              ds[md['identity']].concat(md['depend_on'])
+              ds[md.identity].concat(md.depend_on)
             end
           end
         end
