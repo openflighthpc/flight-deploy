@@ -160,27 +160,6 @@ module Profile
         end
       end
 
-      # def update_dependencies(answers)
-      #   all_questions = cluster_type.recursive_questions
-      #   dependencies = {}.tap do |ds|
-      #     cluster_type.identities.each do |ide|
-      #       ds[ide.name] = []
-      #     end
-      #     answers.each do |id, ans|
-      #       question = all_questions.find { |q| q.id == id }
-      #       conditional_dependencies = question.dependencies
-      #       next unless conditional_dependencies
-      #       matched_dependencies = conditional_dependencies.select { |cd| cd.where == ans }
-      #       matched_dependencies.each do |md|
-      #         ds[md.identity].concat(md.depend_on)
-      #       end
-      #     end
-      #   end
-      #   dependencies.each do |ide, dpo|
-      #     cluster_type.set_conditional_dependencies(ide, dpo)
-      #   end
-      # end
-
       def save_answers(answers)
         Config.data.set(:cluster_type, value: cluster_type.id)
         Config.save_data
