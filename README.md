@@ -124,6 +124,35 @@ For this kind of questions, only yes, y, no, or n a valid answers.
 
 Boolean questions can also have child questions. Simply use `true` or `false` as the value of the `where` option for the child questions of a boolean question.
 
+#### Conditional Dependencies
+
+Questions can have effects on identity dependencies by using the `dependencies` field. For instance:
+```
+questions:
+  - id: conditional_dependency_question
+    env: CONDITIONAL_DEPENDENCY_QUESTION
+    text: "conditional_dependency_question:"
+    default: no_dependency
+    validation:
+      type: string
+    dependencies:
+      - identity: id_a
+        depend_on:
+          - id_x
+        where: dependency_a
+      - identity: id_b
+        depend_on:
+          - id_y
+          - id_z
+        where: dependency_b
+```
+Given the above question definition:
+- If the answer to the question is "dependency_a", it forms a dependency that `id_a` depends on `id_x`.
+- If the answer to the question is "dependency_b", it forms a dependency that `id_b` depends on both `id_y` and `id_z`.
+- If the answer to the question is anything else, both dependencies won't be created, or, they will be discarded in a reconfiguration scanario.
+
+_**IMPORTANT NOTE:**_ Updating the conditional dependencies through a reconfiguration can cause side effects to the queueing nodes of the `profile apply` process. To avoid this, please dequeue the relevant nodes before the reconfiguration and reapply them afterwards.
+
 ## Operation
 
 A brief usage guide is given here. See the `help` command for more in depth details and information specific to each command.
