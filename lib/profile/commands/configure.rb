@@ -27,7 +27,7 @@ module Profile
 
       def use_cli_answers
         cli_answers.tap do |as|
-          given = a&.keys || []
+          given = as&.keys || []
           all_questions = cluster_type.recursive_questions
           invalid_boolean_answers = all_questions.select { |q| q.type == 'boolean' && !as[q.id].is_a?(TrueClass) && !as[q.id].is_a?(FalseClass) && !as[q.id].nil? }.map(&:id)
           raise "The following questions requires boolean answers: #{invalid_boolean_answers.join(", ")}" unless invalid_boolean_answers.empty?
