@@ -26,19 +26,22 @@ module Profile
       private
 
       def use_cli_answers
-        cli_answers.tap do |a|
+        cli_answers.tap do |as|
           given = a&.keys || []
           all_questions = cluster_type.recursive_questions
+          invalid_boolean_answers = all_questions.select { |q| q.type == 'boolean' && !as[q.id].is_a?(TrueClass) && !as[q.id].is_a?(FalseClass) && !as[q.id].nil? }.map(&:id)
+          raise "The following questions requires boolean answers: #{invalid_boolean_answers.join(", ")}" unless invalid_boolean_answers.empty?
+          
           if @options.accept_defaults
             generate_prefills(cluster_type.questions)
             all_questions.each do |question|
-              a[question.id] ||= @prefills[question.id] unless @prefills[question.id].nil?
+              as[question.id] ||= @prefills[question.id] unless @prefills[question.id].nil?
             end
           end
-          missing = missing_answers(a)
+          missing = missing_answers(as)
           raise "The following questions were not answered by the JSON data: #{missing.join(", ")}" unless missing.empty?
 
-          required = required_answers(a)
+          required = required_answers(as)
           invalid = given - required
           raise "The following given answers are not recognised by the cluster type: #{invalid.join(", ")}" unless invalid.empty?
         end
