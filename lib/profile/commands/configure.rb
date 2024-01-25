@@ -63,7 +63,7 @@ module Profile
           questions.each do |q|
             next unless parent_answer.nil? || parent_answer == q.where
             ra << q.id
-            ra.concat(required_answers(answers), q.questions, answers[q.id]) if q.questions
+            ra.concat(required_answers(answers, q.questions, answers[q.id])) if q.questions
           end
         end
       end
