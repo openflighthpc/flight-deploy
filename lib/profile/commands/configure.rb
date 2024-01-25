@@ -28,7 +28,7 @@ module Profile
       def use_cli_answers
         cli_answers.tap do |a|
           if @options.accept_defaults
-            generate_prefills(question)
+            generate_prefills(cluster_type.questions)
             cluster_type.recursive_questions.each do |question|
               a[question.id] ||= @prefills[question.id] unless @prefills[question.id].nil?
             end
