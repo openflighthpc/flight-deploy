@@ -19,7 +19,7 @@ module Profile
 
         raise "Cluster type is already prepared." if cluster_type.prepared?
         puts "Preparing '#{cluster_type.name}' cluster type..."
-        if cluster_type.prepare
+        if cluster_type.prepare.success?
           puts "'#{cluster_type.name}' prepared."
           cluster_type.verify
         else
