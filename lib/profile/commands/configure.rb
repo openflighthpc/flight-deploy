@@ -27,30 +27,43 @@ module Profile
 
       def use_cli_answers
         cli_answers.tap do |a|
+          all_questions = cluster_type.recursive_questions
           if @options.accept_defaults
             generate_prefills(cluster_type.questions)
-            cluster_type.recursive_questions.each do |question|
+            all_questions.each do |question|
               a[question.id] ||= @prefills[question.id] unless @prefills[question.id].nil?
             end
           end
           given = a&.keys || []
-          required = required_cli_answers(a)
-          if !(required - given).empty?
-            raise "The following questions were not answered by the JSON data: #{(required - given).join(", ")}"
-          elsif !(given - required).empty?
-            raise "The following given answers are not recognised by the cluster type: #{(given - required).join(", ")}"
+          missing = missing_answers(a)
+          raise "The following questions were not answered by the JSON data: #{missing.join(", ")}" unless missing.empty?
+
+          required = required_answers(a)
+          invalid = given - required
+          invalid -= all_questions.map(&:id) if @options.accept_defaults
+          raise "The following given answers are not recognised by the cluster type: #{invalid.join(", ")}" unless invalid.empty?
+        end
+      end
+
+      def missing_answers(answers, questions = cluster_type.questions, parent_answer = nil)
+        [].tap do |ma|
+          questions.each do |q|
+            next unless parent_answer.nil? || parent_answer == q.where
+            if answers[q.id].nil?
+              ma << q.id
+            else
+              ma.concat(missing_answers(answers, q.questions, answers[q.id])) if q.questions
+            end
           end
         end
       end
 
-      def required_cli_answers(given_answers, questions = cluster_type.questions, parent_answer = nil)
-        [].tap do |required|
+      def required_answers(answers, questions = cluster_type.questions, parent_answer = nil)
+        [].tap do |ra|
           questions.each do |q|
-            if parent_answer.nil? || parent_answer == q.where
-              required << q.id 
-              required.concat(required_cli_answers(given_answers, q.questions, given_answers[q.id])) if q.questions
-            end
-          end
+            next unless parent_answer.nil? || parent_answer == q.where
+            ra << q.id
+            ra.concat(required_answers(answers), q.questions, answers[q.id]) if q.questions
         end
       end
 
