@@ -27,6 +27,7 @@ module Profile
 
       def use_cli_answers
         cli_answers.tap do |a|
+          given = a&.keys || []
           all_questions = cluster_type.recursive_questions
           if @options.accept_defaults
             generate_prefills(cluster_type.questions)
@@ -34,13 +35,11 @@ module Profile
               a[question.id] ||= @prefills[question.id] unless @prefills[question.id].nil?
             end
           end
-          given = a&.keys || []
           missing = missing_answers(a)
           raise "The following questions were not answered by the JSON data: #{missing.join(", ")}" unless missing.empty?
 
           required = required_answers(a)
           invalid = given - required
-          invalid -= all_questions.map(&:id) if @options.accept_defaults
           raise "The following given answers are not recognised by the cluster type: #{invalid.join(", ")}" unless invalid.empty?
         end
       end
