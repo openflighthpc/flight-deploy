@@ -29,9 +29,19 @@ module Profile
         cli_answers.tap do |as|
           given = as&.keys || []
           all_questions = cluster_type.recursive_questions
-          invalid_boolean_answers = all_questions.select { |q| q.type == 'boolean' && !as[q.id].is_a?(TrueClass) && !as[q.id].is_a?(FalseClass) && !as[q.id].nil? }.map(&:id)
-          raise "The following questions requires boolean answers: #{invalid_boolean_answers.join(", ")}" unless invalid_boolean_answers.empty?
-          
+
+          invalid_boolean_answers = all_questions.select do |q|
+            q.type == 'boolean' &&
+              !as[q.id].is_a?(TrueClass) &&
+              !as[q.id].is_a?(FalseClass) &&
+              !as[q.id].nil?
+          end
+          invalid_boolean_answers.map!(&:id)
+
+          unless invalid_boolean_answers.empty?
+            raise "The following questions requires boolean answers: #{invalid_boolean_answers.join(", ")}"
+          end
+
           if @options.accept_defaults
             generate_prefills(cluster_type.questions)
             all_questions.each do |question|
@@ -39,11 +49,15 @@ module Profile
             end
           end
           missing = missing_answers(as)
-          raise "The following questions were not answered by the JSON data: #{missing.join(", ")}" unless missing.empty?
+          unless missing.empty?
+            raise "The following questions were not answered by the JSON data: #{missing.join(", ")}"
+          end
 
           required = required_answers(as)
           invalid = given - required
-          raise "The following given answers are not recognised by the cluster type: #{invalid.join(", ")}" unless invalid.empty?
+          unless invalid.empty?
+            raise "The following given answers are not recognised by the cluster type: #{invalid.join(", ")}"
+          end
         end
       end
 
@@ -51,10 +65,11 @@ module Profile
         [].tap do |ma|
           questions.each do |q|
             next unless parent_answer.nil? || parent_answer == q.where
+
             if answers[q.id].nil?
               ma << q.id
-            else
-              ma.concat(missing_answers(answers, q.questions, answers[q.id])) if q.questions
+            elsif q.questions
+              ma.concat(missing_answers(answers, q.questions, answers[q.id]))
             end
           end
         end
@@ -64,6 +79,7 @@ module Profile
         [].tap do |ra|
           questions.each do |q|
             next unless parent_answer.nil? || parent_answer == q.where
+
             ra << q.id
             ra.concat(required_answers(answers, q.questions, answers[q.id])) if q.questions
           end
@@ -72,7 +88,6 @@ module Profile
 
       def ask_questions
         type = cluster_type
-        smart_log = Logger.new(File.join(Config.log_dir, 'configure.log'))
 
         Thread.fork do
           generate_prefills(type.questions)
@@ -155,7 +170,7 @@ module Profile
           output = outputs[command_index].stdout.chomp
           if !outputs[command_index].success?
             log.debug("Command '#{command_list[command_index]}' failed to run: #{outputs[command_index].stderr.dump}")
-          elsif (regex.nil? || output.match(Regexp.new(regex)))
+          elsif regex.nil? || output.match(Regexp.new(regex))
             return output
           else
             log.debug("Command result '#{output}' did not pass validation check")
@@ -191,8 +206,8 @@ module Profile
         @cli_answers ||= JSON.load(@options.answers)
       rescue JSON::ParserError
         raise <<~ERROR.chomp
-        Error parsing answers JSON:
-        #{$!.message}
+          Error parsing answers JSON:
+          #{$!.message}
         ERROR
       end
 
@@ -206,12 +221,12 @@ module Profile
         return unless bad_answers.any?
 
         raise <<~ERROR.chomp
-        The following answers did not pass validation: #{bad_answers.join(', ')}
+          The following answers did not pass validation: #{bad_answers.join(', ')}
         ERROR
       end
 
       def cluster_type
-        @type ||=
+        @cluster_type ||=
           if @options.answers
             if @options.reset_type
               Type.find(cli_answers&.delete('cluster_type'))
@@ -221,17 +236,15 @@ module Profile
                 Config.cluster_type
               )
             end
+          elsif @options.reset_type
+            Type.find(ask_for_cluster_type)
           else
-            if @options.reset_type
-              Type.find(ask_for_cluster_type)
-            else
-              Type.find(Config.cluster_type || ask_for_cluster_type)
-            end
+            Type.find(Config.cluster_type || ask_for_cluster_type)
           end
       end
 
       def ask_for_cluster_type
-        prompt.select('Cluster type: ', Type.all.map { |t| t.name })
+        prompt.select('Cluster type: ', Type.all.map(&:name))
       end
     end
   end
