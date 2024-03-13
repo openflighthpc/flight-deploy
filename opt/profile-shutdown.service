@@ -3,7 +3,7 @@ Description="cURL headnode with Flight Profile remove request"
 DefaultDependencies=no
 Requires=network.target
 Before=shutdown.target
-After=sshd.service flight-slurmd.service
+After=sshd.service flight-slurmd.service nfs-server.service
 
 [Service]
 Type=oneshot
