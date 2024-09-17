@@ -1,0 +1,3 @@
+apply:
+- name: main
+  command: "echo Applying compute node"

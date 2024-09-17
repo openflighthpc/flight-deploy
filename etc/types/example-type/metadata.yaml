@@ -1,7 +1,7 @@
 ---
-id: openflight-slurm
-name: 'Openflight Slurm'
-description: 'Description for openflight slurm cluster type.'
+id: example-type
+name: 'Example Type'
+description: 'An example cluster type'
 questions:
   - id: cluster_name
     env: CLUSTERNAME

@@ -1,0 +1,6 @@
+name: compute
+description: Set up an example compute node
+group_name: nodes
+dependencies:
+  - login
+conflicts:
